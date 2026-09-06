@@ -5,7 +5,7 @@ import {
 } from "./validation.js";
 
 import { initializeCosmetics } from "./cosmetics.js";
-import { showLoading, showSuccess, showError, clearStatus } from "./panchoStatus.js";
+import { showLoading, showSuccess, showError, showOffline, clearStatus } from "./panchoStatus.js";
 
 
 // Small helper so a loading state is guaranteed to actually be visible for
@@ -195,27 +195,68 @@ document.addEventListener("DOMContentLoaded", function () {
         dogNameInput.value = savedName;
     }
 
+const retryButton = document.getElementById("retryDogFetch");
+
+function toggleRetryButton(show){
+    if (retryButton) {
+        retryButton.classList.toggle("hidden", !show);
+    }
+}
+
+async function loadPanchoDogs() {
+
+    if (!dogSelectionContainer) {
+        return;
+    }
+
+    if (!navigator.onLine) {
+        showOffline("No internet connection");
+        toggleRetryButton(true);
+        return;
+    }
+
+    showLoading();
+    toggleRetryButton(false);
+
+    const result = await Promise.all([
+        initializeDogSelection(dogSelectionContainer),
+        wait(600)
+    ]);
+
+    const success = result[0];
+
+    if (success) {
+        clearStatus();
+        toggleRetryButton(false);
+    } else {
+        showError();
+        toggleRetryButton(true);
+    }
+}
+
     if (dogSelectionContainer) {
+        loadPanchoDogs();
+    }    
 
-        showLoading();
-
-        // Show the loading banner for at least 600ms, even if the fetch
-        // resolves faster than that.
-        Promise.all([
-            initializeDogSelection(dogSelectionContainer),
-            wait(600)
-        ]).then(function (results) {
-
-            const success = results[0];
-
-            if (success) {
-                clearStatus();
-            } else {
-                showError();
-            }
+    if (retryButton) {
+        retryButton.addEventListener("click", function () {
+            loadPanchoDogs();
         });
     }
 
+    window.addEventListener("offline", function () {
+        if (dogSelectionContainer) {
+            showOffline("Internet connection lost");
+            toggleRetryButton(true);
+        }
+    });
+
+    window.addEventListener("online", function () {
+        if (dogSelectionContainer) {
+            loadPanchoDogs();
+        }
+    });
+    
     if (selectedDogImage) {
         displaySelectedDog(selectedDogImage);
     }

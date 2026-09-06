@@ -13,13 +13,15 @@ const STYLE_ID = "panchoStatusStyles";
 const MESSAGES = {
     loading: "Loading Pancho...",
     success: "Pancho ready to be raised!",
-    error: "Something got wrong with Pancho"
+    error: "Something got wrong with Pancho",
+    offline: "You're offline - showing saved data"
 };
 
 const COLORS = {
     loading: { bg: "#374151", text: "#ffffff" }, // slate
     success: { bg: "#16a34a", text: "#ffffff" }, // green
-    error: { bg: "#dc2626", text: "#ffffff" }    // red
+    error: { bg: "#dc2626", text: "#ffffff" },   // red
+    offline: { bg: "#b45309", text: "#ffffff"}   // ambar
 };
 
 function injectStyles() {
@@ -154,4 +156,8 @@ export function clearStatus() {
     if (banner) {
         banner.style.display = "none";
     }
+}
+
+export function showOffline(customMessage) {
+    setStatus("offline", customMessage);
 }
