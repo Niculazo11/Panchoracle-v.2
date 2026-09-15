@@ -1,0 +1,122 @@
+[
+    {
+        "id": 1,
+        "name": "Skully bow",
+        "category": "Head",
+        "cost": 230
+    },
+    {
+        "id": 2,
+        "name": "Christmas bow",
+        "category": "Head",
+        "cost": 200
+    },
+    {
+        "id": 3,
+        "name": "Starry bow",
+        "category": "Head",
+        "cost": 200
+    },
+    {
+        "id": 4,
+        "name": "Cow-doggy",
+        "category": "Head",
+        "cost": 250
+    },
+    {
+        "id": 5,
+        "name": "Astronaut's helmet",
+        "category": "Head",
+        "cost": 300
+    },
+    {
+        "id": 6,
+        "name": "Sunglasses",
+        "category": "Face",
+        "cost": 300
+    },
+    {
+        "id": 7,
+        "name": "Circular glasses",
+        "category": "Face",
+        "cost": 300
+    },
+    {
+        "id": 8,
+        "name": "Bandanna",
+        "category": "Face",
+        "cost": 330
+    },
+    {
+        "id": 9,
+        "name": "Monocle",
+        "category": "Face",
+        "cost": 300
+    },
+    {
+        "id": 10,
+        "name": "Visor",
+        "category": "Face",
+        "cost": 500
+    },
+    {
+        "id": 11,
+        "name": "Piked collar",
+        "category": "Neck",
+        "cost": 300
+    },
+    {
+        "id": 12,
+        "name": "Red collar",
+        "category": "Neck",
+        "cost": 200
+    },
+    {
+        "id": 13,
+        "name": "Black collar",
+        "category": "Neck",
+        "cost": 200
+    },
+    {
+        "id": 14,
+        "name": "Blue collar",
+        "category": "Neck",
+        "cost": 200
+    },
+    {
+        "id": 15,
+        "name": "Pink scarf",
+        "category": "Neck",
+        "cost": 300
+    },
+    {
+        "id": 16,
+        "name": "Tutu",
+        "category": "Body",
+        "cost": 400
+    },
+    {
+        "id": 17,
+        "name": "PANCHO",
+        "category": "Body",
+        "cost": 777
+    },
+    {
+        "id": 18,
+        "name": "Smoking",
+        "category": "Body",
+        "cost": 500
+    },
+    {
+        "id": 19,
+        "name": "Red sweater",
+        "category": "Body",
+        "cost": 400
+    },
+    {
+        "id": 20,
+        "name": "White sweater",
+        "category": "Body",
+        "cost": 400
+    }
+]
