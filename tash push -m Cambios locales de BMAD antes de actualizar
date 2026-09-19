@@ -1,0 +1,105 @@
+warning: in the working copy of '_bmad/_config/files-manifest.csv', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '_bmad/_config/manifest.yaml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '_bmad/bmm/config.yaml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '_bmad/core/config.yaml', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/_bmad/_config/files-manifest.csv b/_bmad/_config/files-manifest.csv[m
+[1mindex 9a27f85..2d17983 100644[m
+[1m--- a/_bmad/_config/files-manifest.csv[m
+[1m+++ b/_bmad/_config/files-manifest.csv[m
+[36m@@ -1,5 +1,5 @@[m
+ type,name,module,path,hash[m
+[31m-"yaml","manifest","_config","_config/manifest.yaml","40f5745645cb98a617aa67d41add0c856e95ef258ffe401946eb4b9b323d2095"[m
+[32m+[m[32m"yaml","manifest","_config","_config/manifest.yaml","5f52f74f89d12cd824fcb0ed994b718f5155aa19b0fa25c05c4f1749fb645018"[m
+ "csv","module-help","bmm","bmm/module-help.csv","c3c1033c8fffef924bb71342e22a0a2a8243911a0b856e2aa7804d8bb49feb5a"[m
+ "html","validation-report-template","bmm","bmm/plan/bmad-prd/assets/validation-report-template.html","a80becdd8205d2d7c18738855830b096172a496b96b5ca8a0820ec55c9bb8bf9"[m
+ "html","validation-report-template","bmm","bmm/plan/bmad-ux/assets/validation-report-template.html","8656945636fabe96624f8ef8fce931b073b5aecbe42d490584c1d5c7f31e1353"[m
+[36m@@ -151,7 +151,7 @@[m [mtype,name,module,path,hash[m
+ "toml","customize","bmm","bmm/ship/bmad-qa-generate-e2e-tests/customize.toml","4fbbd9d96e5af24ae012d33e59582b88867e8203dcd5a29f0d46b42ef6d747b8"[m
+ "toml","customize","bmm","bmm/ship/bmad-retrospective/customize.toml","33ce7da5bad6dfe1791218d8d607b749f9b58586b232df7ea0d3263ec50ec466"[m
+ "toml","customize","bmm","bmm/ship/bmad-walkthrough/customize.toml","2a4b14c5b25729a2d8fa9d9762ab3f12ac9429cfc6bd31fd80a81d86eed98630"[m
+[31m-"yaml","config","bmm","bmm/config.yaml","1989912fcd3651c1a6853303dc58ca004875e2df33b9195ff458424709a85dd5"[m
+[32m+[m[32m"yaml","config","bmm","bmm/config.yaml","339eb95a9ebd29307ee0f66d1f21a00f7ed31c2a667899a160269b50cf73e003"[m
+ "yaml","sprint-status-template","bmm","bmm/plan/bmad-sprint-planning/sprint-status-template.yaml","64b1a937e1fe03b8b8d158e3b1caeb89e7d51692a56c16038e2af091decc553a"[m
+ "yaml","sprint-status-template","bmm","bmm/ship/bmad-retrospective/scripts/tests/fixtures/sprint-status-template.yaml","64b1a937e1fe03b8b8d158e3b1caeb89e7d51692a56c16038e2af091decc553a"[m
+ "toml","config","config.toml","config.toml","8a4e213f77dae6659c88987602f3bf15f0031e91650ccdfffa484a9871f2f2ff"[m
+[36m@@ -226,8 +226,7 @@[m [mtype,name,module,path,hash[m
+ "toml","customize","core","core/bmad-forge-idea/customize.toml","839f57b89c8b04038fa795525f55799ee5c23431b17d429fe668880e78399ef2"[m
+ "toml","customize","core","core/bmad-party-mode/customize.toml","332aca1a85a681ff38a78850deb552e954d6a7d0b32f8d22caf9b2b2324b4e24"[m
+ "toml","customize","core","core/bmad-review/customize.toml","005dde84f09c0b1ab0ef0ee87f1ed1985922c893089cc3595157611fb83b3ebd"[m
+[31m-"yaml","config","core","core/config.yaml","c086293c189ea1feafcd0050e97587e6a08b8298bc7735b77a9620b7345ac983"[m
+[31m-"file",".gitignore","custom","custom/.gitignore","973b03a33f142c22cf9b65be285bebadd85790b6b55be04637d2f8c716f58fab"[m
+[32m+[m[32m"yaml","config","core","core/config.yaml","ac7a593c808d86e1500dcd15551dae19ca197dd97356532129599b7d56f4b59b"[m
+ "file",".gitignore","render","render/.gitignore","240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d"[m
+ "py","config_utils","scripts","scripts/config_utils.py","48afe2bc18a29201e343cce3703be1e70df9c83ee74eeb68e57ef8ef42e8c651"[m
+ "py","memlog","scripts","scripts/memlog.py","3b00f82ca33dc4227f715123b939514ee35c4f9c71150c894c3d8185df1b48df"[m
+[1mdiff --git a/_bmad/_config/manifest.yaml b/_bmad/_config/manifest.yaml[m
+[1mindex 9b0c9ae..b94cbcc 100644[m
+[1m--- a/_bmad/_config/manifest.yaml[m
+[1m+++ b/_bmad/_config/manifest.yaml[m
+[36m@@ -1,20 +1,20 @@[m
+ installation:[m
+   version: 6.12.0[m
+   installDate: 2026-09-08T13:37:28.511Z[m
+[31m-  lastUpdated: 2026-09-08T13:37:28.511Z[m
+[32m+[m[32m  lastUpdated: 2026-09-11T12:27:44.272Z[m
+   installShims: false[m
+ modules:[m
+   - name: core[m
+     version: 6.12.0[m
+     installDate: 2026-09-08T13:37:27.101Z[m
+[31m-    lastUpdated: 2026-09-08T13:37:28.506Z[m
+[32m+[m[32m    lastUpdated: 2026-09-11T12:27:44.269Z[m
+     source: built-in[m
+     npmPackage: null[m
+     repoUrl: null[m
+   - name: bmm[m
+     version: 6.12.0[m
+     installDate: 2026-09-08T13:37:28.381Z[m
+[31m-    lastUpdated: 2026-09-08T13:37:28.511Z[m
+[32m+[m[32m    lastUpdated: 2026-09-11T12:27:44.272Z[m
+     source: built-in[m
+     npmPackage: null[m
+     repoUrl: null[m
+[1mdiff --git a/_bmad/bmm/config.yaml b/_bmad/bmm/config.yaml[m
+[1mindex f28ab13..0cd0f31 100644[m
+[1m--- a/_bmad/bmm/config.yaml[m
+[1m+++ b/_bmad/bmm/config.yaml[m
+[36m@@ -1,16 +1,16 @@[m
+ # BMM Module Configuration[m
+ # Generated by BMAD installer[m
+ # Version: 6.12.0[m
+[31m-# Date: 2026-09-08T13:37:28.416Z[m
+[32m+[m[32m# Date: 2026-09-11T12:27:44.146Z[m
+ [m
+[31m-user_skill_level: intermediate[m
+ planning_artifacts: "{project-root}/_bmad-output/planning-artifacts"[m
+ implementation_artifacts: "{project-root}/_bmad-output/implementation-artifacts"[m
+ project_knowledge: "{project-root}/docs"[m
+[32m+[m[32muser_skill_level: intermediate[m
+ [m
+ # Core Configuration Values[m
+[31m-user_name: Dayanne[m
+ project_name: Panchoracle-v.2[m
+[31m-communication_language: English[m
+ document_output_language: English[m
+ output_folder: "{project-root}/_bmad-output"[m
+[32m+[m[32muser_name: Dayanne[m
+[32m+[m[32mcommunication_language: English[m
+[1mdiff --git a/_bmad/core/config.yaml b/_bmad/core/config.yaml[m
+[1mindex 70fac9a..adb4d11 100644[m
+[1m--- a/_bmad/core/config.yaml[m
+[1m+++ b/_bmad/core/config.yaml[m
+[36m@@ -1,10 +1,10 @@[m
+ # CORE Module Configuration[m
+ # Generated by BMAD installer[m
+ # Version: 6.12.0[m
+[31m-# Date: 2026-09-08T13:37:28.419Z[m
+[32m+[m[32m# Date: 2026-09-11T12:27:44.151Z[m
+ [m
+[31m-user_name: Dayanne[m
+ project_name: Panchoracle-v.2[m
+[31m-communication_language: English[m
+ document_output_language: English[m
+ output_folder: "{project-root}/_bmad-output"[m
+[32m+[m[32muser_name: Dayanne[m
+[32m+[m[32mcommunication_language: English[m
