@@ -1,4 +1,3 @@
-import HomeHeader from "./home/HomeHeader.jsx";
 import HeroSection from "./home/HeroSection.jsx";
 import BenefitsSection from "./home/BenefitsSection.jsx";
 import TestimonialSection from "./home/TestimonialSection.jsx";
@@ -10,10 +9,8 @@ import HomeFooter from "./home/HomeFooter.jsx";
 // goes over the line limit. The markup/classes are untouched.
 export default function Home() {
     return (
-        <div className="bg-[rgb(149,248,165)] dark:bg-[#18351f] m-0">
-            <HomeHeader />
-
-            <main className="pt-[70px] sm:pt-[60px]">
+        <div className="bg-[rgb(149,248,165)] dark:bg-[#18351f] text-black dark:text-white m-0">
+            <main>
                 <HeroSection />
                 <BenefitsSection />
                 <TestimonialSection />

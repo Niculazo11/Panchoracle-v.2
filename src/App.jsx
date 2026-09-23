@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
@@ -8,6 +8,7 @@ import RaisePancho from "./pages/RaisePancho.jsx";
 import PanchoStats from "./pages/PanchoStats.jsx";
 import Shop from "./pages/Shop.jsx";
 import MiniGames from "./pages/MiniGames.jsx";
+import HomeHeader from "./pages/home/HomeHeader.jsx";
 
 // Every page is reachable both through its original .html path (so the
 // links migrated from the static site keep working) and through a short,
@@ -37,13 +38,23 @@ function renderRoutes(routes, wrap) {
     );
 }
 
+// The global navbar is shown everywhere except on AboutUs, which has its
+// own header with a single "back to Home" button.
+const ABOUT_PATHS = PUBLIC_ROUTES.find((route) => route.element.type === AboutUs).paths;
+
 export default function App() {
+    const { pathname } = useLocation();
+    const showNavbar = !ABOUT_PATHS.includes(pathname);
+
     return (
-        <Routes>
-            {renderRoutes(PUBLIC_ROUTES)}
-            {renderRoutes(PRIVATE_ROUTES, (element) => (
-                <ProtectedRoute>{element}</ProtectedRoute>
-            ))}
-        </Routes>
+        <>
+            {showNavbar && <HomeHeader />}
+            <Routes>
+                {renderRoutes(PUBLIC_ROUTES)}
+                {renderRoutes(PRIVATE_ROUTES, (element) => (
+                    <ProtectedRoute>{element}</ProtectedRoute>
+                ))}
+            </Routes>
+        </>
     );
 }

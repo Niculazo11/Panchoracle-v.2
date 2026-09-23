@@ -1,20 +1,36 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-// React port of js/darkmode.js. The original script toggled a
-// "dark-mode" class on <body> (tailwind.config: darkMode: ['selector',
-// '.dark-mode']) whenever an element with id="dark-mode" was clicked —
-// but no page in the original site actually renders that button, so
-// the script was a no-op in practice. This hook preserves that exact
-// behavior: it's available for any page to opt into, but isn't wired
-// up anywhere by default, matching the original app 1:1.
+// Toggles the "dark-mode" class on <body> (tailwind.config: darkMode:
+// ['selector', '.dark-mode']) and remembers the choice in localStorage.
 const STORAGE_KEY = "theme";
 const DARK_CLASS = "dark-mode";
 
+function readStoredTheme() {
+    try {
+        return localStorage.getItem(STORAGE_KEY) === "dark";
+    } catch {
+        return false;
+    }
+}
+
 export function useDarkMode() {
+    const [isDark, setIsDark] = useState(readStoredTheme);
+
+    useEffect(() => {
+        document.body.classList.toggle(DARK_CLASS, isDark);
+    }, [isDark]);
+
     const toggleDarkMode = useCallback(() => {
-        const isDark = document.body.classList.toggle(DARK_CLASS);
-        localStorage.setItem(STORAGE_KEY, isDark ? "dark" : "light");
+        setIsDark((prev) => {
+            const next = !prev;
+            try {
+                localStorage.setItem(STORAGE_KEY, next ? "dark" : "light");
+            } catch {
+                /* storage unavailable: the toggle still works for this session */
+            }
+            return next;
+        });
     }, []);
 
-    return { toggleDarkMode };
+    return { isDark, toggleDarkMode };
 }
