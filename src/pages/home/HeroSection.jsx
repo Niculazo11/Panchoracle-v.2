@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
+import { useAccess } from "../../lib/useAccess.js";
 
 export default function HeroSection() {
+    const isLoggedIn = useAccess();
+
     return (
         <>
             <section className="py-16 sm:py-24 px-5 text-center w-full box-border">
@@ -18,9 +21,18 @@ export default function HeroSection() {
 
                 <article className="flex-1 text-center">
                     <h2 className="text-xl font-normal mb-[25px]">Take Care of Your Pancho</h2>
-                    <a href="#joinForm">
-                        <img src="/images/SalchichaAjedrez.png" alt="Brown Pancho playing chess." className="w-[90%] max-w-[300px] rounded-[20px] block mx-auto" />
-                    </a>
+
+                    {/* Logged in -> straight to their Pancho; logged out ->
+                        same anchor jump to the join form as before. */}
+                    {isLoggedIn ? (
+                        <Link to="/raise">
+                            <img src="/images/SalchichaAjedrez.png" alt="Brown Pancho playing chess." className="w-[90%] max-w-[300px] rounded-[20px] block mx-auto" />
+                        </Link>
+                    ) : (
+                        <a href="#joinForm">
+                            <img src="/images/SalchichaAjedrez.png" alt="Brown Pancho playing chess." className="w-[90%] max-w-[300px] rounded-[20px] block mx-auto" />
+                        </a>
+                    )}
                 </article>
 
                 <article className="flex-1 text-center">
