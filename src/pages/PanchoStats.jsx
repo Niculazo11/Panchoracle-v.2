@@ -1,11 +1,16 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useGameState } from "../state/GameStateContext.jsx";
 import { GameState } from "../state/gameState.js";
 import StatsPanel from "./stats/StatsPanel.jsx";
 
+// Profile route: /stats/:username. The registered name in the URL is
+// the one stored as student.id (see state/defaults.js), so this page
+// is reachable at a shareable, per-student link instead of a single
+// fixed path.
 export default function PanchoStats() {
     const navigate = useNavigate();
+    const { username } = useParams();
     const { dog, student, currentAssignment } = useGameState();
 
     // No Pancho chosen yet -> send the student to pick one first.
@@ -14,6 +19,15 @@ export default function PanchoStats() {
             navigate("/choosePancho.html");
         }
     }, [dog.imgUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Keep the URL in sync with the registered student: old static
+    // links (/stats, /panchoStats.html) or a stale/foreign :username
+    // both get canonicalized to this student's own profile URL.
+    useEffect(() => {
+        if (dog.imgUrl && student.id && username !== student.id) {
+            navigate(`/stats/${encodeURIComponent(student.id)}`, { replace: true });
+        }
+    }, [dog.imgUrl, student.id, username]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Keep this page's numbers live even if the passive hunger/health
     // tick (running on RaisePancho in another tab) writes to localStorage
@@ -42,6 +56,10 @@ export default function PanchoStats() {
                 <h1 className="text-4xl font-bold uppercase text-black">
                     Pancho Stats
                 </h1>
+
+                <p className="text-black/70 text-sm mb-4">
+                    Profile: <span className="font-semibold">{username || student.id}</span>
+                </p>
 
                 <StatsPanel dog={dog} student={student} currentAssignment={currentAssignment} />
 

@@ -23,7 +23,7 @@ export default function FormField({
                 type={type}
                 id={id}
                 name={id}
-                className={inputClassName}
+                className={`${inputClassName} dark:text-black`}
                 value={value}
                 onChange={onChange}
                 aria-invalid={Boolean(error)}

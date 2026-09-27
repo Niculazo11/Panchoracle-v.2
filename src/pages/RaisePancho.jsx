@@ -48,7 +48,7 @@ export default function RaisePancho() {
     return (
         <div className="min-h-screen w-full bg-[url('/images/Background1.png')] bg-cover bg-center bg-no-repeat">
 
-            <RaiseNav />
+            <RaiseNav username={student.id} />
 
             <main className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 sm:gap-10 px-4 sm:px-6 py-8">
                 <PanchoSection dog={dog} student={student} />

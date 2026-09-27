@@ -1,6 +1,10 @@
 import { Link } from "react-router-dom";
 
-export default function RaiseNav() {
+// `username` builds the dynamic profile link (/stats/:username); falls
+// back to the plain static path if it isn't available yet.
+export default function RaiseNav({ username }) {
+    const statsPath = username ? `/stats/${encodeURIComponent(username)}` : "/panchoStats.html";
+
     return (
         <nav className="relative flex items-center h-[110px] w-full bg-[oklch(90.1%_0.076_70.697)]">
 
@@ -13,7 +17,7 @@ export default function RaiseNav() {
                 <span>MiniGames</span>
             </Link>
 
-            <Link to="/panchoStats.html" className="absolute right-28 top-1 flex flex-col items-center gap-1 text-black font-serif text-base">
+            <Link to={statsPath} className="absolute right-28 top-1 flex flex-col items-center gap-1 text-black font-serif text-base">
                 <img src="/images/PlayingCards.png" alt="Stats" className="w-16 h-16 object-contain" />
                 <span>Stats</span>
             </Link>

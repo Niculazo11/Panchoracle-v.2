@@ -25,7 +25,10 @@ const PUBLIC_ROUTES = [
 // Everything that needs an adopted Pancho lives behind <ProtectedRoute />.
 const PRIVATE_ROUTES = [
     { paths: ["/raise", "/raisePancho", "/raisePancho.html"], element: <RaisePancho /> },
-    { paths: ["/stats", "/panchoStats", "/panchoStats.html"], element: <PanchoStats /> },
+    // ":username" is the registered student's name (student.id); the
+    // static paths still work and get redirected to the dynamic one by
+    // PanchoStats itself, via useParams().
+    { paths: ["/stats/:username", "/stats", "/panchoStats", "/panchoStats.html"], element: <PanchoStats /> },
     { paths: ["/shop", "/Shop", "/Shop.html"], element: <Shop /> },
     { paths: ["/minigames", "/MiniGames", "/MiniGames.html"], element: <MiniGames /> }
 ];

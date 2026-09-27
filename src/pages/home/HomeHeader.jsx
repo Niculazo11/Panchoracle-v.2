@@ -1,5 +1,9 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDarkMode } from "../../lib/useDarkMode.js";
+import { useAccess } from "../../lib/useAccess.js";
+import { revokeAccess } from "../../lib/auth.js";
+
+const NAV_LINK_CLASS = "font-display font-semibold text-sm sm:text-xl no-underline text-black dark:text-white mx-2 sm:mx-5 font-bold capitalize";
 
 function SunIcon() {
     return (
@@ -18,6 +22,29 @@ function MoonIcon() {
     );
 }
 
+// Login/Logout toggle. Logged in -> "Log out" clears the access flag
+// (lib/auth.js) and sends the user Home; logged out -> plain link to
+// the /login screen (ProtectedRoute already covers the reverse case).
+function AuthAction() {
+    const isLoggedIn = useAccess();
+    const navigate = useNavigate();
+
+    if (!isLoggedIn) {
+        return <Link to="/login" className={NAV_LINK_CLASS}>Log in</Link>;
+    }
+
+    function handleLogout() {
+        revokeAccess();
+        navigate("/", { replace: true });
+    }
+
+    return (
+        <button type="button" onClick={handleLogout} className={`${NAV_LINK_CLASS} bg-transparent border-0 cursor-pointer`}>
+            Log out
+        </button>
+    );
+}
+
 export default function HomeHeader() {
     const { isDark, toggleDarkMode } = useDarkMode();
 
@@ -26,8 +53,9 @@ export default function HomeHeader() {
             <h1 className="font-display text-xl sm:text-[2rem] text-left text-black dark:text-white m-0">Raise a Pancho</h1>
 
             <nav className="flex justify-end items-center">
-                <Link to="/" className="font-display font-semibold text-sm sm:text-xl no-underline text-black dark:text-white mx-2 sm:mx-5 font-bold capitalize">Home</Link>
-                <Link to="/aboutus.html" className="font-display font-semibold text-sm sm:text-xl no-underline text-black dark:text-white mx-2 sm:mx-5 font-bold capitalize">About Us</Link>
+                <Link to="/" className={NAV_LINK_CLASS}>Home</Link>
+                <Link to="/aboutus.html" className={NAV_LINK_CLASS}>About Us</Link>
+                <AuthAction />
                 <button
                     type="button"
                     onClick={toggleDarkMode}

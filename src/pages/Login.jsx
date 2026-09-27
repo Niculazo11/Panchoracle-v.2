@@ -1,11 +1,19 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import LoginForm from "./login/LoginForm.jsx";
 import { useLoginForm } from "./login/useLoginForm.js";
+import { useAccess } from "../lib/useAccess.js";
 
 // Destination of <ProtectedRoute /> when the access flag is missing.
 // Uses the same palette as the join section on Home.
 export default function Login() {
+    const isLoggedIn = useAccess();
     const { formData, errors, handleChange, handleSubmit } = useLoginForm();
+
+    // Someone already logged in has no business seeing the login form
+    // again: send them straight to their Pancho.
+    if (isLoggedIn) {
+        return <Navigate replace to="/raise" />;
+    }
 
     return (
         <div className="min-h-screen bg-[rgb(149,248,165)] dark:bg-[#18351f] flex flex-col justify-center items-center px-5 py-16">
