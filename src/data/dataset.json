@@ -1,0 +1,142 @@
+[
+  {
+    "id": 1,
+    "name": "Skully bow",
+    "category": "Head",
+    "cost": 230,
+    "image": "/public/images/skully-bow.png"
+  },
+  {
+    "id": 2,
+    "name": "Christmas bow",
+    "category": "Head",
+    "cost": 200,
+    "image": "/public/images/christmas-bow.png"
+  },
+  {
+    "id": 3,
+    "name": "Starry bow",
+    "category": "Head",
+    "cost": 200,
+    "image": "/public/images/starry-bow.png"
+  },
+  {
+    "id": 4,
+    "name": "Cowboy hat",
+    "category": "Head",
+    "cost": 250,
+    "image": "/public/images/cowboy-hat.png"
+  },
+  {
+    "id": 5,
+    "name": "Astronaut's helmet",
+    "category": "Head",
+    "cost": 300,
+    "image": "/public/images/astronauts-helmet.png"
+  },
+  {
+    "id": 6,
+    "name": "Sunglasses",
+    "category": "Face",
+    "cost": 300,
+    "image": "/public/images/sunglasses.png"
+  },
+  {
+    "id": 7,
+    "name": "Circular glasses",
+    "category": "Face",
+    "cost": 300,
+    "image": "/public/images/circular-glasses.png"
+  },
+  {
+    "id": 8,
+    "name": "Bandanna",
+    "category": "Face",
+    "cost": 330,
+    "image": "/public/images/bandanna.png"
+  },
+  {
+    "id": 9,
+    "name": "Monocle",
+    "category": "Face",
+    "cost": 300,
+    "image": "/public/images/monocle.png"
+  },
+  {
+    "id": 10,
+    "name": "Visor",
+    "category": "Face",
+    "cost": 500,
+    "image": "/public/images/visor.png"
+  },
+  {
+    "id": 11,
+    "name": "Piked collar",
+    "category": "Neck",
+    "cost": 300,
+    "image": "/public/images/piked-collar.png"
+  },
+  {
+    "id": 12,
+    "name": "Red collar",
+    "category": "Neck",
+    "cost": 200,
+    "image": "/public/images/red-collar.png"
+  },
+  {
+    "id": 13,
+    "name": "Black collar",
+    "category": "Neck",
+    "cost": 200,
+    "image": "/public/images/black-collar.png"
+  },
+  {
+    "id": 14,
+    "name": "Blue collar",
+    "category": "Neck",
+    "cost": 200,
+    "image": "/public/images/blue-collar.png"
+  },
+  {
+    "id": 15,
+    "name": "Pink scarf",
+    "category": "Neck",
+    "cost": 300,
+    "image": "/public/images/pink-scarf.png"
+  },
+  {
+    "id": 16,
+    "name": "Tutu",
+    "category": "Body",
+    "cost": 400,
+    "image": "/public/images/tutu.png"
+  },
+  {
+    "id": 17,
+    "name": "Hotdog costume",
+    "category": "Body",
+    "cost": 777,
+    "image": "/public/images/hotdog-costume.png"
+  },
+  {
+    "id": 18,
+    "name": "Smoking",
+    "category": "Body",
+    "cost": 500,
+    "image": "/public/images/smoking.png"
+  },
+  {
+    "id": 19,
+    "name": "Red sweater",
+    "category": "Body",
+    "cost": 400,
+    "image": "/public/images/red-sweater.png"
+  },
+  {
+    "id": 20,
+    "name": "White sweater",
+    "category": "Body",
+    "cost": 400,
+    "image": "/public/images/white-sweater.png"
+  }
+]
