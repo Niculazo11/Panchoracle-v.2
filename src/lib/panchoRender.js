@@ -9,19 +9,12 @@
 // function (renderPanchoLayers) is now the <PanchoLayers /> component
 // in src/components/PanchoLayers.jsx — these constants are unchanged.
 //
-<<<<<<< HEAD
 // Each cosmetic in src/data/dataset.json now carries its own "image"
 // path (see COSMETIC layer lookup in PanchoLayers.jsx). Every cosmetic
 // image and the base dog image are drawn at the same canvas size, so a
 // layer only needs to sit at inset-0 w-full h-full — no per-slot
 // positioning is needed, they're already aligned to land correctly on
 // the dog when stacked.
-=======
-// IMPORTANT — placeholders: the final cosmetic sprites don't exist yet,
-// so each slot temporarily uses an icon already present in /images as a
-// placeholder. This only proves the stacking technique; once the real
-// sprites exist, just swap the paths in PLACEHOLDER_BY_SLOT.
->>>>>>> 913f93d391f63baac6fa9a41693b67de0185e060
 // ---------------------------------------------------------------------
 
 // The dataset (src/data/dataset.json) uses "category" (Head/Face/Neck/Body).
@@ -38,17 +31,6 @@ export const SLOT_TO_CATEGORY = Object.fromEntries(
     Object.entries(CATEGORY_TO_SLOT).map(([category, slot]) => [slot, category])
 );
 
-<<<<<<< HEAD
-=======
-// Temporary placeholders taken from the already-existing images/ folder.
-export const PLACEHOLDER_BY_SLOT = {
-    head: "/images/paw.png",
-    face: "/images/circulito.png",
-    neck: "/images/LogoPatita.png",
-    body: "/images/PlayingCards.png"
-};
-
->>>>>>> 913f93d391f63baac6fa9a41693b67de0185e060
 // z-index per layer: head always renders on top, body underneath, as
 // requested (head 10 / neck 5), with face and body interleaved in the
 // same scheme.
@@ -59,20 +41,9 @@ export const SLOT_Z_INDEX = {
     head: 10
 };
 
-<<<<<<< HEAD
 // Every cosmetic layer (and the base dog image) fills the same
 // full-bleed frame; the artwork itself is what lines things up.
 export const COSMETIC_LAYER_CLASS = "inset-0 w-full h-full object-cover";
-=======
-// Rough positioning for each layer inside the container, so the
-// placeholder "lands" on the part of the body it corresponds to.
-export const SLOT_POSITION_CLASSES = {
-    body: "inset-0 w-full h-full object-contain opacity-90",
-    neck: "w-1/3 h-1/3 top-[46%] left-1/2 -translate-x-1/2 object-contain",
-    face: "w-1/4 h-1/4 top-[22%] left-1/2 -translate-x-1/2 object-contain",
-    head: "w-1/3 h-1/3 top-[2%] left-1/2 -translate-x-1/2 object-contain"
-};
->>>>>>> 913f93d391f63baac6fa9a41693b67de0185e060
 
 // Slot render order (bottom to top), used so equipped layers mount in a
 // stable DOM order matching their z-index intent.

@@ -7,14 +7,11 @@
 // to dogStorage.js and are re-exported below so existing imports keep
 // working. getDachshunds() accepts an AbortSignal so the caller's
 // useEffect cleanup can cancel an in-flight request.
-<<<<<<< HEAD
 //
 // The first Pancho option is no longer fetched: it's a fixed local
 // drawing (see STATIC_DOG_IMAGE, used by useDogImages.js). Only the
 // second option still comes from the live API, so this module now only
 // ever asks for and caches a single image.
-=======
->>>>>>> 913f93d391f63baac6fa9a41693b67de0185e060
 // ---------------------------------------------------------------------
 
 export {
@@ -24,7 +21,6 @@ export {
     dogIdFromUrl
 } from "./dogStorage.js";
 
-<<<<<<< HEAD
 // First Pancho option: always this local drawing, never fetched.
 export const STATIC_DOG_IMAGE = "/images/pancho-choice1.png";
 
@@ -33,13 +29,6 @@ export const STATIC_DOG_IMAGE = "/images/pancho-choice1.png";
 const DOG_LIST_URL = "https://dog.ceo/api/breed/dachshund/images";
 
 // Fallback cache of the last successfully fetched image.
-=======
-// Full (non-random) list of images for the breed. Every visitor gets the
-// same fixed pair of Pancho models, since we always take the first two.
-const DOG_LIST_URL = "https://dog.ceo/api/breed/dachshund/images";
-
-// Fallback cache of the last successfully fetched pair of dog images.
->>>>>>> 913f93d391f63baac6fa9a41693b67de0185e060
 const DOG_CACHE_KEY = "cachedDachshundImages";
 
 function readCache() {
@@ -60,15 +49,10 @@ function writeCache(dogs) {
     }
 }
 
-<<<<<<< HEAD
 // Returns { images, fromCache } where images is a 1-item array (the
 // live API pick for the second Pancho option). An aborted request is
 // re-thrown so the caller can ignore it instead of showing an error
 // banner.
-=======
-// Returns { images, fromCache }. An aborted request is re-thrown so the
-// caller can ignore it instead of showing an error banner.
->>>>>>> 913f93d391f63baac6fa9a41693b67de0185e060
 export async function getDachshunds(signal) {
 
     try {
@@ -80,17 +64,10 @@ export async function getDachshunds(signal) {
 
         const data = await response.json();
 
-<<<<<<< HEAD
         // Always the same one: the first image in the fixed list.
         const dogs = (data.message || []).slice(0, 1);
 
         if (dogs.length === 1) {
-=======
-        // Always the same two: the first two images in the fixed list.
-        const dogs = (data.message || []).slice(0, 2);
-
-        if (dogs.length === 2) {
->>>>>>> 913f93d391f63baac6fa9a41693b67de0185e060
             writeCache(dogs);
         }
 
