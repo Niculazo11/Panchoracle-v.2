@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useGameState } from "../state/GameStateContext.jsx";
 import { GameState } from "../state/gameState.js";
 import StatsPanel from "./stats/StatsPanel.jsx";
@@ -63,10 +63,10 @@ export default function PanchoStats() {
 
                 <StatsPanel dog={dog} student={student} currentAssignment={currentAssignment} />
 
-                <a href="/raisePancho.html"
+                <Link to="/raisePancho.html"
                    className="absolute bottom-8 left-8 flex h-12 w-12 items-center justify-center rounded-full border-2 border-black bg-[#b9d9f0] text-2xl transition hover:scale-110">
                     ➜
-                </a>
+                </Link>
 
             </main>
         </div>

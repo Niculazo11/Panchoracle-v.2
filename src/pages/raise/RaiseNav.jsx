@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { asset } from "../../lib/asset.js";
 
 // `username` builds the dynamic profile link (/stats/:username); falls
 // back to the plain static path if it isn't available yet.
@@ -13,12 +14,12 @@ export default function RaiseNav({ username }) {
             </h1>
 
             <Link to="/MiniGames.html" className="absolute right-3 top-1 flex flex-col items-center gap-1 text-black font-serif text-base">
-                <img src="/images/PlayingBall.png" alt="MiniGames" className="w-16 h-16 object-contain" />
+                <img src={asset("images/PlayingBall.png")} alt="MiniGames" className="w-16 h-16 object-contain" />
                 <span>MiniGames</span>
             </Link>
 
             <Link to={statsPath} className="absolute right-28 top-1 flex flex-col items-center gap-1 text-black font-serif text-base">
-                <img src="/images/PlayingCards.png" alt="Stats" className="w-16 h-16 object-contain" />
+                <img src={asset("images/PlayingCards.png")} alt="Stats" className="w-16 h-16 object-contain" />
                 <span>Stats</span>
             </Link>
 

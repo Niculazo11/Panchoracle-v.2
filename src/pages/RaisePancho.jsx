@@ -7,6 +7,7 @@ import PanchoSection from "./raise/PanchoSection.jsx";
 import StatusBars from "./raise/StatusBars.jsx";
 import AssignmentPanel from "./raise/AssignmentPanel.jsx";
 import DeadNotice from "./raise/DeadNotice.jsx";
+import { asset } from "../lib/asset.js";
 
 const TICK_INTERVAL_MS = 15000; // hunger drops a bit passively every 15s
 const FEEDBACK_TIMEOUT_MS = 3000;
@@ -47,7 +48,6 @@ export default function RaisePancho() {
 
     return (
         <div className="min-h-screen w-full bg-[url('/images/Background1.png')] bg-cover bg-center bg-no-repeat">
-
             <RaiseNav username={student.id} />
 
             <main className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 sm:gap-10 px-4 sm:px-6 py-8">
@@ -72,7 +72,7 @@ export default function RaisePancho() {
             {/* Shop cart image */}
             <Link to="/Shop.html" className="fixed bottom-0 left-3 flex flex-col items-center text-black font-serif text-base">
                 SHOP
-                <img src="/images/ShoppingCart.png" alt="" className="w-16 h-16 sm:w-20 sm:h-20 object-contain" />
+                <img src={asset("images/ShoppingCart.png")} alt="" className="w-16 h-16 sm:w-20 sm:h-20 object-contain" />
             </Link>
         </div>
     );

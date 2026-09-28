@@ -29,7 +29,7 @@ nav a:hover {
 .hero{
     background-image:
 linear-gradient(rgba(152, 178, 233, 0.4), rgba(152, 183, 223, 0.4)),
-url("/images/herooff.jpg");
+url("${import.meta.env.BASE_URL}images/herooff.jpg");
     background-color:rgb(201, 224, 236);
     background-size: cover;
     background-position: center;

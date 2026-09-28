@@ -8,6 +8,7 @@ import ChooseForm from "./choose/ChooseForm.jsx";
 import DogOptions from "./choose/DogOptions.jsx";
 import { useChooseForm } from "./choose/useChooseForm.js";
 import { useConfirmPancho } from "./choose/useConfirmPancho.js";
+import { asset } from "../lib/asset.js";
 
 export default function ChoosePancho() {
     const game = useGameState();
@@ -63,7 +64,7 @@ export default function ChoosePancho() {
                     <h2 className="text-black text-center text-sm font-semibold mt-3">Select this paw to confirm</h2>
 
                     <a href="/raisePancho.html" id="confirmPawLink" onClick={handleConfirmPaw}>
-                        <img id="confirm-paw" src="/images/paw.png" className="w-28 h-28 object-contain rounded-full bg-[#6B5A8E] p-5 shadow-lg cursor-pointer" alt="" />
+                        <img id="confirm-paw" src={asset("images/paw.png")} className="w-28 h-28 object-contain rounded-full bg-[#6B5A8E] p-5 shadow-lg cursor-pointer" alt="" />
                     </a>
                 </div>
             </section>

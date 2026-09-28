@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useGameState } from "../state/GameStateContext.jsx";
 import { useFeedback } from "../lib/useFeedback.js";
 import { useFavorites } from "../lib/useFavorites.js";
-import catalog from "../data/dataset.json";
+import catalog from "../data/catalog.js";
 import ShopHeader from "./shop/ShopHeader.jsx";
 import ShopPreview from "./shop/ShopPreview.jsx";
 import CosmeticCard from "./shop/CosmeticCard.jsx";

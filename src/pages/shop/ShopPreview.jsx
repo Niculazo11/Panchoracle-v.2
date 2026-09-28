@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import PanchoLayers from "../../components/PanchoLayers.jsx";
 
 export default function ShopPreview({ dog, feedback }) {
@@ -10,10 +11,10 @@ export default function ShopPreview({ dog, feedback }) {
 
             <p id="shopFeedback" className="min-h-[1.25rem] text-sm font-semibold text-black text-center">{feedback}</p>
 
-            <a href="/raisePancho.html"
+            <Link to="/raisePancho.html"
                className="mt-2 px-5 py-2 rounded-full bg-[#6B5A8E] text-white font-semibold shadow hover:opacity-90 transition">
                 come back
-            </a>
+            </Link>
         </section>
     );
 }

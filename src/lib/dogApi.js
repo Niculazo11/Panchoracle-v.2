@@ -22,7 +22,7 @@ export {
 } from "./dogStorage.js";
 
 // First Pancho option: always this local drawing, never fetched.
-export const STATIC_DOG_IMAGE = "/images/pancho-choice1.png";
+export const STATIC_DOG_IMAGE = import.meta.env.BASE_URL + "images/pancho-choice1.png";
 
 // Breed image list; we only need the first entry now (the second
 // Pancho option).

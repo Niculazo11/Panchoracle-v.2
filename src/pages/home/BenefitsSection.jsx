@@ -1,5 +1,6 @@
 import { BENEFITS } from "./benefits.js";
 import { useBenefitsSearch } from "./useBenefitsSearch.js";
+import { asset } from "../../lib/asset.js";
 
 export default function BenefitsSection() {
     const { searchText, setSearchText, searchInputRef, visibleBenefits, showNoResults } = useBenefitsSearch();
@@ -45,7 +46,7 @@ export default function BenefitsSection() {
                     <p id="noResults" className="text-left font-display text-base sm:text-lg mt-3" style={{ display: showNoResults ? "block" : "none" }}>No benefits found.</p>
                 </div>
 
-                <img src="/images/PerritoMirandoKiut.png" alt="A brown Pancho looking at the camera. The camera is over the Pancho." className="w-[60%] max-w-[280px] mx-auto md:mx-0 md:w-[30%] md:max-w-[450px] h-auto block rounded-[10%]" />
+                <img src={asset("images/PerritoMirandoKiut.png")} alt="A brown Pancho looking at the camera. The camera is over the Pancho." className="w-[60%] max-w-[280px] mx-auto md:mx-0 md:w-[30%] md:max-w-[450px] h-auto block rounded-[10%]" />
             </article>
         </section>
     );

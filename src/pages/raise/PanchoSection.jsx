@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import PanchoLayers from "../../components/PanchoLayers.jsx";
 import { formatCoins } from "../../lib/formatCoins.js";
 import { useChangeFlash } from "../../lib/useChangeFlash.js";
+import { asset } from "../../lib/asset.js";
 
 export default function PanchoSection({ dog, student }) {
     const coinsChanged = useChangeFlash(student.coins);
@@ -13,7 +14,7 @@ export default function PanchoSection({ dog, student }) {
             <div className="flex items-center gap-3">
                 <span id="panchoStateBadge" className={"px-3 py-1 rounded-full text-xs font-bold text-white " + (dog.status === "ALIVE" ? "bg-emerald-600" : "bg-red-700")}>{dog.status}</span>
                 <span className={"flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-white/80 text-black" + (coinsChanged ? " animate-coin-pop" : "")}>
-                    <img src="/images/paw.png" alt="Coins" className="w-4 h-4" />
+                    <img src={asset("images/paw.png")} alt="Coins" className="w-4 h-4" />
                     <span id="coinsLabel">{formatCoins(student.coins)}</span>
                 </span>
             </div>

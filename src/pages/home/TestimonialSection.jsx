@@ -1,13 +1,15 @@
+import { asset } from "../../lib/asset.js";
+
 export default function TestimonialSection() {
     return (
         <>
             <section className="w-full h-[40vh] sm:h-[60vh] md:min-h-screen md:h-auto">
-                <img src="/images/SalchichaVestidoCustomizacion.png" alt="Pancho cosmetics advertisement. It advertises a new way to customize your Pancho." className="w-full h-full object-cover" />
+                <img src={asset("images/SalchichaVestidoCustomizacion.png")} alt="Pancho cosmetics advertisement. It advertises a new way to customize your Pancho." className="w-full h-full object-cover" />
             </section>
 
             <section className="flex flex-col md:flex-row items-center gap-6 md:gap-10 px-5 md:px-[100px] py-10 md:py-[50px]">
                 <article className="flex-1">
-                    <img src="/images/SalchichaLenguaAfuera.png" alt="Pancho with its tongue out, eyes half closedd, looking quite happy." className="w-[70%] sm:w-full max-w-[300px] sm:max-w-none mx-auto block" />
+                    <img src={asset("images/SalchichaLenguaAfuera.png")} alt="Pancho with its tongue out, eyes half closedd, looking quite happy." className="w-[70%] sm:w-full max-w-[300px] sm:max-w-none mx-auto block" />
                 </article>
 
                 <article className="flex-1 text-center md:text-left">

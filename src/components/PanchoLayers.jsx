@@ -3,7 +3,7 @@ import {
     COSMETIC_LAYER_CLASS,
     SLOT_ORDER
 } from "../lib/panchoRender.js";
-import catalog from "../data/dataset.json";
+import catalog from "../data/catalog.js";
 
 // Look up a cosmetic's own record (name + image) by its id, once,
 // instead of re-scanning the catalog array on every render.

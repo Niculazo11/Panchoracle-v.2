@@ -1,3 +1,5 @@
+import { asset } from "../lib/asset.js";
+
 export default function MiniGames() {
     return (
         <div className="relative min-h-screen w-full overflow-hidden bg-[#a3a960]">
@@ -9,7 +11,7 @@ export default function MiniGames() {
                 object-cover + inset-0 keeps it responsive.
                ============================================================ */}
             <img
-                src="/images/fondo-minigame.jpeg"
+                src={asset("images/fondo-minigame.jpeg")}
                 alt="Minigames background"
                 aria-hidden="true"
                 className="absolute inset-0 h-full w-full object-cover object-bottom"
