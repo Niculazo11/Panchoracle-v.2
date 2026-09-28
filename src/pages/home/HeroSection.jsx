@@ -37,9 +37,15 @@ export default function HeroSection() {
 
                 <article className="flex-1 text-center">
                     <h2 className="text-xl font-normal mb-[25px]">Enter Our Dog Park</h2>
+<<<<<<< HEAD
                     <Link to="/dogpark-login">
                         <img src="/images/perrosX2.png" alt="Panchos sitting and looking at the camera." className="w-[90%] max-w-[300px] rounded-[20px] block mx-auto" />
                     </Link>
+=======
+                    <a href="#joinForm">
+                        <img src="/images/perrosX2.png" alt="Panchos sitting and looking at the camera." className="w-[90%] max-w-[300px] rounded-[20px] block mx-auto" />
+                    </a>
+>>>>>>> 913f93d391f63baac6fa9a41693b67de0185e060
                 </article>
             </section>
 

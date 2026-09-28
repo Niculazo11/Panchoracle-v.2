@@ -7,11 +7,16 @@ import ChoosePancho from "./pages/ChoosePancho.jsx";
 import RaisePancho from "./pages/RaisePancho.jsx";
 import PanchoStats from "./pages/PanchoStats.jsx";
 import Shop from "./pages/Shop.jsx";
+<<<<<<< HEAD
 import CosmeticDetail from "./pages/CosmeticDetail.jsx";
 import MiniGames from "./pages/MiniGames.jsx";
 import HomeHeader from "./pages/home/HomeHeader.jsx";
 import DogParkLogin from "./pages/dogpark/DogParkLogin.jsx";
 import DogParkPlaceholder from "./pages/dogpark/DogParkPlaceholder.jsx";
+=======
+import MiniGames from "./pages/MiniGames.jsx";
+import HomeHeader from "./pages/home/HomeHeader.jsx";
+>>>>>>> 913f93d391f63baac6fa9a41693b67de0185e060
 
 // Every page is reachable both through its original .html path (so the
 // links migrated from the static site keep working) and through a short,
@@ -22,11 +27,15 @@ const PUBLIC_ROUTES = [
     { paths: ["/aboutus", "/aboutus.html"], element: <AboutUs /> },
     // Adoption is the entry point of the game: it is what creates the
     // account, so it cannot sit behind the login guard.
+<<<<<<< HEAD
     { paths: ["/choose", "/choosePancho", "/choosePancho.html"], element: <ChoosePancho /> },
     // Standalone gate in front of the Dog Park placeholder — separate
     // from the game's real login/account system.
     { paths: ["/dogpark-login", "/dogParkLogin.html"], element: <DogParkLogin /> },
     { paths: ["/dogpark", "/dogPark.html"], element: <DogParkPlaceholder /> }
+=======
+    { paths: ["/choose", "/choosePancho", "/choosePancho.html"], element: <ChoosePancho /> }
+>>>>>>> 913f93d391f63baac6fa9a41693b67de0185e060
 ];
 
 // Everything that needs an adopted Pancho lives behind <ProtectedRoute />.
@@ -37,8 +46,11 @@ const PRIVATE_ROUTES = [
     // PanchoStats itself, via useParams().
     { paths: ["/stats/:username", "/stats", "/panchoStats", "/panchoStats.html"], element: <PanchoStats /> },
     { paths: ["/shop", "/Shop", "/Shop.html"], element: <Shop /> },
+<<<<<<< HEAD
     // Per-item deep link into the shop, same pattern as /stats/:username.
     { paths: ["/Shop/:cosmeticId"], element: <CosmeticDetail /> },
+=======
+>>>>>>> 913f93d391f63baac6fa9a41693b67de0185e060
     { paths: ["/minigames", "/MiniGames", "/MiniGames.html"], element: <MiniGames /> }
 ];
 
