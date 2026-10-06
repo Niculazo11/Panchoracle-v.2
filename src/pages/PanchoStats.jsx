@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useGameState } from "../state/GameStateContext.jsx";
 import { GameState } from "../state/gameState.js";
 import StatsPanel from "./stats/StatsPanel.jsx";
+import { asset } from "../lib/asset.js";
 
 // Profile route: /stats/:username. The registered name in the URL is
 // the one stored as student.id (see state/defaults.js), so this page
@@ -18,7 +19,7 @@ export default function PanchoStats() {
         if (!dog.imgUrl) {
             navigate("/choosePancho.html");
         }
-    }, [dog.imgUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [dog.imgUrl, navigate]);
 
     // Keep the URL in sync with the registered student: old static
     // links (/stats, /panchoStats.html) or a stale/foreign :username
@@ -27,7 +28,7 @@ export default function PanchoStats() {
         if (dog.imgUrl && student.id && username !== student.id) {
             navigate(`/stats/${encodeURIComponent(student.id)}`, { replace: true });
         }
-    }, [dog.imgUrl, student.id, username]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [dog.imgUrl, student.id, username, navigate]);
 
     // Keep this page's numbers live even if the passive hunger/health
     // tick (running on RaisePancho in another tab) writes to localStorage
@@ -49,7 +50,10 @@ export default function PanchoStats() {
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-[#c9a187]">
-            <div className="absolute inset-0 bg-[url('/images/fondoS.jpeg')] bg-cover bg-center bg-no-repeat"></div>
+            <div
+                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: `url("${asset("images/fondoS.jpeg")}")` }}
+            ></div>
 
             <main className="relative z-10 min-h-screen p-8">
 

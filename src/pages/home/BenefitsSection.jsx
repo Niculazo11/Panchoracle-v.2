@@ -38,12 +38,12 @@ export default function BenefitsSection() {
 
                     <ol id="benefitsList" className="text-left font-display text-base sm:text-lg list-decimal pl-6 space-y-3">
                         {BENEFITS.map((benefit) => (
-                            <li key={benefit} style={{ display: visibleBenefits.includes(benefit) ? "list-item" : "none" }}>
+                            <li key={benefit} className={visibleBenefits.includes(benefit) ? "list-item" : "hidden"}>
                                 <p>{benefit}</p>
                             </li>
                         ))}
                     </ol>
-                    <p id="noResults" className="text-left font-display text-base sm:text-lg mt-3" style={{ display: showNoResults ? "block" : "none" }}>No benefits found.</p>
+                    <p id="noResults" className={"text-left font-display text-base sm:text-lg mt-3" + (showNoResults ? "" : " hidden")}>No benefits found.</p>
                 </div>
 
                 <img src={asset("images/PerritoMirandoKiut.png")} alt="A brown Pancho looking at the camera. The camera is over the Pancho." className="w-[60%] max-w-[280px] mx-auto md:mx-0 md:w-[30%] md:max-w-[450px] h-auto block rounded-[10%]" />

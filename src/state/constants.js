@@ -7,6 +7,10 @@ export const CURRENT_USER_KEY = "name"; // same key used by the join form
 export const STATE_PREFIX = "panchoGameState_";
 export const STARTING_COINS = 270;
 
+// Matches the "+5 coins" per completed minigame already documented in
+// the About page FAQ (pages/about/faqItems.jsx, "How do i obtain coins?").
+export const MINIGAME_REWARD_COINS = 5;
+
 // Cosmetic slots supported. These map 1:1 to the dataset "category"
 // values (Head/Face/Neck/Body) via CATEGORY_TO_SLOT in panchoRender.js.
 export const EMPTY_EQUIPPED = { head: null, face: null, neck: null, body: null };

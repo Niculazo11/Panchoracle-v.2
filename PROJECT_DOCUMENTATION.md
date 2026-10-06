@@ -68,7 +68,15 @@ Como ejemplo representativo para la defensa oral, `src/lib/useDogImages.js` enca
 - **Array de dependencias:** el `useEffect` interno vuelve a ejecutarse solo cuando cambia su "tick" de recarga interno (controlado por `reload()`), no en cada render; evita repetir la petición de red innecesariamente.
 - **Cleanup:** usa un `AbortController` creado dentro del efecto. La función de limpieza del `useEffect` llama a `controller.abort()`, de modo que si el componente se desmonta (o se dispara una nueva carga) antes de que la petición a `dog.ceo` responda, la respuesta tardía se descarta y no intenta actualizar el estado de un componente ya desmontado.
 
-Otros hooks propios en el proyecto (13 en total): `useAccess`, `useChangeFlash`, `useDarkMode`, `useFavorites`, `useFeedback`, `useStatus`, `usePageStyles`, `useChooseForm`, `useConfirmPancho`, `useDogParkLogin`, `useBenefitsSearch`, `useJoinForm`, `useLoginForm`.
+Otros hooks propios en el proyecto (13 en total): `useAccess`, `useChangeFlash`, `useDarkMode`, `useFavorites`, `useFeedback`, `useStatus`, `useChooseForm`, `useConfirmPancho`, `useDogParkLogin`, `useBenefitsSearch`, `useJoinForm`, `useLoginForm`, `useQuiz` (14 en total junto con `useDogImages`). `usePageStyles` existió en una versión anterior (inyectaba un `<style>` con CSS plano para la página `AboutUs`) y se eliminó al unificar esa página hacia Tailwind puro; ver la Bitácora (sección 7).
+
+#### 2.1.3 Mini Juegos (gameplay, sigue siendo Fase 1 / solo frontend)
+
+`/minigames` dejó de ser un placeholder: incluye un quiz corto de trivia académica (`src/pages/minigames/`) como primer ejemplo funcional. Los estudiantes ganan monedas por jugar, de forma separada del flujo académico de `RaisePancho` (que solo restaura Hambre, nunca monedas — ver `SUBMIT_REWARDS` en `state/constants.js`).
+
+- **`src/pages/minigames/useQuiz.js`:** custom hook que gestiona el estado de una ronda (pregunta actual, respuesta seleccionada, aciertos, si terminó). No requiere cleanup: no abre timers ni listeners, solo reacciona a los clics del jugador.
+- **`src/state/actions/minigames.js` → `awardMinigameCoins`:** sigue el mismo patrón que el resto de `state/actions/` (recibe el estado, devuelve un estado nuevo sin mutar). Otorga 1 moneda por respuesta correcta, hasta el tope `MINIGAME_REWARD_COINS = 5` definido en `state/constants.js` (mismo valor que ya documentaba la FAQ de `AboutUs`: "+5 coins" por minijuego completado). Las monedas solo se otorgan cuando el estudiante pulsa "Claim coins" explícitamente, nunca de forma automática.
+- Sigue siendo 100% `localStorage` (Fase 1): no depende de nada de la Fase 2.
 
 ### 2.2 Fase 2 — Backend, Seguridad y Despliegue Full Stack (🔲 Planeado, no implementado)
 
@@ -262,7 +270,9 @@ El objetivo es que, leyendo solo este archivo, se pueda saber en cualquier momen
 
 | Fecha | Autor | Cambio | Impacto | Estado |
 |---|---|---|---|---|
-| _(pendiente)_ | | Ejemplo: "Se implementó `POST /api/auth/login` con JWT, falta el middleware de verificación." | Endpoint de login en sección 4.1 pasa de plantilla a documentación real. | 🟡 En proceso |
-| | | | | |
+| 2026-10-05 | Claude (asistido) | Unificación de estilos hacia Tailwind CSS: se eliminó el CSS plano inyectado en `AboutUs` (`about/styles/*.js`, `usePageStyles.js`) y se reescribieron `AboutNav/Hero/Team/Project/FaqSection` en Tailwind puro; `PanchoStatusBanner` migró sus colores hex y `@keyframes` a `tailwind.config.js`. | Sección 2.1.2 actualizada (hook `usePageStyles` ya no existe). Ningún cambio visual ni funcional para el usuario. | ✅ Hecho |
+| 2026-10-05 | Claude (asistido) | Saneamiento del repositorio: se eliminaron `_bmad/` y el archivo suelto `"tash push -m..."` (ambos trackeados en git). Se corrigió además un bug de despliegue propio de una sesión anterior: los fondos de `RaisePancho` y `PanchoStats` usaban rutas absolutas (`bg-[url('/images/...')]`) que se rompían bajo el subdirectorio de GitHub Pages. | Repositorio sin archivos de herramientas ajenas al proyecto. Fondos de esas dos páginas ahora sí cargan en el sitio publicado. | ✅ Hecho |
+| 2026-10-05 | Claude (asistido) | Optimización de re-renders y limpieza de dependencias: `GameStateContext` memoiza el valor del contexto (`useMemo`) en vez de reconstruirlo en cada render; se corrigieron los 8 `useEffect` que tenían `eslint-disable react-hooks/exhaustive-deps`, agregando las dependencias reales donde era seguro hacerlo. | Menos renders innecesarios en todos los consumidores de `useGameState()`. Código sin advertencias de lint silenciadas. | ✅ Hecho |
+| 2026-10-05 | Claude (asistido) | Nueva sección de Mini Juegos: quiz funcional (`src/pages/minigames/`) integrado en la ruta ya existente `/minigames`, con nueva acción `awardMinigameCoins` en `state/actions/minigames.js` que otorga monedas (hasta el tope ya documentado en la FAQ: +5 por minijuego). | Sección 2.1.3 (nueva) documenta el flujo. Sigue siendo 100% frontend/`localStorage` (Fase 1); no toca nada de la Fase 2. | ✅ Hecho |
 | | | | | |
 

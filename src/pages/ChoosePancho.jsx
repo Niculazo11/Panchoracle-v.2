@@ -29,16 +29,18 @@ export default function ChoosePancho() {
         } else {
             status.clearStatus();
         }
-    }, [loading, error, offline]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [loading, error, offline, status.showLoading, status.showOffline, status.showError, status.clearStatus]);
 
-    // Pre-select this user's already-saved Pancho, if any.
+    // Pre-select this user's already-saved Pancho, if any. Also re-checks
+    // when the typed name changes, since a saved Pancho is looked up per
+    // username.
     useEffect(() => {
         const savedDog = getSelectedDog(form.formData.name || getStoredUsername());
 
         if (savedDog && images.includes(savedDog)) {
             setSelectedImage(savedDog);
         }
-    }, [images]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [images, form.formData.name]);
 
     const handleConfirmPaw = useConfirmPancho({ form, selectedImage, status, game });
     const showRetry = !loading && Boolean(error || offline);

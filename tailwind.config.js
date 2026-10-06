@@ -23,11 +23,23 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.45" },
         },
+        // Floating status banner (PanchoStatusBanner.jsx); ported from
+        // the original js/panchoStatus.js inline <style>.
+        statusFadeIn: {
+          from: { opacity: "0", transform: "translate(-50%, -12px)" },
+          to: { opacity: "1", transform: "translate(-50%, 0)" },
+        },
+        statusSpin: {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
+        },
       },
       animation: {
         "bounce-short": "bounceShort 0.5s ease-in-out",
         "coin-pop": "coinPop 0.5s ease-in-out",
         "stat-pulse": "statPulse 0.6s ease-in-out",
+        "status-fade-in": "statusFadeIn 0.25s ease-out",
+        "status-spin": "statusSpin 0.7s linear infinite",
       },
     },
   },

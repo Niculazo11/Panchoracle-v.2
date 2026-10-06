@@ -22,13 +22,13 @@ export default function RaisePancho() {
         if (!dog.imgUrl) {
             navigate("/choosePancho.html");
         }
-    }, [dog.imgUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [dog.imgUrl, navigate]);
 
-    // Passive hunger decay while the tab stays open.
+    // Passive hunger decay while the tab stays open. `tick` is stable (useCallback, no deps), so this only runs once per mount.
     useEffect(() => {
         const id = window.setInterval(() => tick(), TICK_INTERVAL_MS);
         return () => window.clearInterval(id);
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [tick]);
 
     if (!dog.imgUrl) {
         return null;
@@ -47,18 +47,19 @@ export default function RaisePancho() {
     }
 
     return (
-        <div className="min-h-screen w-full bg-[url('/images/Background1.png')] bg-cover bg-center bg-no-repeat">
+        <div
+            className="min-h-screen w-full bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url("${asset("images/Background1.png")}")` }}
+        >
             <RaiseNav username={student.id} />
 
             <main className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 sm:gap-10 px-4 sm:px-6 py-8">
                 <PanchoSection dog={dog} student={student} />
 
                 <section className="w-full max-w-sm bg-white/85 rounded-2xl shadow-xl p-6 flex flex-col gap-6">
-
                     <DeadNotice dog={dog} className="rounded-xl bg-red-100 border border-red-400 text-red-800 text-sm font-bold text-center px-4 py-3" />
 
                     <StatusBars dog={dog} />
-
                     <AssignmentPanel
                         dog={dog}
                         assignment={currentAssignment}

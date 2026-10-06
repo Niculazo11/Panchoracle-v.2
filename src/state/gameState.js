@@ -15,6 +15,7 @@ import * as panchoActions from "./actions/pancho.js";
 import * as assignmentActions from "./actions/assignment.js";
 import * as lifecycleActions from "./actions/lifecycle.js";
 import * as shopActions from "./actions/shop.js";
+import * as minigameActions from "./actions/minigames.js";
 
 class GameStateManager extends GameStateBase {
 
@@ -36,6 +37,11 @@ class GameStateManager extends GameStateBase {
 
     equipCosmetic(cosmeticId, slot) {
         return this._run(shopActions.equipCosmetic(this.state, cosmeticId, slot));
+    }
+
+    // Coins earned by completing a minigame (see src/pages/minigames/).
+    awardMinigameCoins(correctCount) {
+        return this._run(minigameActions.awardMinigameCoins(this.state, correctCount));
     }
 
     // Passive decay: tick() returns null when nothing changed.

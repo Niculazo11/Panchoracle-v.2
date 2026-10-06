@@ -27,7 +27,7 @@ export default function CosmeticDetail() {
         if (!dog.imgUrl) {
             navigate("/choosePancho.html");
         }
-    }, [dog.imgUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [dog.imgUrl, navigate]);
 
     if (!dog.imgUrl) {
         return null;

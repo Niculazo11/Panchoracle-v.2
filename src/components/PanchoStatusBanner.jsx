@@ -1,64 +1,40 @@
-const COLORS = {
-    loading: { bg: "#374151", text: "#ffffff" }, // slate
-    success: { bg: "#16a34a", text: "#ffffff" }, // green
-    error: { bg: "#dc2626", text: "#ffffff" },   // red
-    offline: { bg: "#b45309", text: "#ffffff" }  // ambar
+// bg/text pairs matching Tailwind's default palette exactly (gray-700,
+// green-600, red-600, amber-700), so the state -> color mapping lives
+// in Tailwind classes instead of hard-coded hex in a style attribute.
+const COLOR_CLASSES = {
+    loading: "bg-gray-700 text-white",
+    success: "bg-green-600 text-white",
+    error: "bg-red-600 text-white",
+    offline: "bg-amber-700 text-white"
 };
 
 // React port of the floating banner js/panchoStatus.js used to build by
 // hand with document.createElement. Same fixed position, colors,
-// spinner and fade-in animation (see the keyframes ported into
-// src/index.css), driven by the { status, message } produced by the
-// useStatus() hook instead of imperative DOM calls.
+// spinner and fade-in animation (now Tailwind utilities + the
+// status-fade-in / status-spin animations in tailwind.config.js),
+// driven by the { status, message } produced by the useStatus() hook
+// instead of imperative DOM calls.
 export default function PanchoStatusBanner({ status }) {
 
     if (!status || !status.message) {
         return null;
     }
 
-    const colors = COLORS[status.state] || COLORS.loading;
+    const colorClasses = COLOR_CLASSES[status.state] || COLOR_CLASSES.loading;
 
     return (
         <div
             role="status"
             aria-live="polite"
-            style={{
-                position: "fixed",
-                top: "20px",
-                left: "50%",
-                transform: "translate(-50%, 0)",
-                zIndex: 9999,
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                padding: "14px 26px",
-                borderRadius: "999px",
-                boxShadow: "0 10px 30px rgba(0, 0, 0, 0.3)",
-                fontFamily: "system-ui, -apple-system, sans-serif",
-                fontSize: "16px",
-                fontWeight: 600,
-                letterSpacing: "0.01em",
-                animation: "panchoStatusFadeIn 0.25s ease-out",
-                maxWidth: "90vw",
-                textAlign: "center",
-                pointerEvents: "none",
-                backgroundColor: colors.bg,
-                color: colors.text
-            }}
+            className={
+                "fixed top-5 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-2.5 " +
+                "px-[26px] py-3.5 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.3)] " +
+                "font-sans text-base font-semibold tracking-wide animate-status-fade-in " +
+                "max-w-[90vw] text-center pointer-events-none " + colorClasses
+            }
         >
             {status.state === "loading" && (
-                <span
-                    style={{
-                        display: "inline-block",
-                        width: "16px",
-                        height: "16px",
-                        border: "3px solid rgba(255, 255, 255, 0.4)",
-                        borderTopColor: "#ffffff",
-                        borderRadius: "50%",
-                        animation: "panchoStatusSpin 0.7s linear infinite",
-                        flexShrink: 0
-                    }}
-                />
+                <span className="inline-block w-4 h-4 rounded-full border-[3px] border-white/40 border-t-white animate-status-spin shrink-0" />
             )}
             <span>{status.message}</span>
         </div>
