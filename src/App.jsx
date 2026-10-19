@@ -12,6 +12,7 @@ import MiniGames from "./pages/MiniGames.jsx";
 import HomeHeader from "./pages/home/HomeHeader.jsx";
 import DogParkLogin from "./pages/dogpark/DogParkLogin.jsx";
 import DogParkPlaceholder from "./pages/dogpark/DogParkPlaceholder.jsx";
+import TeachersPark from "./pages/teacherspark/TeachersPark.jsx";
 
 // Every page is reachable both through its original .html path (so the
 // links migrated from the static site keep working) and through a short,
@@ -26,7 +27,10 @@ const PUBLIC_ROUTES = [
     // Standalone gate in front of the Dog Park placeholder — separate
     // from the game's real login/account system.
     { paths: ["/dogpark-login", "/dogParkLogin.html"], element: <DogParkLogin /> },
-    { paths: ["/dogpark", "/dogPark.html"], element: <DogParkPlaceholder /> }
+    { paths: ["/dogpark", "/dogPark.html"], element: <DogParkPlaceholder /> }, 
+       { paths: ["/dogpark", "/dogPark.html"], element: <DogParkPlaceholder /> },
+   // Teacher's park view. It has its own top bar, so the global navbar is hidden (see below).
+   { paths: ["/teachersPark", "/teachersPark.html"], element: <TeachersPark /> }
 ];
 
 // Everything that needs an adopted Pancho lives behind <ProtectedRoute />.
@@ -53,10 +57,11 @@ function renderRoutes(routes, wrap) {
 // The global navbar is shown everywhere except on AboutUs, which has its
 // own header with a single "back to Home" button.
 const ABOUT_PATHS = PUBLIC_ROUTES.find((route) => route.element.type === AboutUs).paths;
+const TEACHERS_PARK_PATHS = PUBLIC_ROUTES.find((route) => route.element.type === TeachersPark).paths;
 
 export default function App() {
     const { pathname } = useLocation();
-    const showNavbar = !ABOUT_PATHS.includes(pathname);
+    const showNavbar = !ABOUT_PATHS.includes(pathname) && !TEACHERS_PARK_PATHS.includes(pathname);
 
     return (
         <>
