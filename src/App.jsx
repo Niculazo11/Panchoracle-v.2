@@ -12,7 +12,6 @@ import CosmeticDetail from "./pages/CosmeticDetail.jsx";
 import MiniGames from "./pages/MiniGames.jsx";
 import HomeHeader from "./pages/home/HomeHeader.jsx";
 import DogParkLogin from "./pages/dogpark/DogParkLogin.jsx";
-import DogParkPlaceholder from "./pages/dogpark/DogParkPlaceholder.jsx"; //I dont know if it needs to be deleted.
 import TeachersPark from "./pages/teacherspark/TeachersPark.jsx";
 
 // Every page is reachable both through its original .html path (so the
