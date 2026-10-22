@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import { useDogParkAccess } from "./lib/useDogParkAccess.js";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import AboutUs from "./pages/AboutUs.jsx";
@@ -11,7 +12,7 @@ import CosmeticDetail from "./pages/CosmeticDetail.jsx";
 import MiniGames from "./pages/MiniGames.jsx";
 import HomeHeader from "./pages/home/HomeHeader.jsx";
 import DogParkLogin from "./pages/dogpark/DogParkLogin.jsx";
-import DogParkPlaceholder from "./pages/dogpark/DogParkPlaceholder.jsx";
+import DogParkPlaceholder from "./pages/dogpark/DogParkPlaceholder.jsx"; //I dont know if it needs to be deleted.
 import TeachersPark from "./pages/teacherspark/TeachersPark.jsx";
 
 // Every page is reachable both through its original .html path (so the
@@ -25,15 +26,21 @@ const PUBLIC_ROUTES = [
     // account, so it cannot sit behind the login guard.
     { paths: ["/choose", "/choosePancho", "/choosePancho.html"], element: <ChoosePancho /> },
     // Standalone gate in front of the Dog Park placeholder — separate
-    // from the game's real login/account system.
-    { paths: ["/dogpark-login", "/dogParkLogin.html"], element: <DogParkLogin /> },
-    { paths: ["/dogpark", "/dogPark.html"], element: <DogParkPlaceholder /> }, 
-       { paths: ["/dogpark", "/dogPark.html"], element: <DogParkPlaceholder /> },
-   // Teacher's park view. It has its own top bar, so the global navbar is hidden (see below).
-   { paths: ["/teachersPark", "/teachersPark.html"], element: <TeachersPark /> }
+    // login/account system. After a successful login it sends the person
+    // back to the page they were trying to open (default: /teachersPark).
+    { paths: ["/dogpark-login", "/dogParkLogin.html"], element: <DogParkLogin /> }
 ];
 
-// Everything that needs an adopted Pancho lives behind <ProtectedRoute />.
+// Teachers' area: only reachable with the Dog Park access flag.
+// Anyone else is redirected to /dogpark-login (see the render below).
+
+const DOG_PARK_ROUTES = [
+    // Old placeholder URL: it now just forwards to the real Teachers Park.
+    { paths: ["/dogpark", "/dogPark.html"], element: <Navigate replace to="/teachersPark" /> },
+    // Has its own top bar, so the global navbar is hidden (see below).
+    { paths: ["/teachersPark", "/teachersPark.html"], element: <TeachersPark /> }
+]
+
 const PRIVATE_ROUTES = [
     { paths: ["/raise", "/raisePancho", "/raisePancho.html"], element: <RaisePancho /> },
     // ":username" is the registered student's name (student.id); the
@@ -57,7 +64,7 @@ function renderRoutes(routes, wrap) {
 // The global navbar is shown everywhere except on AboutUs, which has its
 // own header with a single "back to Home" button.
 const ABOUT_PATHS = PUBLIC_ROUTES.find((route) => route.element.type === AboutUs).paths;
-const TEACHERS_PARK_PATHS = PUBLIC_ROUTES.find((route) => route.element.type === TeachersPark).paths;
+const TEACHERS_PARK_PATHS = DOG_PARK_ROUTES.find((route) => route.element.type === TeachersPark).paths;
 
 export default function App() {
     const { pathname } = useLocation();
@@ -70,6 +77,11 @@ export default function App() {
                 {renderRoutes(PUBLIC_ROUTES)}
                 {renderRoutes(PRIVATE_ROUTES, (element) => (
                     <ProtectedRoute>{element}</ProtectedRoute>
+                ))}
+                 {renderRoutes(DOG_PARK_ROUTES, (element) => (
+                    <ProtectedRoute redirectTo="/dogpark-login" useAllowed={useDogParkAccess}>
+                        {element}
+                    </ProtectedRoute>
                 ))}
             </Routes>
         </>
