@@ -7,8 +7,8 @@ import { useAccess } from "../lib/useAccess.js";
 // state as `from`, so Login can send the user back to the page they
 // originally asked for (including its query string). `replace` keeps the
 // blocked page out of the history stack.
-export default function ProtectedRoute({ children, redirectTo = "/login" }) {
-    const allowed = useAccess();
+export default function ProtectedRoute({ children, redirectTo = "/login", useAllowed = useAccess}) {
+    const allowed = useAllowed();
     const location = useLocation();
 
     if (!allowed) {
