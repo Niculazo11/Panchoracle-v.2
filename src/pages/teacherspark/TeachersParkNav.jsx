@@ -1,9 +1,18 @@
+import { useNavigate } from "react-router-dom";
 import { asset } from "../../lib/asset.js";
 import { NAV_ITEMS } from "./navItems.js";
 import TeachersParkNavItem from "./TeachersParkNavItem.jsx";
 
 // Tan top bar: title + paw on the left, the three teacher tabs on the right. yepos?
 export default function TeachersParkNav() {
+    const navigate = useNavigate();
+
+    // Same pattern as the Log out in HomeHeader: clear the flag, go Home.
+    function handleLogout() {
+        revokeDogParkAccess();
+        navigate("/", { replace: true });
+    }
+
     return (
         <nav className="flex flex-wrap items-center justify-between gap-4 px-4 sm:px-8 py-3 bg-[#d3b48c] border-b-4 border-[#7c3aed]">
             <div className="flex items-center gap-3">
@@ -20,6 +29,15 @@ export default function TeachersParkNav() {
                         <TeachersParkNavItem item={item} />
                     </li>
                 ))}
+                <li>
+                    <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="bg-transparent border-0 cursor-pointer text-black font-serif text-sm sm:text-base underline"
+                    >
+                        Log out
+                    </button>
+                </li>
             </ul>
         </nav>
     );
