@@ -1,11 +1,21 @@
+import { Navigate, useLocation } from "react-router-dom";
 import DogParkField from "./DogParkField.jsx";
-import { useDogParkLogin } from "./useDogParkLogin.js";
+import { useDogParkLogin, redirectTarget } from "./useDogParkLogin.js";
+import { useDogParkAccess } from "../../lib/useDogParkAccess.js";
+
 
 // Kept separate from the game's real login (Login.jsx / useLoginForm.js):
 // this is a standalone gate in front of the Dog Park placeholder page,
 // with its own tiny bit of local state (see useDogParkLogin.js).
 export default function DogParkLogin() {
     const { username, setUsername, password, setPassword, error, handleSubmit } = useDogParkLogin();
+    const isLoggedIn = useDogParkAccess();
+    const location = useLocation();
+
+    // Redirect to the intended page after successful login
+    if (isLoggedIn) {
+        return <Navigate replace to={redirectTarget(location.state)} />;
+    }
 
     return (
         <div className="min-h-screen bg-[#74c398] flex flex-col px-6 py-8 sm:px-14 sm:py-10">
