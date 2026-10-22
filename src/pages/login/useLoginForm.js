@@ -53,7 +53,11 @@ export function useLoginForm() {
 
         event.preventDefault();
 
+        try {
         localStorage.setItem("email", formData.email.trim());
+            } catch (error) {
+                console.error("Could not persist the email:", error);
+            }
         grantAccess(formData.name.trim());
 
         // Cleared only after a fully successful submit.
