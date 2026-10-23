@@ -38,7 +38,7 @@ export default function HeroSection() {
 
                 <article className="flex-1 text-center">
                     <h2 className="text-xl font-normal mb-[25px]">Enter Our Dog Park</h2>
-                    <Link to="/dogpark-login">
+                    <Link to="/teachersPark">
                         <img src={asset("images/perrosX2.png")} alt="Panchos sitting and looking at the camera." className="w-[90%] max-w-[300px] rounded-[20px] block mx-auto" />
                     </Link>
                 </article>

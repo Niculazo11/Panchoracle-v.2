@@ -15,7 +15,7 @@ export default function TeachersPark() {
                 // TODO(IMAGE): PARK BACKGROUND (watercolor park with trees, path, bench and
                 // dog house). Save it as public/images/teachers-park-bg.png
                 // (or change the file name here).
-                style={{ backgroundImage: `url("${asset("images/teachers-park-bg.png")}")` }}
+                style={{ backgroundImage: `url("${asset("images/teachers-park-bg.jpeg")}")` }}
             >
                 {PARK_DOGS.map((dog) => (
                     <ParkDog key={dog.id} dog={dog} />
