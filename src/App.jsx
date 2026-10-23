@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { useDogParkAccess } from "./lib/useDogParkAccess.js";
 import Home from "./pages/Home.jsx";
