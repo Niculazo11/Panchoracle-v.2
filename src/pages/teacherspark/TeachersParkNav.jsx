@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { revokeDogParkAccess } from "../../lib/dogParkAuth.js";
 import { asset } from "../../lib/asset.js";
 import { NAV_ITEMS } from "./navItems.js";
 import TeachersParkNavItem from "./TeachersParkNavItem.jsx";
