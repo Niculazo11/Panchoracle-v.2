@@ -1,51 +1,17 @@
-// Access flag used by <ProtectedRoute />. Kept in localStorage and
-// exposed as a tiny observable store so React can re-render when it
-// changes (useAccess.js subscribes to it).
-const ACCESS_KEY = "panchoAccess";
-const USER_KEY = "name";
+// Auth helpers for the new cookie-based authentication system.
+// The actual auth state (status, user, role) lives in useAccess.js.
+// This file is kept for backwards compatibility only — new code should use useAccess().
 
-let listeners = [];
+// No localStorage flag anymore; token lives in httpOnly cookie managed by backend.
+// useAccess() handles login/logout via API calls to /api/auth/*.
 
-function emit() {
-    listeners.forEach((fn) => fn());
+export function getAuthToken() {
+  // httpOnly cookie cannot be read from JS; this returns null.
+  // Kept for API compatibility if needed.
+  return null;
 }
 
-export function subscribeAccess(callback) {
-    listeners.push(callback);
-    return () => {
-        listeners = listeners.filter((fn) => fn !== callback);
-    };
-}
-
-export function hasAccess() {
-    try {
-        return localStorage.getItem(ACCESS_KEY) === "true";
-    } catch (error) {
-        console.error("Could not read the access flag:", error);
-        return false;
-    }
-}
-
-export function grantAccess(username) {
-    try {
-        localStorage.setItem(ACCESS_KEY, "true");
-
-        if (username) {
-            localStorage.setItem(USER_KEY, username);
-        }
-    } catch (error) {
-        console.error("Could not persist the access flag:", error);
-    }
-
-    emit();
-}
-
-export function revokeAccess() {
-    try {
-        localStorage.removeItem(ACCESS_KEY);
-    } catch (error) {
-        console.error("Could not clear the access flag:", error);
-    }
-
-    emit();
+export function clearAuthToken() {
+  // httpOnly cookie cleared by backend on POST /api/auth/logout.
+  // Kept for API compatibility if needed.
 }

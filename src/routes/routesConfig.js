@@ -9,6 +9,7 @@ import Shop from "../pages/Shop.jsx";
 import CosmeticDetail from "../pages/CosmeticDetail.jsx";
 import MiniGames from "../pages/MiniGames.jsx";
 import TeachersPark from "../pages/teacherspark/TeachersPark.jsx";
+import { withRole } from "./withRole.js";
 
 export const PUBLIC_ROUTES = [
   { paths: ["/"], element: <Home /> },
@@ -23,19 +24,24 @@ export const PRIVATE_ROUTES = [
   { paths: ["/shop", "/Shop", "/Shop.html"], element: <Shop /> },
   { paths: ["/Shop/:cosmeticId"], element: <CosmeticDetail /> },
   { paths: ["/minigames", "/MiniGames", "/MiniGames.html"], element: <MiniGames /> },
-  { paths: ["/teachersPark", "/teachersPark.html"], element: <TeachersPark /> },
+  {
+    paths: ["/teachersPark", "/teachersPark.html"],
+    element: <TeachersPark />,
+    wrapper: withRole(["teacher"])
+  },
 ];
 
 export const LEGACY_REDIRECTS = [
   { from: ["/dogpark", "/dogPark.html"], to: "/teachersPark" },
 ];
 
-export function renderRoutes(routes, wrapper) {
-  return routes.flatMap(({ paths, element }) =>
-    paths.map((path) => (
-      <wrapper key={path} path={path} element={element} />
-    ))
-  );
+export function renderRoutes(routes, defaultWrapper) {
+  return routes.flatMap(({ paths, element, wrapper }) => {
+    const wrap = wrapper || defaultWrapper;
+    return paths.map((path) => (
+      <wrap key={path} path={path} element={element} />
+    ));
+  });
 }
 
 export const ABOUT_PATHS = PUBLIC_ROUTES.find((r) => r.element.type === AboutUs).paths;

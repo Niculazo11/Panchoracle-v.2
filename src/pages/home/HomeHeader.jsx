@@ -1,7 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useDarkMode } from "../../lib/useDarkMode.js";
 import { useAccess } from "../../lib/useAccess.js";
-import { revokeAccess } from "../../lib/auth.js";
 
 const NAV_LINK_CLASS = "font-display font-semibold text-sm sm:text-xl no-underline text-black dark:text-white mx-2 sm:mx-5 font-bold capitalize";
 
@@ -22,26 +21,31 @@ function MoonIcon() {
     );
 }
 
-// Login/Logout toggle. Logged in -> "Log out" clears the access flag
-// (lib/auth.js) and sends the user Home; logged out -> plain link to
-// the /login screen (ProtectedRoute already covers the reverse case).
 function AuthAction() {
-    const isLoggedIn = useAccess();
+    const { status, user, logout } = useAccess();
     const navigate = useNavigate();
 
-    if (!isLoggedIn) {
+    if (status !== "authenticated") {
         return <Link to="/login" className={NAV_LINK_CLASS}>Log in</Link>;
     }
 
     function handleLogout() {
-        revokeAccess();
+        logout();
         navigate("/", { replace: true });
     }
 
     return (
-        <button type="button" onClick={handleLogout} className={`${NAV_LINK_CLASS} bg-transparent border-0 cursor-pointer`}>
-            Log out
-        </button>
+        <div className="flex items-center gap-2">
+            <span className="text-sm text-black dark:text-white opacity-70">
+                {user?.email || "Usuario"}
+            </span>
+            <span className="px-2 py-0.5 text-xs bg-[#4b3f9e] text-white rounded capitalize">
+                {user?.role || "student"}
+            </span>
+            <button type="button" onClick={handleLogout} className={`${NAV_LINK_CLASS} bg-transparent border-0 cursor-pointer`}>
+                Log out
+            </button>
+        </div>
     );
 }
 

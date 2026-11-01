@@ -1,21 +1,17 @@
 import { useNavigate } from "react-router-dom";
 import { saveSelectedDog, dogIdFromUrl } from "../../lib/dogApi.js";
-import { grantAccess } from "../../lib/auth.js";
 import { hasErrors } from "../../lib/validation.js";
 import { wait } from "../../lib/wait.js";
 
 const CONFIRM_DELAY_MS = 700;
 const REDIRECT_DELAY_MS = 1000;
 
-// Confirmation of the chosen Pancho. The "submit" here is the paw link,
-// so blocking it means preventing its default navigation.
 export function useConfirmPancho({ form, selectedImage, status, game }) {
     const navigate = useNavigate();
 
     async function handleConfirmPaw(event) {
         const nextErrors = form.validateAll();
 
-        // At least one active error -> block the navigation and stop.
         if (hasErrors(nextErrors)) {
             event.preventDefault();
             status.showError("Please complete the form correctly first.");
@@ -41,7 +37,7 @@ export function useConfirmPancho({ form, selectedImage, status, game }) {
 
         game.init(username);
         game.choosePancho(dogIdFromUrl(selectedImage), selectedImage);
-        grantAccess(username); // unlocks the protected routes
+        // grantAccess removed: user already authenticated via join form login
 
         status.showSuccess();
         form.resetAfterSuccess();
