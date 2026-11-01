@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-import { ABOUT_PATHS, TEACHERS_PARK_PATHS } from "../routes/routesConfig.js";
+import { ABOUT_PATHS, TEACHERS_PARK_PATHS } from "../routes/routesConfig.jsx";
 
 export function useNavbarVisibility() {
   const { pathname } = useLocation();
