@@ -1,4 +1,5 @@
 import AppError from "../utils/AppError.js";
+import { logError } from "../utils/safeLog.js";
 
 //Se ejecuta cuando ninguna ruta coincidió, osea 404 NOT_FOUND
 export function notFoundHandler(req, res, next) {
@@ -30,7 +31,7 @@ export function errorHandler(err, req, res, next) {
 
     // Error inesperado: el detalle real solo va a la consola del servidor,
     // nunca al cliente.
-    console.error(err);
+    logError(err, req);
   }
 
   res.status(status).json({ error: { code, message } });

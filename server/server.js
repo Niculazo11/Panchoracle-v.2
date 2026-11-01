@@ -5,6 +5,7 @@
 import "dotenv/config";
 import app from "./app.js";
 import { connectDB } from "./config/db.js";
+import { redact } from "./utils/safeLog.js";
 
 const PORT = process.env.PORT || 3000;
 
@@ -12,5 +13,5 @@ app.listen(PORT, () => {
   console.log(`Servidor escuchando en http://localhost:${PORT}`);
   connectDB()
     .then(() => console.log("MongoDB conectado"))
-    .catch((error) => console.error("No se pudo conectar a MongoDB:", error.message));
+    .catch((error) => console.error("No se pudo conectar a MongoDB:", redact(error.message)));
 });
