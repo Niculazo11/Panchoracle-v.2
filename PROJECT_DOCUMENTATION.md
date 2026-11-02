@@ -29,7 +29,7 @@ La Fase 1 construyó el frontend completo en React, con todos los datos persisti
 | Mínimo 3 rutas, con al menos 1 ruta dinámica (`useParams`) | ✅ Cumplido | Ver tabla de rutas en 2.1.1. Hay más de 10 rutas públicas/privadas, y 2 rutas dinámicas: `/stats/:username` y `/Shop/:cosmeticId`. |
 | Rutas protegidas que redirigen a usuarios no autenticados | ✅ Cumplido | `src/components/ProtectedRoute.jsx` protege `/raise`, `/stats`, `/shop`, `/Shop/:cosmeticId` y `/minigames`, redirigiendo a `/login` si no hay sesión. |
 | Al menos un Custom Hook propio | ✅ Cumplido (13 hooks) | `src/lib/use*.js` y hooks por página (`useChooseForm`, `useLoginForm`, `useJoinForm`, etc.). Ver detalle en 2.1.2. |
-| Despliegue inicial en GitHub Pages, accesible desde cualquier dispositivo | ✅ Configurado | `vite.config.js` define `base: "/Panchoracle-v.2/"`, el router usa `basename={import.meta.env.BASE_URL}`, y `package.json` tiene scripts `predeploy`/`deploy` con `gh-pages`. El diseño usa Tailwind con clases responsive (`sm:`, `md:`, `lg:`). |
+
 
 **Stack de la Fase 1:**
 
@@ -205,13 +205,6 @@ npm run preview
 npm run deploy
 ```
 
-Este comando ejecuta `predeploy` (build + genera `dist/404.html` a partir de `dist/index.html`, necesario para que las rutas internas de React Router no den 404 al recargar) y luego publica la carpeta `dist/` en la rama `gh-pages` mediante el paquete `gh-pages`. La configuración relevante:
-
-- `vite.config.js`: `base: "/Panchoracle-v.2/"`.
-- `src/main.jsx`: `<BrowserRouter basename={import.meta.env.BASE_URL}>`.
-- GitHub → Settings → Pages → Source: `Deploy from a branch`, rama `gh-pages`, carpeta `/ (root)`.
-
-Sitio: `https://Niculazo11.github.io/Panchoracle-v.2/`.
 
 ### 5.2 Backend y despliegue Full Stack en Vercel (Fase 2 — pendiente)
 
