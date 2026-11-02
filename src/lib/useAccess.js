@@ -1,19 +1,41 @@
-import { useSyncExternalStore } from "react";
-import { hasAccess, subscribeAccess } from "./auth.js";
+import { useState, useEffect, useCallback } from "react";
+import { api } from "./api.js";
 
-function subscribe(callback) {
-    const unsubscribe = subscribeAccess(callback);
-
-    // Another tab logging in/out should unlock this one too.
-    window.addEventListener("storage", callback);
-
-    return () => {
-        unsubscribe();
-        window.removeEventListener("storage", callback);
-    };
-}
-
-// Boolean snapshot, so useSyncExternalStore never loops.
 export function useAccess() {
-    return useSyncExternalStore(subscribe, hasAccess, () => false);
+  const [status, setStatus] = useState("checking");
+  const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    api.get("/api/auth/me")
+      .then(({ user }) => {
+        if (mounted) {
+          setStatus("authenticated");
+          setUser(user);
+          setRole(user.role);
+        }
+      })
+      .catch(() => {
+        if (mounted) setStatus("anonymous");
+      });
+    return () => { mounted = false; };
+  }, []);
+
+  const login = useCallback(async (email, password) => {
+    const { token, user } = await api.post("/api/auth/login", { email, password });
+    setStatus("authenticated");
+    setUser(user);
+    setRole(user.role);
+    return { token, user };
+  }, []);
+
+  const logout = useCallback(async () => {
+    await api.post("/api/auth/logout").catch(() => {});
+    setStatus("anonymous");
+    setUser(null);
+    setRole(null);
+  }, []);
+
+  return { status, user, role, login, logout };
 }

@@ -1,16 +1,15 @@
 import { useNavigate } from "react-router-dom";
-import { revokeDogParkAccess } from "../../lib/dogParkAuth.js";
+import { useAccess } from "../../lib/useAccess.js";
 import { asset } from "../../lib/asset.js";
 import { NAV_ITEMS } from "./navItems.js";
 import TeachersParkNavItem from "./TeachersParkNavItem.jsx";
 
-// Tan top bar: title + paw on the left, the three teacher tabs on the right. yepos?
 export default function TeachersParkNav() {
     const navigate = useNavigate();
+    const { logout } = useAccess();
 
-    // Same pattern as the Log out in HomeHeader: clear the flag, go Home.
     function handleLogout() {
-        revokeDogParkAccess();
+        logout();
         navigate("/", { replace: true });
     }
 
@@ -20,7 +19,6 @@ export default function TeachersParkNav() {
                 <h1 className="m-0 text-3xl sm:text-5xl font-bold tracking-wide text-black">
                     Raise a Pancho
                 </h1>
-                {/* Black paw next to the title (existing asset, tinted black with brightness-0). */}
                 <img src={asset("images/paw.png")} alt="" className="w-10 h-10 sm:w-14 sm:h-14 brightness-0" />
             </div>
 

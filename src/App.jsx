@@ -12,7 +12,7 @@ export default function App() {
     <>
       {showNavbar && <HomeHeader />}
       <Routes>
-        {renderRoutes(PUBLIC_ROUTES, (element) => element)}
+        {renderRoutes(PUBLIC_ROUTES)}
         {renderRoutes(PRIVATE_ROUTES, (element) => (
           <Route element={<ProtectedRoute>{element}</ProtectedRoute>} />
         ))}
