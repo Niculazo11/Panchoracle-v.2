@@ -6,4 +6,7 @@ export default defineConfig({
   // GitHub Pages serves the site from /<repo-name>/ instead of the domain root.
   base: "/Panchoracle-v.2/",
   plugins: [react()],
+  server: {
+    proxy: { "/api": "http://localhost:3000" },
+  },
 });

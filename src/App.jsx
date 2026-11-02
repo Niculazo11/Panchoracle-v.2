@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { useAccess } from "./lib/useAccess.js";
 import HomeHeader from "./pages/home/HomeHeader.jsx";
-import { renderRoutes, PRIVATE_ROUTES, PUBLIC_ROUTES, LEGACY_REDIRECTS } from "./routes/routesConfig.js";
+import { renderRoutes, PRIVATE_ROUTES, PUBLIC_ROUTES, LEGACY_REDIRECTS } from "./routes/routesConfig.jsx";
 import { useNavbarVisibility } from "./hooks/useNavbarVisibility.js";
 
 export default function App() {
