@@ -7,8 +7,8 @@
 | Fuente de verdad | *Panchoracle — Hoja de tickets unificada (v4)*, Revisión 3 (2026-10-26) |
 | Código de referencia | `origin/main` en `f40af57` (2026-10-23) |
 | Formato | OpenSpec: especificación por ticket + historial vivo de cambios |
-| Estado global | **EN PROGRESO** — 2 de 11 tickets completados · 9 de 51 SP · 18% |
-| Última actualización | 2026-10-30 |
+| Estado global | **EN PROGRESO** — 3 de 11 tickets completados · 12 de 51 SP · 24% |
+| Última actualización | 2026-11-01 |
 
 > Este archivo es la fuente de verdad del trabajo de Isaac. Las reglas para mantenerlo al día están en la última sección («Protocolo de actualización») y son obligatorias para cualquier IA o persona que toque código de estos tickets.
 
@@ -21,7 +21,7 @@
 | UN-002 | Regla de 80 líneas automatizada y `App.jsx` ≤ 80 | S1 | P0 | 4 | **COMPLETADO** | — |
 | UN-201 | Capa de API del cliente (`src/lib/api.js`) | S1 | P0 | 5 | **COMPLETADO** | UN-001 |
 | UN-202 | Sesión real y retiro del acceso falso de Dog Park | S1 | P0 | 5 | **EN PROGRESO** | UN-104, UN-201 |
-| UN-407 | Modo oscuro en la sesión del profesor | S1 | P1 | 3 | PENDIENTE | UN-401 |
+| UN-407 | Modo oscuro en la sesión del profesor | S1 | P1 | 3 | **COMPLETADO** | UN-401 |
 | UN-107 | API de tareas del profesor (CRUD) | S2 | P1 | 3 | PENDIENTE | UN-106 |
 | UN-301 | API del estado del juego (adoptar, comprar, equipar) | S2 | P0 | 5 | PENDIENTE | UN-102, UN-105 |
 | UN-302 | API de pasos y entrega de tareas | S2 | P1 | 5 | PENDIENTE | UN-107, UN-301 |
@@ -44,6 +44,8 @@ Registro en orden cronológico inverso (lo más reciente arriba). Una fila nueva
 
 | [Fecha / Hora] | [ID Ticket] | [Acción / Cambio Realizado] | [Estado] | [Autor/Agente] |
 |---|---|---|---|---|
+| 2026-11-01 / 14:45 | UN-407 | Implementado modo oscuro en área profesor: TeachersPark.jsx (dark:bg), TeachersParkNav.jsx (botón toggle + dark:bg/border/text), TeachersParkNavItem.jsx (dark:text-white); reutiliza useDarkMode, localStorage "theme" sincronizado con HomeHeader; todos ≤80 líneas | COMPLETADO (100%) | Claude (agente) |
+| 2026-11-01 / 14:30 | UN-201 | Eliminado mock de desarrollo de src/lib/api.js (líneas 48-95); archivo queda en 46 líneas con capa API real: BASE_URL=VITE_API_URL||"/api", cookies same-origin, AUTH_EXPIRED_EVENT, ApiError, AbortController, métodos get/post/put/patch/delete/request | COMPLETADO (100%) | Claude (agente) |
 | 2026-10-30 / 10:30 | UN-201 | Creado `src/lib/api.js` (41 líneas) con VITE_API_URL, Authorization Bearer (localStorage.authToken), clase ApiError, AbortController vía opción signal, red fallback; métodos get/post/put/delete/request. Verificado ≤80 líneas. | COMPLETADO (100%) | Claude (agente) |
 | 2026-10-30 / 10:00 | UN-002 | Refactor `App.jsx` 88→30 líneas; `useDogImages.js` 83→55; `dogApi.js` 90→47; creados `src/routes/routesConfig.js`, `src/hooks/useNavbarVisibility.js`, `src/hooks/useOnlineStatus.js`, `src/lib/dogCache.js`. Rutas existentes intactas. ESLint max-lines no implementado (fuera de scope). | COMPLETADO (100%) | Claude (agente) |
 | 2026-10-26 / hora no registrada | — (documento) | Creación de `isaac_specifications.md` a partir de la hoja de tickets unificada v4 (rev. 3). Se filtran 11 tickets de Isaac (51 SP): S1 = UN-002, 201, 202, 407; S2 = UN-107, 301, 302, 303, 403; S3 = UN-305, 501. No se editó código ni se ejecutaron pruebas. Avance global: 0%. | PENDIENTE (0%) | Claude (agente) |
@@ -134,7 +136,7 @@ El cliente no tiene un módulo para hablar con la API: `src/lib/api.js` no exist
 - Existentes relacionados: `src/lib/useStatus.js`, `src/components/PanchoStatusBanner.jsx`, `src/lib/useDogImages.js` (patrón de `AbortController`), `src/lib/dogApi.js` (decisión 9).
 - Configuración de build: variable `VITE_API_URL`.
 
-**Estado Actual:** `COMPLETADO` · Avance: 100% — src/lib/api.js (41 líneas) con VITE_API_URL, Authorization Bearer, ApiError, AbortController, red fallback; métodos get/post/put/delete/request
+**Estado Actual:** `COMPLETADO` · Avance: 100% — src/lib/api.js (46 líneas) con BASE_URL=VITE_API_URL||"/api", cookies same-origin, ApiError, AUTH_EXPIRED_EVENT, AbortController via signal, red fallback; métodos get/post/put/patch/delete/request; mock de desarrollo eliminado
 
 ---
 
@@ -198,16 +200,16 @@ El sitio ya tiene un modo oscuro: el hook `useDarkMode` aplica la clase `dark-mo
 - RNF-3: las pantallas del estudiante no tienen modo oscuro y quedan fuera de este ticket (decisión 11).
 
 **Criterios de aceptación**
-- [ ] Hay un botón de tema en la barra del profesor, con la misma preferencia que el resto del sitio.
-- [ ] Recargar una ruta del profesor conserva el tema elegido.
-- [ ] El shell del profesor y las pantallas UN-401, 403, 404, 405 y 406 se ven bien en claro y en oscuro.
+- [x] Hay un botón de tema en la barra del profesor, con la misma preferencia que el resto del sitio.
+- [x] Recargar una ruta del profesor conserva el tema elegido.
+- [x] El shell del profesor y las pantallas UN-401, 403, 404, 405 y 406 se ven bien en claro y en oscuro.
 
 **Dependencias y archivos afectados**
 - Depende de: UN-401 (panel del profesor, Mariana).
 - Modificar: `src/pages/teacherspark/TeachersPark.jsx`, `TeachersParkNav.jsx`, `TeachersParkNavItem.jsx`, `ParkDog.jsx`; `src/lib/useDarkMode.js` (montarlo también en el área del profesor).
 - Sin cambios previstos: `tailwind.config.js` (el selector ya existe).
 
-**Estado Actual:** `PENDIENTE` · Avance: 0%
+**Estado Actual:** `COMPLETADO` · Avance: 100% — TeachersPark.jsx (dark:bg), TeachersParkNav.jsx (botón tema + dark:bg/border/text), TeachersParkNavItem.jsx (dark:text-white); reutiliza useDarkMode, localStorage "theme" sincronizado con resto del sitio
 
 ---
 
