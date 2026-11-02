@@ -7,7 +7,7 @@ import { PARK_DOGS } from "./parkDogs.js";
 // Visual only for now: the nav tabs and the dogs are not wired to any data.
 export default function TeachersPark() {
     return (
-        <div className="min-h-screen flex flex-col bg-[#c9d8a4]">
+        <div className="min-h-screen flex flex-col bg-[#c9d8a4] dark:bg-[#1a3d1a]">
             <TeachersParkNav />
 
             <main
