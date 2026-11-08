@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, Route } from "react-router-dom";
 import Home from "../pages/Home.jsx";
 import Login from "../pages/Login.jsx";
 import AboutUs from "../pages/AboutUs.jsx";
@@ -36,12 +36,21 @@ export const LEGACY_REDIRECTS = [
 ];
 
 export function renderRoutes(routes, defaultWrapper) {
-  return routes.flatMap(({ paths, element, wrapper }) => {
-    const wrap = wrapper || defaultWrapper;
-    return paths.map((path) => (
-      <wrap key={path} path={path} element={element} />
-    ));
-  });
+  const result = [];
+
+  for (let i = 0; i < routes.length; i++) {
+    const { paths, element, wrapper } = routes[i];
+    const Wrapper = wrapper || defaultWrapper;
+
+    // Wrap the page in the wrapper component, if there is one.
+    const content = Wrapper ? <Wrapper>{element}</Wrapper> : element;
+
+    for (let j = 0; j < paths.length; j++) {
+      result.push(<Route key={paths[j]} path={paths[j]} element={content} />);
+    }
+  }
+
+  return result;
 }
 
 export const ABOUT_PATHS = PUBLIC_ROUTES.find((r) => r.element.type === AboutUs).paths;

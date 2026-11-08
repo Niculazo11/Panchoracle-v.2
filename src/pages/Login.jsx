@@ -1,9 +1,9 @@
 import { Link, Navigate, useLocation } from "react-router-dom";
 import LoginForm from "./login/LoginForm.jsx";
-import { useAccess } from "../../lib/useAccess.js";
+import { useAccess } from "../lib/useAccess.js";
 import { useState, useCallback } from "react";
-import { validateLoginForm, EMPTY_LOGIN_ERRORS } from "../../lib/formValidators.js";
-import { hasErrors } from "../../lib/validation.js";
+import { validateLoginForm, EMPTY_LOGIN_ERRORS } from "../lib/formValidators.js";
+import { hasErrors } from "../lib/validation.js";
 
 const EMPTY_FORM = { email: "", password: "" };
 const DEFAULT_TARGET = "/raise";
