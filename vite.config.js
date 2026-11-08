@@ -7,7 +7,6 @@ export default defineConfig({
   // GitHub Pages serves the site from /<repo-name>/ instead of the domain root.
   base: process.env.VERCEL ? "/" : "/Panchoracle/",
   plugins: [react()],
-<<<<<<< HEAD
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -20,8 +19,6 @@ export default defineConfig({
       "@data": path.resolve(__dirname, "./src/data"),
     },
   },
-=======
-
   // Treat .js files inside src/ as JSX, so they don't have to be renamed to .jsx.
   esbuild: {
     loader: "jsx",
@@ -33,8 +30,6 @@ export default defineConfig({
       loader: { ".js": "jsx" },
     },
   },
-
->>>>>>> 464e57e4fa4b7e0ebc7c32cce04dd8df36a0da72
   server: {
     proxy: { "/api": "http://localhost:3000" },
   },
