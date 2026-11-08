@@ -9,7 +9,7 @@ import Shop from "../pages/Shop.jsx";
 import CosmeticDetail from "../pages/CosmeticDetail.jsx";
 import MiniGames from "../pages/MiniGames.jsx";
 import TeachersPark from "../pages/teacherspark/TeachersPark.jsx";
-import { withRole } from "./withRole.js";
+import { withRole } from "./withRole.jsx";
 
 export const PUBLIC_ROUTES = [
   { paths: ["/"], element: <Home /> },

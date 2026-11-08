@@ -1,9 +1,9 @@
-import { Link, Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import LoginForm from "./login/LoginForm.jsx";
-import { useAccess } from "../../lib/useAccess.js";
+import { useAccess } from "@lib/useAccess.js";
 import { useState, useCallback } from "react";
-import { validateLoginForm, EMPTY_LOGIN_ERRORS } from "../../lib/formValidators.js";
-import { hasErrors } from "../../lib/validation.js";
+import { validateLoginForm, EMPTY_LOGIN_ERRORS } from "@lib/formValidators.js";
+import { hasErrors } from "@lib/validation.js";
 
 const EMPTY_FORM = { email: "", password: "" };
 const DEFAULT_TARGET = "/raise";
@@ -18,6 +18,7 @@ function redirectTarget(state) {
 export default function Login() {
   const { status, login } = useAccess();
   const location = useLocation();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState(EMPTY_LOGIN_ERRORS);
 
