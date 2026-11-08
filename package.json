@@ -16,7 +16,10 @@
     "express": "^5.3.0",
     "express-mongo-sanitize": "^2.2.0",
     "helmet": "^8.3.0",
+<<<<<<< HEAD
     "jsonwebtoken": "^9.0.3",
+=======
+>>>>>>> 464e57e4fa4b7e0ebc7c32cce04dd8df36a0da72
     "mongoose": "^9.11.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

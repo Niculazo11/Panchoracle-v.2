@@ -1,271 +1,275 @@
-# Raise a Pancho — Documentación Técnica del Proyecto
+# Raise a Pancho — Project Technical Documentation
 
-> **Estado del documento:** generado a partir de una revisión real del código del repositorio `Panchoracle-v.2` (snapshot del frontend). La Fase 1 descrita aquí **está implementada y verificada en el código**. La Fase 2 (backend, JWT, MongoDB, Helmet, despliegue en Vercel) se documenta como **arquitectura objetivo / plan de trabajo**, porque ese código **todavía no existe en este repositorio**. Cuando se implemente, cada apartado de la Fase 2 debe actualizarse para reflejar el código real, igual que se hizo con la Fase 1.
-
----
-
-## 1. Título del Proyecto y Descripción General
-
-**Raise a Pancho** es una plataforma web educativa interactiva en la que cada estudiante adopta y cuida a una mascota virtual (un "Pancho", un perro salchicha) que evoluciona a medida que el estudiante completa tareas académicas asignadas por su profesor. El cuidado del Pancho (alimentarlo, vestirlo con cosméticos, mantener sus estadísticas) funciona como una capa de gamificación sobre el seguimiento académico: completar asignaciones otorga monedas y recompensas que el estudiante usa para mantener y personalizar a su mascota.
-
-El proyecto está pensado con dos roles de usuario:
-
-- **Estudiante:** adopta un Pancho, completa asignaciones, gana monedas, compra y equipa cosméticos, y consulta sus propias estadísticas.
-- **Profesor:** crea y gestiona asignaciones, registra/administra estudiantes y supervisa el progreso del curso.
-
-> **Nota de estado:** en el código actual, el rol de **Profesor** y el backend que lo soportaría no están implementados. Hoy el proyecto es un frontend funcional en React que simula el progreso del Estudiante con datos guardados en `localStorage`, sin backend ni base de datos real. La sección 3 detalla qué existe y qué falta por cada rol.
+> **Document status:** generated from a real review of the `Panchoracle-v.2` repository code (frontend snapshot). Phase 1, as described here, **is implemented and verified against the code**. Phase 2 (backend, JWT, MongoDB, Helmet, deployment on Vercel) is documented as a **target architecture / work plan**, because that code **does not exist in this repository yet**. When it is implemented, every Phase 2 section must be updated to reflect the real code, just as was done with Phase 1.
 
 ---
 
-## 2. Arquitectura e Historia de Requisitos (Fase 1 y Fase 2)
+## 1. Project Title and General Description
 
-### 2.1 Fase 1 — Frontend (✅ Implementado)
+**Raise a Pancho** is an interactive educational web platform in which each student adopts and takes care of a virtual pet (a "Pancho", a dachshund) that evolves as the student completes academic tasks assigned by their teacher. Taking care of the Pancho (feeding it, dressing it with cosmetics, keeping its stats up) works as a gamification layer on top of academic tracking: completing assignments awards coins and rewards that the student uses to maintain and customize their pet.
 
-La Fase 1 construyó el frontend completo en React, con todos los datos persistidos de forma local en el navegador (sin backend). Esto es lo que hay en el repositorio hoy:
+The project is designed around two user roles:
 
-| Requisito | Estado | Evidencia en el código |
+- **Student:** adopts a Pancho, completes assignments, earns coins, buys and equips cosmetics, and checks their own statistics.
+- **Teacher:** creates and manages assignments, registers/manages students, and supervises the progress of the course.
+
+> **Status note:** in the current code, the **Teacher** role and the backend that would support it are not implemented. Today the project is a working React frontend that simulates the Student's progress with data stored in `localStorage`, with no backend and no real database. Section 3 details what exists and what is missing for each role.
+
+---
+
+## 2. Architecture and Requirements History (Phase 1 and Phase 2)
+
+### 2.1 Phase 1 — Frontend (✅ Implemented)
+
+Phase 1 built the complete frontend in React, with all data persisted locally in the browser (no backend). This is what the repository contains today:
+
+| Requirement | Status | Evidence in the code |
 |---|---|---|
-| Componentes bien estructurados, ninguno >80 líneas | ✅ Cumplido | Todos los `.jsx` de `src/` están por debajo de 80 líneas. Páginas grandes (p. ej. `Shop`, `RaisePancho`, `CosmeticDetail`) se dividen en subcomponentes de responsabilidad única dentro de subcarpetas (`pages/shop/`, `pages/raise/`, `pages/home/`, etc.). |
-| Mínimo 3 rutas, con al menos 1 ruta dinámica (`useParams`) | ✅ Cumplido | Ver tabla de rutas en 2.1.1. Hay más de 10 rutas públicas/privadas, y 2 rutas dinámicas: `/stats/:username` y `/Shop/:cosmeticId`. |
-| Rutas protegidas que redirigen a usuarios no autenticados | ✅ Cumplido | `src/components/ProtectedRoute.jsx` protege `/raise`, `/stats`, `/shop`, `/Shop/:cosmeticId` y `/minigames`, redirigiendo a `/login` si no hay sesión. |
-| Al menos un Custom Hook propio | ✅ Cumplido (13 hooks) | `src/lib/use*.js` y hooks por página (`useChooseForm`, `useLoginForm`, `useJoinForm`, etc.). Ver detalle en 2.1.2. |
+| Well-structured components, none longer than 80 lines | ✅ Met | Every `.jsx` file in `src/` is under 80 lines. Large pages (e.g. `Shop`, `RaisePancho`, `CosmeticDetail`) are split into single-responsibility subcomponents inside subfolders (`pages/shop/`, `pages/raise/`, `pages/home/`, etc.). |
+| At least 3 routes, with at least 1 dynamic route (`useParams`) | ✅ Met | See the route table in 2.1.1. There are more than 10 public/private routes, and 2 dynamic routes: `/stats/:username` and `/Shop/:cosmeticId`. |
+| Protected routes that redirect unauthenticated users | ✅ Met | `src/components/ProtectedRoute.jsx` protects `/raise`, `/stats`, `/shop`, `/Shop/:cosmeticId` and `/minigames`, redirecting to `/login` when there is no session. `/teachersPark` additionally requires the `teacher` role (`src/routes/withRole.js`). |
+| At least one custom Hook of our own | ✅ Met (15 hooks) | `src/lib/use*.js`, `src/hooks/use*.js` and per-page hooks (`useChooseForm`, `useJoinForm`, etc.). See details in 2.1.2. |
 
 
-**Stack de la Fase 1:**
+**Phase 1 stack:**
 
-- **React 18** + **React Router DOM 6** (enrutado por cliente, `BrowserRouter`).
-- **Vite 5** como bundler/dev server.
-- **Tailwind CSS 3** para estilos.
-- **Estado del juego:** un `Context` propio (`src/state/GameStateContext.jsx` + `src/state/gameState.js`) que centraliza el estado del estudiante y del Pancho (hambre, felicidad, monedas, cosméticos equipados, asignación activa), con acciones puras separadas por dominio en `src/state/actions/` (`pancho.js`, `shop.js`, `assignment.js`, `lifecycle.js`).
-- **Persistencia:** `localStorage`, a través de `src/state/storage.js` y `src/lib/dogStorage.js`. No hay llamadas a un backend propio; la única petición de red real es a la API pública `https://dog.ceo/api/...` para una de las imágenes de perro al elegir mascota (ver `src/lib/dogApi.js`).
-- **"Autenticación" actual:** una bandera booleana (`panchoAccess`) en `localStorage`, gestionada por `src/lib/auth.js` y expuesta a React vía el hook `useAccess` (`useSyncExternalStore`). No hay contraseñas verificadas contra un servidor ni tokens: es un control de acceso puramente de cliente, suficiente para cumplir el requisito de "ruta protegida" de la Fase 1, pero **no apto como seguridad real** (de ahí el objetivo de la Fase 2).
+- **React 18** + **React Router DOM 6** (client-side routing, `BrowserRouter`).
+- **Vite 5** as bundler/dev server.
+- **Tailwind CSS 3** for styling.
+- **Game state:** a custom `Context` (`src/state/GameStateContext.jsx` + `src/state/gameState.js`) that centralizes the student's and the Pancho's state (hunger, happiness, coins, equipped cosmetics, active assignment), with pure actions separated by domain in `src/state/actions/` (`pancho.js`, `shop.js`, `assignment.js`, `lifecycle.js`).
+- **Persistence:** `localStorage`, through `src/state/storage.js` and `src/lib/dogStorage.js`. There are no calls to a backend of our own; the only real network request is to the public API `https://dog.ceo/api/...` for one of the dog images when choosing a pet (see `src/lib/dogApi.js`).
+- **Authentication:** the client no longer uses the `panchoAccess` flag. `src/lib/useAccess.js` requests the session from `GET /api/auth/me` (httpOnly cookie) and exposes `status`, `user`, `role`, `login` and `logout`; `useRole()` returns the role. `src/lib/auth.js` is kept only for backwards compatibility. 🟡 The auth backend (UN-104) does not exist yet.
 
-#### 2.1.1 Tabla de rutas (`src/App.jsx`)
+#### 2.1.1 Route table (`src/routes/routesConfig.jsx`, rendered by `src/App.jsx`)
 
-| Ruta(s) | Página | Tipo | Protegida |
+| Route(s) | Page | Type | Protected |
 |---|---|---|---|
-| `/` | `Home` | Pública | No |
-| `/login` | `Login` | Pública | No |
-| `/aboutus`, `/aboutus.html` | `AboutUs` | Pública | No |
-| `/choose`, `/choosePancho`, `/choosePancho.html` | `ChoosePancho` | Pública (es el punto de entrada que crea la "cuenta") | No |
-| `/dogpark-login`, `/dogParkLogin.html` | `DogParkLogin` | Pública (gate independiente, no usa `auth.js`) | No |
-| `/dogpark`, `/dogPark.html` | `DogParkPlaceholder` | Pública | No |
-| `/raise`, `/raisePancho`, `/raisePancho.html` | `RaisePancho` | Privada | **Sí** |
-| `/stats/:username`, `/stats`, `/panchoStats`, `/panchoStats.html` | `PanchoStats` | Privada, **dinámica** (`useParams`) | **Sí** |
-| `/shop`, `/Shop`, `/Shop.html` | `Shop` | Privada | **Sí** |
-| `/Shop/:cosmeticId` | `CosmeticDetail` | Privada, **dinámica** (`useParams`) | **Sí** |
-| `/minigames`, `/MiniGames`, `/MiniGames.html` | `MiniGames` | Privada | **Sí** |
+| `/` | `Home` | Public | No |
+| `/login` | `Login` | Public | No |
+| `/aboutus`, `/aboutus.html` | `AboutUs` | Public | No |
+| `/choose`, `/choosePancho`, `/choosePancho.html` | `ChoosePancho` | Public | No |
+| `/raise`, `/raisePancho`, `/raisePancho.html` | `RaisePancho` | Private | **Yes** (session) |
+| `/stats/:username`, `/stats`, `/panchoStats`, `/panchoStats.html` | `PanchoStats` | Private, **dynamic** (`useParams`) | **Yes** (session) |
+| `/shop`, `/Shop`, `/Shop.html` | `Shop` | Private | **Yes** (session) |
+| `/Shop/:cosmeticId` | `CosmeticDetail` | Private, **dynamic** (`useParams`) | **Yes** (session) |
+| `/minigames`, `/MiniGames`, `/MiniGames.html` | `MiniGames` | Private | **Yes** (session) |
+| `/teachersPark`, `/teachersPark.html` | `TeachersPark` | Private, teacher only | **Yes** (session + `teacher` role, via `withRole`) |
+| `/dogpark`, `/dogPark.html` | — | Redirect to `/teachersPark` | — |
 
-Cada ruta privada se envuelve en `<ProtectedRoute>`, que:
-1. Lee el estado de acceso con `useAccess()`.
-2. Si no hay acceso, redirige con `<Navigate replace to="/login" state={{ from: location }} />`, guardando la ruta de origen para poder volver a ella tras el login.
+Private routes are wrapped in `<ProtectedRoute>`, which reads `useAccess()` (`checking` / `authenticated` / `anonymous`): while it is checking it renders nothing; if there is no session it redirects to `/login`, saving the origin route in `state.from`. `/teachersPark` uses `withRole(["teacher"])` (`src/routes/withRole.js`), which additionally requires the role.
 
-#### 2.1.2 Custom Hook de referencia (dependencias y cleanup)
+> 🟡 The session is loaded with `GET /api/auth/me`, but the server does not have auth routes yet (UN-104). Until then the client always stays anonymous.
 
-Como ejemplo representativo para la defensa oral, `src/lib/useDogImages.js` encapsula la carga de las imágenes de Pancho disponibles:
+**Removed (UN-202):** `dogParkAuth.js`, `useDogParkAccess.js`, `useDogParkLogin.js` and the `pages/dogpark/` folder (`DogParkLogin`, `DogParkField`, `DogParkPlaceholder`). `DogParkPlaceholder` is no longer listed. Teacher folder: `src/pages/teacherspark/` (`TeachersPark`, `TeachersParkNav`, `TeachersParkNavItem`, `ParkDog`, `navItems.js`, `parkDogs.js`; the latter with hard-coded data that UN-403 will replace).
 
-- **Qué resuelve:** separa la lógica de "pedir imágenes, manejar carga/offline/error y cachear el resultado" de la página `ChoosePancho`, que solo consume `{ images, loading, error, offline, reload }`.
-- **Array de dependencias:** el `useEffect` interno vuelve a ejecutarse solo cuando cambia su "tick" de recarga interno (controlado por `reload()`), no en cada render; evita repetir la petición de red innecesariamente.
-- **Cleanup:** usa un `AbortController` creado dentro del efecto. La función de limpieza del `useEffect` llama a `controller.abort()`, de modo que si el componente se desmonta (o se dispara una nueva carga) antes de que la petición a `dog.ceo` responda, la respuesta tardía se descarta y no intenta actualizar el estado de un componente ya desmontado.
+#### 2.1.2 Reference Custom Hook (dependencies and cleanup)
 
-Otros hooks propios en el proyecto (13 en total): `useAccess`, `useChangeFlash`, `useDarkMode`, `useFavorites`, `useFeedback`, `useStatus`, `useChooseForm`, `useConfirmPancho`, `useDogParkLogin`, `useBenefitsSearch`, `useJoinForm`, `useLoginForm`, `useQuiz` (14 en total junto con `useDogImages`). `usePageStyles` existió en una versión anterior (inyectaba un `<style>` con CSS plano para la página `AboutUs`) y se eliminó al unificar esa página hacia Tailwind puro; ver la Bitácora (sección 7).
+As a representative example for the oral defense, `src/lib/useDogImages.js` encapsulates the loading of the available Pancho images:
 
-#### 2.1.3 Mini Juegos (gameplay, sigue siendo Fase 1 / solo frontend)
+- **What it solves:** it separates from `ChoosePancho` the logic of requesting the Pancho image from `dog.ceo`, with loading, error, offline and cache handling. The page only consumes `{ images, loading, error, offline, fromCache, reload }`.
+- **Dependency array:** `[reloadToken, reload, isOnline]`. The effect runs on mount and runs again only if `reloadToken` changes (incremented by `reload()`, for example when the connection comes back) or `isOnline` changes. `reload` is stable (`useCallback` with no dependencies), so it does not trigger the effect by itself.
+- **Cleanup:** the effect creates an `AbortController` and an `active` flag. On unmount, or before the next run, the cleanup sets `active = false` and calls `controller.abort()`. The request is cancelled and a late response does not update the state: the `AbortError` is ignored and every `setState` is guarded by `active`.
+- **Offline:** if `isOnline` is false, the effect ends without requesting anything (`loading = false`). `useOnlineStatus` registers the `online` and `offline` listeners on `window` and removes them in its own cleanup; when the connection returns it calls `reload`.
+- **Other details:** it waits a minimum of 600 ms (`MIN_LOADING_MS`) to avoid flickering; if `dog.ceo` fails it uses the `localStorage` cache (`dogCache.js`) and sets `fromCache`; if there is nothing, it shows the error and the static image.
 
-`/minigames` dejó de ser un placeholder: incluye un quiz corto de trivia académica (`src/pages/minigames/`) como primer ejemplo funcional. Los estudiantes ganan monedas por jugar, de forma separada del flujo académico de `RaisePancho` (que solo restaura Hambre, nunca monedas — ver `SUBMIT_REWARDS` en `state/constants.js`).
+Other custom hooks (15 in use in total, counting `useDogImages`): `useAccess`, `useRole`, `useChangeFlash`, `useDarkMode`, `useFavorites`, `useFeedback`, `useStatus`, `useNavbarVisibility`, `useOnlineStatus`, `useChooseForm`, `useConfirmPancho`, `useBenefitsSearch`, `useJoinForm` and `useQuiz`. `usePageStyles.js` is still in `pages/about/`, but no component uses it (orphan).
 
-- **`src/pages/minigames/useQuiz.js`:** custom hook que gestiona el estado de una ronda (pregunta actual, respuesta seleccionada, aciertos, si terminó). No requiere cleanup: no abre timers ni listeners, solo reacciona a los clics del jugador.
-- **`src/state/actions/minigames.js` → `awardMinigameCoins`:** sigue el mismo patrón que el resto de `state/actions/` (recibe el estado, devuelve un estado nuevo sin mutar). Otorga 1 moneda por respuesta correcta, hasta el tope `MINIGAME_REWARD_COINS = 5` definido en `state/constants.js` (mismo valor que ya documentaba la FAQ de `AboutUs`: "+5 coins" por minijuego completado). Las monedas solo se otorgan cuando el estudiante pulsa "Claim coins" explícitamente, nunca de forma automática.
-- Sigue siendo 100% `localStorage` (Fase 1): no depende de nada de la Fase 2.
+#### 2.1.3 Mini Games (gameplay, still Phase 1 / frontend only)
 
-### 2.2 Fase 2 — Backend, Seguridad y Despliegue Full Stack (🔲 Planeado, no implementado)
+`/minigames` is no longer a placeholder: it includes a short academic trivia quiz (`src/pages/minigames/`) as the first working example. Students earn coins for playing, separately from the academic flow of `RaisePancho` (which only restores Hunger, never coins — see `SUBMIT_REWARDS` in `state/constants.js`).
 
-> Todo lo que sigue en esta sección es el **diseño objetivo**. Ningún archivo de backend existe aún en el repositorio (no hay carpeta `server/`, ni `package.json` con `express`/`jsonwebtoken`/`mongoose`/`helmet`, ni `vercel.json`). Esta sección sirve como especificación para implementar y como checklist a marcar/actualizar a medida que se construya.
+- **`src/pages/minigames/useQuiz.js`:** custom hook that manages the state of a round (current question, selected answer, correct answers, whether it has finished). It needs no cleanup: it opens no timers or listeners, it only reacts to the player's clicks.
+- **`src/state/actions/minigames.js` → `awardMinigameCoins`:** follows the same pattern as the rest of `state/actions/` (receives the state, returns a new state without mutating). It awards 1 coin per correct answer, up to the cap `MINIGAME_REWARD_COINS = 5` defined in `state/constants.js` (the same value the `AboutUs` FAQ already documented: "+5 coins" per completed mini game). Coins are only awarded when the student explicitly presses "Claim coins", never automatically.
+- It remains 100% `localStorage` (Phase 1): it does not depend on anything from Phase 2.
 
-**Objetivo de la Fase 2:** reemplazar `localStorage` y la bandera de acceso del cliente por un backend real con persistencia en base de datos y autenticación verificada en el servidor, sin eliminar ni romper el frontend de la Fase 1 (el contrato de datos del `GameStateContext` debe poder alimentarse desde la API en vez de desde `localStorage`).
+### 2.2 Phase 2 — Backend, Security and Full Stack Deployment (🔲 Planned, not implemented)
 
-| Requisito | Estado | Qué falta construir |
+> Everything that follows in this section is the **target design**. No backend file exists yet in the repository (there is no `server/` folder, no `package.json` with `express`/`jsonwebtoken`/`mongoose`/`helmet`, and no `vercel.json`). This section serves as a specification to implement and as a checklist to mark/update as it gets built.
+
+**Phase 2 goal:** replace `localStorage` and the client's access flag with a real backend with database persistence and server-verified authentication, without removing or breaking the Phase 1 frontend (the `GameStateContext` data contract must be able to be fed from the API instead of from `localStorage`).
+
+| Requirement | Status | What is left to build |
 |---|---|---|
-| CRUD completo contra MongoDB Atlas (sin datos in-memory) | 🔲 No implementado | Servidor Node/Express, modelos de Mongoose (`Student`, `Teacher`, `Assignment`, `Pancho`/`Dog`, `Cosmetic`/inventario), conexión a Atlas vía variable de entorno, y endpoints CRUD reales. |
-| JWT con roles `Estudiante` y `Profesor`, validado en backend | 🔲 No implementado | Endpoint de login que emita JWT firmado, middleware de verificación de token, middleware de autorización por rol que bloquee en el servidor (no solo ocultar UI) las acciones exclusivas de Profesor. |
-| Despliegue full stack en Vercel (frontend + API) | 🔲 No implementado | El frontend hoy se despliega en **GitHub Pages**, no en Vercel. Habría que decidir si Vercel reemplaza a GitHub Pages para el frontend o convive con él, y desplegar el backend como funciones serverless o servidor Node en Vercel. |
-| Seguridad: XSS, inyección NoSQL, `helmet` | 🔲 No implementado | Agregar `helmet` al servidor Express, sanitización de entradas (p. ej. `express-mongo-sanitize` contra inyección NoSQL, `express-validator`/`zod` para validar payloads), escape/sanitización de cualquier HTML generado a partir de input de usuario para mitigar XSS, CORS configurado explícitamente, rate limiting en endpoints sensibles (login). |
+| Full CRUD against MongoDB Atlas (no in-memory data) | 🔲 Not implemented | Node/Express server, Mongoose models (`Student`, `Teacher`, `Assignment`, `Pancho`/`Dog`, `Cosmetic`/inventory), connection to Atlas through an environment variable, and real CRUD endpoints. |
+| JWT with `Student` and `Teacher` roles, validated in the backend | 🔲 Not implemented | Login endpoint that issues a signed JWT, token verification middleware, role authorization middleware that blocks on the server (not just hides in the UI) the Teacher-only actions. |
+| Full stack deployment on Vercel (frontend + API) | 🔲 Not implemented | Today the frontend is deployed on **GitHub Pages**, not on Vercel. It would be necessary to decide whether Vercel replaces GitHub Pages for the frontend or coexists with it, and to deploy the backend as serverless functions or a Node server on Vercel. |
+| Security: XSS, NoSQL injection, `helmet` | 🔲 Not implemented | Add `helmet` to the Express server, input sanitization (e.g. `express-mongo-sanitize` against NoSQL injection, `express-validator`/`zod` to validate payloads), escaping/sanitization of any HTML generated from user input to mitigate XSS, explicitly configured CORS, rate limiting on sensitive endpoints (login). |
 
-#### 2.2.1 Arquitectura objetivo propuesta
+#### 2.2.1 Proposed target architecture
 
 ```
-Frontend (React + Vite)          Backend (Node.js + Express)        Base de datos
+Frontend (React + Vite)          Backend (Node.js + Express)        Database
 ┌───────────────────────┐        ┌────────────────────────┐        ┌──────────────┐
 │ GameStateContext       │  JWT   │ /api/auth/*            │        │ MongoDB Atlas │
-│ (hoy: localStorage)    │ <----> │ /api/students/*        │ <----> │ - students    │
-│ (futuro: fetch a API)  │ Bearer │ /api/teachers/*         │        │ - teachers    │
+│ (today: localStorage)  │ <----> │ /api/students/*        │ <----> │ - students    │
+│ (future: fetch to API) │ Bearer │ /api/teachers/*         │        │ - teachers    │
 │ ProtectedRoute         │ token  │ /api/assignments/*      │        │ - assignments │
-│ (hoy: useAccess local) │        │ /api/panchos/*          │        │ - panchos     │
+│ (today: local useAccess)│       │ /api/panchos/*          │        │ - panchos     │
 └───────────────────────┘        │ middlewares: helmet,    │        └──────────────┘
                                   │ cors, sanitize, auth,   │
                                   │ authorize(role)         │
                                   └────────────────────────┘
 ```
 
-Esta migración implica, en el frontend, reemplazar gradualmente:
-- `src/lib/auth.js` / `useAccess.js` → llamadas reales de login/registro contra `/api/auth/login`, guardando el JWT (idealmente en memoria + refresh, o en `httpOnly cookie` emitida por el backend en vez de `localStorage`, para reducir superficie de XSS).
-- `src/state/storage.js` / `dogStorage.js` → peticiones `fetch`/`axios` al backend para leer y escribir el estado del Pancho y del estudiante.
+This migration implies, in the frontend, gradually replacing:
+- `src/lib/auth.js` / `useAccess.js` → real login/registration calls against `/api/auth/login`, storing the JWT (ideally in memory + refresh, or in an `httpOnly cookie` issued by the backend instead of `localStorage`, to reduce the XSS surface).
+- `src/state/storage.js` / `dogStorage.js` → `fetch`/`axios` requests to the backend to read and write the state of the Pancho and the student.
 
 ---
 
-## 3. Estructura de Roles y Permisos (Estudiante vs. Profesor)
+## 3. Role and Permission Structure (Student vs. Teacher)
 
-### 3.1 Estado actual (Fase 1)
+### 3.1 Current state (Phase 1)
 
-Solo existe, de facto, un flujo de **Estudiante**: cualquier persona que complete el formulario de `ChoosePancho` "crea una cuenta" local (nombre guardado en `localStorage`) y obtiene acceso a las rutas protegidas. No hay un rol de Profesor ni una distinción real de permisos; no hay nada que impida a cualquier usuario del navegador ver o modificar cualquier dato, porque todo vive en su propio `localStorage`.
+De facto, only a **Student** flow exists: anyone who completes the `ChoosePancho` form "creates an account" locally (name saved in `localStorage`) and gets access to the protected routes. There is no Teacher role or real distinction of permissions; nothing prevents any browser user from viewing or modifying any data, because everything lives in their own `localStorage`.
 
-### 3.2 Diseño objetivo de permisos (Fase 2, a implementar)
+### 3.2 Target permission design (Phase 2, to be implemented)
 
-| Acción | Estudiante | Profesor |
+| Action | Student | Teacher |
 |---|---|---|
-| Registrarse / iniciar sesión | ✅ | ✅ |
-| Adoptar y personalizar su propio Pancho | ✅ | ❌ (no aplica) |
-| Ver sus propias estadísticas (`/stats/:username` propio) | ✅ | — |
-| Ver estadísticas de **cualquier** estudiante del curso | ❌ | ✅ |
-| Completar/entregar asignaciones propias | ✅ | ❌ |
-| Crear, editar o eliminar asignaciones | ❌ | ✅ |
-| Registrar o dar de baja estudiantes | ❌ | ✅ |
-| Ver el progreso agregado del curso | ❌ | ✅ |
+| Register / log in | ✅ | ✅ |
+| Adopt and customize their own Pancho | ✅ | ❌ (not applicable) |
+| View their own statistics (own `/stats/:username`) | ✅ | — |
+| View statistics of **any** student in the course | ❌ | ✅ |
+| Complete/submit their own assignments | ✅ | ❌ |
+| Create, edit or delete assignments | ❌ | ✅ |
+| Register or remove students | ❌ | ✅ |
+| View the aggregated progress of the course | ❌ | ✅ |
 
-**Principio de diseño obligatorio:** la UI puede ocultar botones según el rol, pero eso es solo cosmético. Cada endpoint del backend que modifique o exponga datos sensibles **debe** validar en el servidor, a partir del rol contenido en el JWT verificado (no en un valor enviado por el cliente), que el usuario autenticado tiene permiso para esa acción. Un estudiante que llame directamente a `POST /api/assignments` con su propio token válido debe recibir `403 Forbidden`, incluso si nunca pasó por la UI de profesor.
-
----
-
-## 4. Endpoints de la API & Seguridad (CRUD, JWT, Helmet, Sanitización)
-
-> ⚠️ Ninguno de los endpoints listados abajo existe todavía en el repositorio. Se documentan como el contrato objetivo a implementar en la Fase 2, para que frontend y backend se desarrollen contra la misma referencia. Al implementarlos, actualizar esta tabla con la ruta real, y mover esta nota de advertencia.
-
-### 4.1 Autenticación
-
-| Método | Ruta | Rol requerido | Descripción |
-|---|---|---|---|
-| `POST` | `/api/auth/register` | Público | Crea un usuario (`role: "student" \| "teacher"`), hashea la contraseña (`bcrypt`). |
-| `POST` | `/api/auth/login` | Público | Verifica credenciales, emite JWT firmado con `{ sub, role }` y expiración corta. |
-| `POST` | `/api/auth/logout` | Autenticado | Invalida la sesión (si se usa cookie httpOnly) o es un no-op si el token se descarta en cliente. |
-
-### 4.2 Estudiantes
-
-| Método | Ruta | Rol requerido | Descripción |
-|---|---|---|---|
-| `GET` | `/api/students/me` | Estudiante | Perfil y estado del propio Pancho. |
-| `PATCH` | `/api/students/me` | Estudiante | Actualiza datos propios (p. ej. cosméticos equipados). |
-| `GET` | `/api/students` | Profesor | Lista de estudiantes del curso. |
-| `GET` | `/api/students/:id` | Profesor | Detalle/estadísticas de un estudiante puntual. |
-| `DELETE` | `/api/students/:id` | Profesor | Da de baja a un estudiante. |
-
-### 4.3 Asignaciones
-
-| Método | Ruta | Rol requerido | Descripción |
-|---|---|---|---|
-| `GET` | `/api/assignments` | Estudiante, Profesor | Estudiante ve las suyas; profesor ve todas las que creó. |
-| `POST` | `/api/assignments` | Profesor | Crea una nueva asignación. |
-| `PATCH` | `/api/assignments/:id` | Profesor | Edita una asignación existente. |
-| `DELETE` | `/api/assignments/:id` | Profesor | Elimina una asignación. |
-| `POST` | `/api/assignments/:id/submit` | Estudiante | Entrega/completa una asignación propia; dispara recompensas (monedas, stats del Pancho). |
-
-### 4.4 Seguridad transversal a implementar
-
-- **`helmet`:** middleware global en Express (`app.use(helmet())`) para cabeceras HTTP seguras por defecto (CSP, `X-Content-Type-Options`, etc.).
-- **Protección contra inyección NoSQL:** sanitizar `req.body`, `req.query` y `req.params` (p. ej. con `express-mongo-sanitize`) antes de construir cualquier query de Mongoose, para neutralizar operadores (`$gt`, `$ne`, etc.) inyectados desde el cliente.
-- **Protección contra XSS:** validar y escapar cualquier texto libre que el usuario ingrese (nombre del Pancho, respuestas de asignaciones) tanto al guardarlo como al renderizarlo; nunca usar `dangerouslySetInnerHTML` en el frontend con datos de usuario sin sanitizar.
-- **JWT:** firmar con un secreto fuerte desde variable de entorno, expiración corta + estrategia de refresh si aplica, y middleware `authenticate` + `authorize(role)` reutilizable en todas las rutas privadas.
-- **CORS:** restringido explícitamente al dominio del frontend desplegado.
-- **Validación de entrada:** esquema por endpoint (`zod`/`joi`/`express-validator`) antes de tocar la base de datos.
+**Mandatory design principle:** the UI may hide buttons depending on the role, but that is purely cosmetic. Every backend endpoint that modifies or exposes sensitive data **must** validate on the server, based on the role contained in the verified JWT (not on a value sent by the client), that the authenticated user has permission for that action. A student who calls `POST /api/assignments` directly with their own valid token must receive `403 Forbidden`, even if they never went through the teacher UI.
 
 ---
 
-## 5. Instrucciones para Ejecución Local y Despliegue
+## 4. API Endpoints and Security (CRUD, JWT, Helmet, Sanitization)
 
-### 5.1 Frontend (Fase 1 — vigente hoy)
+> ⚠️ None of the endpoints listed below exists yet in the repository. They are documented as the target contract to implement in Phase 2, so that frontend and backend are developed against the same reference. When implementing them, update this table with the real route, and move this warning note.
 
-**Requisitos:** Node.js 18+ y npm.
+### 4.1 Authentication
+
+| Method | Route | Required role | Description |
+|---|---|---|---|
+| `POST` | `/api/auth/register` | Public | Creates a user (`role: "student" \| "teacher"`), hashes the password (`bcrypt`). |
+| `POST` | `/api/auth/login` | Public | Verifies credentials, issues a JWT signed with `{ sub, role }` and a short expiration. |
+| `POST` | `/api/auth/logout` | Authenticated | Invalidates the session (if an httpOnly cookie is used) or is a no-op if the token is discarded on the client. |
+
+### 4.2 Students
+
+| Method | Route | Required role | Description |
+|---|---|---|---|
+| `GET` | `/api/students/me` | Student | Profile and state of their own Pancho. |
+| `PATCH` | `/api/students/me` | Student | Updates their own data (e.g. equipped cosmetics). |
+| `GET` | `/api/students` | Teacher | List of the course's students. |
+| `GET` | `/api/students/:id` | Teacher | Detail/statistics of a specific student. |
+| `DELETE` | `/api/students/:id` | Teacher | Removes a student. |
+
+### 4.3 Assignments
+
+| Method | Route | Required role | Description |
+|---|---|---|---|
+| `GET` | `/api/assignments` | Student, Teacher | A student sees their own; a teacher sees all the ones they created. |
+| `POST` | `/api/assignments` | Teacher | Creates a new assignment. |
+| `PATCH` | `/api/assignments/:id` | Teacher | Edits an existing assignment. |
+| `DELETE` | `/api/assignments/:id` | Teacher | Deletes an assignment. |
+| `POST` | `/api/assignments/:id/submit` | Student | Submits/completes their own assignment; triggers rewards (coins, Pancho stats). |
+
+### 4.4 Cross-cutting security to implement
+
+- **`helmet`:** global Express middleware (`app.use(helmet())`) for secure HTTP headers by default (CSP, `X-Content-Type-Options`, etc.).
+- **NoSQL injection protection:** sanitize `req.body`, `req.query` and `req.params` (e.g. with `express-mongo-sanitize`) before building any Mongoose query, to neutralize operators (`$gt`, `$ne`, etc.) injected from the client.
+- **XSS protection:** validate and escape any free text the user enters (Pancho name, assignment answers) both when saving it and when rendering it; never use `dangerouslySetInnerHTML` in the frontend with unsanitized user data.
+- **JWT:** sign with a strong secret from an environment variable, short expiration + refresh strategy if applicable, and a reusable `authenticate` + `authorize(role)` middleware on all private routes.
+- **CORS:** explicitly restricted to the deployed frontend's domain.
+- **Input validation:** a schema per endpoint (`zod`/`joi`/`express-validator`) before touching the database.
+
+---
+
+## 5. Local Execution and Deployment Instructions
+
+### 5.1 Frontend (Phase 1 — current today)
+
+**Requirements:** Node.js 18+ and npm.
 
 ```bash
-# 1. Instalar dependencias
+# 1. Install dependencies
 npm install
 
-# 2. Levantar el servidor de desarrollo (http://localhost:5173)
+# 2. Start the development server (http://localhost:5173)
 npm run dev
 
-# 3. Generar el build de producción (carpeta dist/)
+# 3. Generate the production build (dist/ folder)
 npm run build
 
-# 4. Previsualizar ese build localmente
+# 4. Preview that build locally
 npm run preview
 ```
 
-**Despliegue actual (GitHub Pages):**
+**Current deployment (GitHub Pages):**
 
 ```bash
 npm run deploy
 ```
 
 
-### 5.2 Backend y despliegue Full Stack en Vercel (Fase 2 — pendiente)
+### 5.2 Backend and Full Stack deployment on Vercel (Phase 2 — pending)
 
-Esta subsección es una plantilla a completar cuando el backend exista:
+This subsection is a template to complete when the backend exists:
 
 ```bash
-# Dentro de la futura carpeta del servidor (p. ej. /server)
+# Inside the future server folder (e.g. /server)
 npm install
-cp .env.example .env   # definir MONGODB_URI, JWT_SECRET, PORT, etc.
-npm run dev            # servidor local, p. ej. http://localhost:4000
+cp .env.example .env   # define MONGODB_URI, JWT_SECRET, PORT, etc.
+npm run dev            # local server, e.g. http://localhost:4000
 ```
 
-Variables de entorno mínimas a definir (no commitear `.env`):
+Minimum environment variables to define (do not commit `.env`):
 
-| Variable | Descripción |
+| Variable | Description |
 |---|---|
-| `MONGODB_URI` | Cadena de conexión a MongoDB Atlas. |
-| `JWT_SECRET` | Secreto para firmar/verificar tokens. |
-| `CORS_ORIGIN` | Dominio del frontend permitido. |
+| `MONGODB_URI` | Connection string to MongoDB Atlas. |
+| `JWT_SECRET` | Secret to sign/verify tokens. |
+| `CORS_ORIGIN` | Allowed frontend domain. |
 
-Pasos pendientes de decidir y documentar cuando se implemente el despliegue:
-1. Si el frontend migra de GitHub Pages a Vercel, o si Vercel aloja solo la API y GitHub Pages sigue sirviendo el frontend.
-2. Configuración del proyecto en Vercel (`vercel.json` si hace falta, variables de entorno en el dashboard de Vercel, no en el repo).
-3. URL final de entrega, a reemplazar aquí una vez desplegado.
+Steps still to be decided and documented when the deployment is implemented:
+1. Whether the frontend migrates from GitHub Pages to Vercel, or whether Vercel hosts only the API and GitHub Pages keeps serving the frontend.
+2. Project configuration on Vercel (`vercel.json` if needed, environment variables in the Vercel dashboard, not in the repo).
+3. Final delivery URL, to be replaced here once deployed.
 
 ---
 
-## 6. Política de Actualización del Documento (obligatoria)
+## 6. Document Update Policy (mandatory)
 
-Este archivo es un **documento vivo**, no una foto fija tomada una sola vez. Su valor depende de que siga reflejando el estado real del código en todo momento, así que aplica la siguiente regla sin excepción:
+This file is a **living document**, not a snapshot taken only once. Its value depends on it continuing to reflect the real state of the code at all times, so the following rule applies without exception:
 
-> **Toda modificación al proyecto (de código, configuración o despliegue) debe venir acompañada de una actualización de este `.md` en el mismo commit o pull request.** Un cambio no se considera terminado hasta que el documento esté al día.
+> **Every modification to the project (code, configuration or deployment) must be accompanied by an update to this `.md` in the same commit or pull request.** A change is not considered finished until the document is up to date.
 
-Para que el seguimiento sea automático y cualquiera (incluido el profesor, en la defensa oral) pueda ver de un vistazo qué avanzó y qué falta, cada cambio debe:
+So that tracking is automatic and anyone (including the teacher, in the oral defense) can see at a glance what has advanced and what is missing, every change must:
 
-1. **Actualizar el estado del requisito afectado** en las tablas de las secciones 2.1 y 2.2, usando siempre uno de estos tres marcadores:
-   - ✅ **Hecho** — implementado, probado y verificado contra el código real (no contra la intención).
-   - 🟡 **En proceso** — se empezó a construir, pero no cumple aún el requisito completo (por ejemplo, el endpoint existe pero no valida el rol, o el JWT se emite pero no se verifica en el middleware).
-   - 🔲 **Planeado** — todavía no hay código para eso.
+1. **Update the status of the affected requirement** in the tables of sections 2.1 and 2.2, always using one of these three markers:
+   - ✅ **Done** — implemented, tested and verified against the real code (not against the intention).
+   - 🟡 **In progress** — construction started, but it does not yet meet the full requirement (for example, the endpoint exists but does not validate the role, or the JWT is issued but not verified in the middleware).
+   - 🔲 **Planned** — there is no code for it yet.
    
-   Nunca dejar un ítem marcado ✅ si el código no lo respalda: es preferible marcarlo 🟡 y explicar qué falta, que declarar algo terminado antes de tiempo.
+   Never leave an item marked ✅ if the code does not back it up: it is preferable to mark it 🟡 and explain what is missing than to declare something finished ahead of time.
 
-2. **Agregar una entrada en la Bitácora (sección 7)** por cada cambio relevante de arquitectura, endpoints, roles/permisos, seguridad o despliegue, con el formato de la tabla: fecha, autor, cambio y estado alcanzado (🔲→🟡, 🟡→✅, etc.).
+2. **Add an entry to the Log (section 7)** for every relevant change in architecture, endpoints, roles/permissions, security or deployment, using the table format: date, author, change and status reached (🔲→🟡, 🟡→✅, etc.).
 
-3. **Mover el detalle real** de la sección 2.2 (plan) a donde corresponda una vez implementado: si un endpoint pasa de planeado a hecho, su fila deja de ser "a implementar" y pasa a documentar la ruta, el rol y el comportamiento reales (incluyendo casos de error), igual que ya se hizo con las rutas de la Fase 1 en la sección 2.1.1.
+3. **Move the real detail** from section 2.2 (plan) to where it belongs once implemented: if an endpoint goes from planned to done, its row stops being "to implement" and starts documenting the real route, role and behavior (including error cases), just as was already done with the Phase 1 routes in section 2.1.1.
 
-4. **Revisar las advertencias de "no implementado todavía"** (como la de la sección 4) y eliminarlas apenas el primer endpoint real exista, reemplazándolas por la documentación del endpoint concreto.
+4. **Review the "not implemented yet" warnings** (such as the one in section 4) and remove them as soon as the first real endpoint exists, replacing them with the documentation of the concrete endpoint.
 
-El objetivo es que, leyendo solo este archivo, se pueda saber en cualquier momento qué partes del proyecto son reales hoy y cuáles siguen siendo plan, sin tener que leer el código para confirmarlo.
+The goal is that, by reading only this file, it is possible to know at any time which parts of the project are real today and which are still plan, without having to read the code to confirm it.
 
 ---
 
-## 7. Bitácora de Mantenimiento Futuro
+## 7. Future Maintenance Log
 
-> Agregar una entrada por cada cambio relevante de arquitectura, despliegue o seguridad, siguiendo la política de la sección 6. Formato sugerido: fecha, autor, resumen, impacto y estado.
+> Add one entry for every relevant change in architecture, deployment or security, following the policy in section 6. Suggested format: date, author, summary, impact and status.
 
-| Fecha | Autor | Cambio | Impacto | Estado |
+| Date | Author | Change | Impact | Status |
 |---|---|---|---|---|
-| 2026-10-05 | Claude (asistido) | Unificación de estilos hacia Tailwind CSS: se eliminó el CSS plano inyectado en `AboutUs` (`about/styles/*.js`, `usePageStyles.js`) y se reescribieron `AboutNav/Hero/Team/Project/FaqSection` en Tailwind puro; `PanchoStatusBanner` migró sus colores hex y `@keyframes` a `tailwind.config.js`. | Sección 2.1.2 actualizada (hook `usePageStyles` ya no existe). Ningún cambio visual ni funcional para el usuario. | ✅ Hecho |
-| 2026-10-05 | Claude (asistido) | Saneamiento del repositorio: se eliminaron `_bmad/` y el archivo suelto `"tash push -m..."` (ambos trackeados en git). Se corrigió además un bug de despliegue propio de una sesión anterior: los fondos de `RaisePancho` y `PanchoStats` usaban rutas absolutas (`bg-[url('/images/...')]`) que se rompían bajo el subdirectorio de GitHub Pages. | Repositorio sin archivos de herramientas ajenas al proyecto. Fondos de esas dos páginas ahora sí cargan en el sitio publicado. | ✅ Hecho |
-| 2026-10-05 | Claude (asistido) | Optimización de re-renders y limpieza de dependencias: `GameStateContext` memoiza el valor del contexto (`useMemo`) en vez de reconstruirlo en cada render; se corrigieron los 8 `useEffect` que tenían `eslint-disable react-hooks/exhaustive-deps`, agregando las dependencias reales donde era seguro hacerlo. | Menos renders innecesarios en todos los consumidores de `useGameState()`. Código sin advertencias de lint silenciadas. | ✅ Hecho |
-| 2026-10-05 | Claude (asistido) | Nueva sección de Mini Juegos: quiz funcional (`src/pages/minigames/`) integrado en la ruta ya existente `/minigames`, con nueva acción `awardMinigameCoins` en `state/actions/minigames.js` que otorga monedas (hasta el tope ya documentado en la FAQ: +5 por minijuego). | Sección 2.1.3 (nueva) documenta el flujo. Sigue siendo 100% frontend/`localStorage` (Fase 1); no toca nada de la Fase 2. | ✅ Hecho |
+| 2026-11-02 | Nicolás (assisted) | UN-003: route table aligned with `routesConfig.jsx` (`teacher` role on `/teachersPark`, `/dogpark` as a redirect); removal of `dogParkAuth.js`, `useDogParkAccess.js` and `pages/dogpark/` (incl. `DogParkPlaceholder`) documented; authentication section and hook list updated; `useDogImages` explanation completed (dependencies, cleanup, abort and listeners). | Documentation matches `origin/main`. The session stays 🟡 until UN-104 exists. | ✅ Done |
+| 2026-10-05 | Claude (assisted) | Style unification toward Tailwind CSS: the flat CSS injected in `AboutUs` was removed (`about/styles/*.js`, `usePageStyles.js`) and `AboutNav/Hero/Team/Project/FaqSection` were rewritten in pure Tailwind; `PanchoStatusBanner` moved its hex colors and `@keyframes` to `tailwind.config.js`. | Section 2.1.2 updated (the `usePageStyles` hook no longer exists). No visual or functional change for the user. | ✅ Done |
+| 2026-10-05 | Claude (assisted) | Repository cleanup: `_bmad/` and the stray file `"tash push -m..."` (both tracked in git) were removed. A deployment bug from a previous session was also fixed: the backgrounds of `RaisePancho` and `PanchoStats` used absolute paths (`bg-[url('/images/...')]`) that broke under the GitHub Pages subdirectory. | Repository without tool files foreign to the project. The backgrounds of those two pages now do load on the published site. | ✅ Done |
+| 2026-10-05 | Claude (assisted) | Re-render optimization and dependency cleanup: `GameStateContext` memoizes the context value (`useMemo`) instead of rebuilding it on every render; the 8 `useEffect`s that had `eslint-disable react-hooks/exhaustive-deps` were fixed, adding the real dependencies where it was safe to do so. | Fewer unnecessary re-renders in all consumers of `useGameState()`. Code without silenced lint warnings. | ✅ Done |
+| 2026-10-05 | Claude (assisted) | New Mini Games section: working quiz (`src/pages/minigames/`) integrated into the already existing `/minigames` route, with a new `awardMinigameCoins` action in `state/actions/minigames.js` that awards coins (up to the cap already documented in the FAQ: +5 per mini game). | Section 2.1.3 (new) documents the flow. Still 100% frontend/`localStorage` (Phase 1); it does not touch anything from Phase 2. | ✅ Done |
 | | | | | |
-
