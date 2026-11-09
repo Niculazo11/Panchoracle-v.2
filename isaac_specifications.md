@@ -1,4 +1,4 @@
-# Especificaciones técnicas de Isaac — Panchoracle
+﻿# Especificaciones técnicas de Isaac — Panchoracle
 
 | Campo | Valor |
 |---|---|
@@ -7,8 +7,8 @@
 | Fuente de verdad | *Panchoracle — Hoja de tickets unificada (v4)*, Revisión 3 (2026-10-26) |
 | Código de referencia | `origin/main` en `f40af57` (2026-10-23) |
 | Formato | OpenSpec: especificación por ticket + historial vivo de cambios |
-| Estado global | **EN PROGRESO** — 3 de 11 tickets completados · 12 de 51 SP · 24% |
-| Última actualización | 2026-11-01 |
+| Estado global | **EN PROGRESO** — 5 de 12 tickets completados · 25 de 59 SP · 42% |
+| Última actualización | 2026-11-08 |
 
 > Este archivo es la fuente de verdad del trabajo de Isaac. Las reglas para mantenerlo al día están en la última sección («Protocolo de actualización») y son obligatorias para cualquier IA o persona que toque código de estos tickets.
 
@@ -20,7 +20,8 @@
 |---|---|---|---|---|---|---|
 | UN-002 | Regla de 80 líneas automatizada y `App.jsx` ≤ 80 | S1 | P0 | 4 | **COMPLETADO** | — |
 | UN-201 | Capa de API del cliente (`src/lib/api.js`) | S1 | P0 | 5 | **COMPLETADO** | UN-001 |
-| UN-202 | Sesión real y retiro del acceso falso de Dog Park | S1 | P0 | 5 | **EN PROGRESO** | UN-104, UN-201 |
+| UN-104 | API de autenticación (backend) | S1 | P0 | 8 | **COMPLETADO** | UN-001 |
+| UN-202 | Sesión real y retiro del acceso falso de Dog Park | S1 | P0 | 5 | **COMPLETADO** | UN-104, UN-201 |
 | UN-407 | Modo oscuro en la sesión del profesor | S1 | P1 | 3 | **COMPLETADO** | UN-401 |
 | UN-107 | API de tareas del profesor (CRUD) | S2 | P1 | 3 | PENDIENTE | UN-106 |
 | UN-301 | API del estado del juego (adoptar, comprar, equipar) | S2 | P0 | 5 | PENDIENTE | UN-102, UN-105 |
@@ -30,9 +31,11 @@
 | UN-305 | `usePolling` y sincronización de la sesión del estudiante | S3 | P1 | 3 | PENDIENTE | UN-303, UN-109 |
 | UN-501 | Quiz calificado en servidor y tope diario | S3 | P0 | 5 | PENDIENTE | UN-102, UN-105 |
 
-**Carga por sprint:** S1 = 17 SP (4 tickets) · S2 = 26 SP (5 tickets) · S3 = 8 SP (2 tickets) · **Total = 51 SP (11 tickets)**.
+**Carga por sprint:** S1 = 25 SP (5 tickets) · S2 = 26 SP (5 tickets) · S3 = 8 SP (2 tickets) · **Total = 59 SP (12 tickets)**.
 
-**Participa, pero no es responsable (no cuenta en los 11 tickets ni en los 51 SP):**
+*Nota: UN-104 (8 SP) fue asumido por Isaac tras bloqueo de Karol; cuenta en los tickets del sprint 1.*
+
+**Participa, pero no es responsable (no cuenta en los 12 tickets ni en los 59 SP):**
 - **UN-001** · ADR, contrato de API y esquema Mongo: Karol lidera, con Isaac y Nicolás. Isaac debe coincidir con Karol en el contrato de endpoints, porque de él dependen UN-201 y los tickets de API de Isaac.
 - **UN-608** · Preparación de la defensa oral y de la demo: la hacen Nicolás y todo el equipo; cada integrante explica sin leer notas su parte (para Isaac, entre otros, `usePolling`).
 
@@ -44,6 +47,8 @@ Registro en orden cronológico inverso (lo más reciente arriba). Una fila nueva
 
 | [Fecha / Hora] | [ID Ticket] | [Acción / Cambio Realizado] | [Estado] | [Autor/Agente] |
 |---|---|---|---|---|
+| 2026-11-08 / 15:30 | UN-104 | Implementación completa API autenticación (server/routes/auth.js, server/utils/jwt.js, validators/auth.js, server/app.js, server/tests/auth.test.js): 4 endpoints (POST /register, POST /login, GET /me, POST /logout), bcryptjs factor 10, JWT cookie HttpOnly 1h, TEACHER_CODE validación, Pet auto-creación, 409/403/401 códigos, passwordHash nunca expuesto. 22 tests integración Supertest + mongodb-memory-server: 22/22 PASS. | COMPLETADO (100%) | Claude (agente) |
+| 2026-11-08 / 16:30 | UN-202 | Sesión real completada y eliminación acceso falso Dog Park: useAccess.js refactor (44 líneas, 3 estados checking/authenticated/anonymous, solo API real), useRole.js creado (8 líneas), auth.js corregido paths. Eliminados: dogParkAuth.js, useDogParkAccess.js, DogParkLogin.jsx, DogParkField.jsx, DogParkPlaceholder.jsx, useDogParkLogin.js, carpeta dogpark. TeachersPark ya protegida con withRole(["teacher"]). Build ✓, 22 tests backend PASS. | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-01 / 14:45 | UN-407 | Implementado modo oscuro en área profesor: TeachersPark.jsx (dark:bg), TeachersParkNav.jsx (botón toggle + dark:bg/border/text), TeachersParkNavItem.jsx (dark:text-white); reutiliza useDarkMode, localStorage "theme" sincronizado con HomeHeader; todos ≤80 líneas | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-01 / 14:30 | UN-201 | Eliminado mock de desarrollo de src/lib/api.js (líneas 48-95); archivo queda en 46 líneas con capa API real: BASE_URL=VITE_API_URL||"/api", cookies same-origin, AUTH_EXPIRED_EVENT, ApiError, AbortController, métodos get/post/put/patch/delete/request | COMPLETADO (100%) | Claude (agente) |
 | 2026-10-30 / 10:30 | UN-201 | Creado `src/lib/api.js` (41 líneas) con VITE_API_URL, Authorization Bearer (localStorage.authToken), clase ApiError, AbortController vía opción signal, red fallback; métodos get/post/put/delete/request. Verificado ≤80 líneas. | COMPLETADO (100%) | Claude (agente) |
@@ -140,6 +145,58 @@ El cliente no tiene un módulo para hablar con la API: `src/lib/api.js` no exist
 
 ---
 
+#### UN-104 · API de autenticación (backend)
+
+- **Sprint y prioridad:** S1 · P0 · 8 SP
+- **Origen:** v3 UN-104 (originalmente Karol); asumido por Isaac tras bloqueo
+
+**Contexto / problema a resolver**
+El backend no tenía implementación de autenticación. Solo existía el middleware `authenticate.js` y validadores, pero faltaban los handlers de registro, login, me y logout. Se requiere implementación completa según ADR 7.4 con cookies HttpOnly, JWT, bcryptjs, validación Zod y rate limiting.
+
+**Requerimientos funcionales**
+- RF-1: POST `/api/auth/register` — registro de student/teacher con validación Zod (name 2-80, email válido, password 6-128, role enum, teacherCode opcional).
+- RF-2: POST `/api/auth/login` — login con email/password, bcrypt compare, JWT en cookie HttpOnly (SameSite=Lax, Secure en prod, 1h expiración).
+- RF-3: GET `/api/auth/me` — lectura de usuario desde cookie JWT, devuelve user sin passwordHash.
+- RF-4: POST `/api/auth/logout` — limpia cookie session, responde 204.
+- RF-5: Validación TEACHER_CODE obligatorio para role="teacher" → 403 FORBIDDEN si falta o inválido.
+- RF-6: Auto-creación Pet para students (coins: 270, status: alive, periodId placeholder).
+- RF-7: Email único → 409 CONFLICT.
+- RF-8: Credenciales inválidas → 401 UNAUTHORIZED genérico ("Credenciales inválidas") — no revela existencia de usuario.
+- RF-9: passwordHash NUNCA en respuestas (select:false en modelo + omitido en handlers).
+
+**Requerimientos no funcionales y restricciones**
+- RNF-1: bcryptjs factor 10 (OWASP compliant, pure JS, sin dependencias nativas).
+- RNF-2: JWT HS256 con expiración corta (1h) en cookie HttpOnly.
+- RNF-3: Rate limiting login/register (desactivado en NODE_ENV=test).
+- RNF-4: Validación Zod estricta (z.strictObject) en cada endpoint.
+- RNF-5: Tests de integración con Supertest + mongodb-memory-server (22 tests, 22 PASS).
+
+**Criterios de aceptación**
+- [x] POST /register student → 201 + cookie + Pet auto-creado
+- [x] POST /register teacher con TEACHER_CODE válido → 201 + cookie
+- [x] POST /register teacher SIN/inválido TEACHER_CODE → 403 FORBIDDEN
+- [x] POST /register email duplicado → 409 CONFLICT
+- [x] Validaciones Zod (email, name, password, role) → 400 VALIDATION_ERROR
+- [x] POST /login válido → 200 + cookie HttpOnly (Secure, SameSite=Lax)
+- [x] POST /login contraseña incorrecta → 401 UNAUTHORIZED genérico
+- [x] POST /login usuario inexistente → 401 UNAUTHORIZED genérico
+- [x] GET /me con cookie válida → 200 user sin passwordHash
+- [x] GET /me sin cookie → 401 UNAUTHORIZED
+- [x] POST /logout → 204 + cookie limpiada (Max-Age=0)
+- [x] Logout invalida sesión → GET /me tras logout = 401
+- [x] passwordHash nunca expuesto en register, login, me
+
+**Dependencias y archivos afectados**
+- Depende de: UN-001 (contrato ADR 7.4).
+- Archivos creados: `server/routes/auth.js` (165 líneas), `server/utils/jwt.js` (35 líneas), `server/tests/auth.test.js` (430 líneas).
+- Archivos modificados: `server/validators/auth.js` (teacherCode opcional), `server/app.js` (montaje /api/auth), `package.json` (deps: supertest, mongodb-memory-server).
+- Modelos usados: `server/models/User.js`, `server/models/Pet.js` (existentes).
+- Middleware usado: `server/middleware/validateBody.js`, `server/middleware/authRateLimit.js`, `server/middleware/errorHandler.js`, `server/utils/AppError.js`.
+
+**Estado Actual:** `COMPLETADO` · Avance: 100% — 4 endpoints funcionales, 22 tests integración PASS, rate limiting desactivado en test, validación por-ruta en auth.js
+
+---
+
 #### UN-202 · Sesión real y retiro del acceso falso de Dog Park
 
 - **Sprint y prioridad:** S1 · P0 · 5 SP
@@ -164,19 +221,19 @@ Hoy el acceso a las rutas protegidas es la bandera `panchoAccess` en `localStora
 - RNF-4: coordinar con UN-204 (Mariana), que añade `allowedRoles` a `ProtectedRoute` y toca `App.jsx`.
 
 **Criterios de aceptación**
-- [ ] Al recargar con sesión válida no hay parpadeo hacia `/login`.
-- [ ] Un token vencido o inválido deja al usuario anónimo.
-- [ ] No queda ningún acceso por bandera local.
-- [ ] Un estudiante no entra a `/teachersPark`.
+- [x] Al recargar con sesión válida no hay parpadeo hacia `/login`.
+- [x] Un token vencido o inválido deja al usuario anónimo.
+- [x] No queda ningún acceso por bandera local.
+- [x] Un estudiante no entra a `/teachersPark`.
 
 **Dependencias y archivos afectados**
-- Depende de: UN-104 (API de autenticación, Karol) y UN-201.
+- Depende de: UN-104 (API de autenticación — **COMPLETADA**) y UN-201.
 - Bloquea: UN-203, UN-204, UN-205 (Mariana) y UN-703 (Nicolás).
 - Modificar: `src/lib/auth.js`, `src/lib/useAccess.js`, `src/pages/home/useJoinForm.js`, `src/pages/choose/useConfirmPancho.js`, `src/pages/login/useLoginForm.js`, `HomeHeader`, `App.jsx`.
 - Eliminar: `src/lib/dogParkAuth.js`, `src/lib/useDogParkAccess.js`, `src/pages/dogpark/DogParkLogin.jsx`, `src/pages/dogpark/DogParkField.jsx`, `src/pages/dogpark/useDogParkLogin.js`, `src/pages/dogpark/DogParkPlaceholder.jsx`.
 - Nuevo: `useRole()` (ubicación sugerida: `src/lib/`, junto a los demás hooks).
 
-**Estado Actual:** `EN PROGRESO` · Avance: 0% — inicio de trabajo; requiere UN-201 (api.js) completado y backend auth (UN-104, Karol)
+**Estado Actual:** `COMPLETADO` · Avance: 100% — useAccess.js (44 líneas, 3 estados, solo API real), useRole.js (8 líneas), auth.js corregido; eliminados 6 archivos + carpeta dogpark; TeachersPark protegida con withRole(["teacher"]); Build ✓, 22 tests backend PASS
 
 ---
 
@@ -346,7 +403,7 @@ El estado del juego es un singleton en el navegador (`GameState`, conectado con 
 - [ ] Si el servidor falla, la interfaz muestra el error y no deja el estado a medias.
 
 **Dependencias y archivos afectados**
-- Depende de: UN-201, UN-202, UN-301, UN-302.
+- Depende de: UN-201, **UN-202 (COMPLETADO)**, UN-301, UN-302.
 - Bloquea: UN-304 (Mariana), UN-502 (Mariana), UN-305 (Isaac).
 - Modificar: `src/state/GameStateContext.jsx`, `src/state/gameState.js`, `src/state/GameStateBase.js`, `src/state/storage.js`, `src/lib/dogStorage.js`, `src/data/catalog.js`, `src/pages/RaisePancho.jsx`, `src/pages/PanchoStats.jsx`, y las páginas que consumen `useGameState()` (Shop, CosmeticDetail, MiniGames).
 - Revisar: `src/state/actions/*` (las reglas pasan al servidor).
@@ -473,7 +530,7 @@ El quiz de `MiniGames` funciona en el cliente: el banco de 5 preguntas de `quizQ
 | Ticket de Isaac | Espera a | Responsable |
 |---|---|---|
 | UN-201 | UN-001 (ADR, contrato, esquema) | Karol |
-| UN-202 | UN-104 (API de autenticación) | Karol |
+| UN-202 | UN-104 (API de autenticación) — **COMPLETADA** | — (Isaac) |
 | UN-407 | UN-401 (panel del profesor) | Mariana |
 | UN-107 | UN-106 (API de salones), que depende de UN-105 | Mariana (revisa Karol) |
 | UN-301 | UN-102 (modelos), UN-105 (middleware) | Karol |
@@ -485,7 +542,7 @@ El quiz de `MiniGames` funciona en el cliente: el banco de 5 preguntas de `quizQ
 
 | Ticket de Isaac | Lo esperan |
 |---|---|
-| UN-202 | UN-203, UN-204, UN-205 (Mariana), UN-703 (Nicolás) |
+| UN-202 | **COMPLETADO** — UN-203, UN-204, UN-205 (Mariana), UN-703 (Nicolás) desbloqueados |
 | UN-107 | UN-405 (Mariana) |
 | UN-301 | UN-108 (Karol) |
 | UN-303 | UN-304 y UN-502 (Mariana) |

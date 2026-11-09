@@ -5,6 +5,7 @@ import express from "express";
 import { corsMiddleware } from "./config/cors.js";
 import { ensureDb } from "./config/db.js";
 import healthRouter from "./routes/health.js";
+import authRouter from "./routes/auth.js";
 import classroomsRouter from "./routes/classrooms.js";
 import { authenticate } from "./middleware/authenticate.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
@@ -23,11 +24,8 @@ app.use(express.json({ limit: "10kb" })); // UN-103: límite de tamaño del body
 app.use(sanitizeInput); // UN-103: elimina operadores NoSQL ($ne, $gt, ...)
 app.use(hideSensitiveFields); // UN-103: ninguna respuesta incluye passwordHash
 
-// UN-103: protección de login y registro (rate limit en MongoDB + validación estricta).
-// Solo ejecutan comprobaciones y siguen con next(): el handler real lo agrega UN-104
-// montando su router en "/api/auth" DESPUÉS de estas líneas.
-app.post("/api/auth/login", ensureDb, loginRateLimit, validateBody(loginSchema));
-app.post("/api/auth/register", ensureDb, registerRateLimit, validateBody(registerSchema));
+// UN-104: Router de autenticación con middlewares de rate limit y validación
+app.use("/api/auth", ensureDb, authRouter);
 
 // "ensureDb" asegura que Mongo esté conectado (reutiliza la conexión cacheada).
 app.use("/api/health", ensureDb, healthRouter);

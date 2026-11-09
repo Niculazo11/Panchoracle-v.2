@@ -20,5 +20,5 @@ export function clearAuthToken() {
 
 export async function revokeAccess() {
   // Llama al backend para limpiar la cookie httpOnly
-  await api.post("/api/auth/logout").catch(() => {});
+  await api.post("/auth/logout").catch(() => {});
 }

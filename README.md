@@ -1,4 +1,4 @@
-# Panchoracle Milestone V2
+# Panchoracle Milestone
 
 ## Isaac Bonilla Cerón
 ## Mariana Gonzales Correa

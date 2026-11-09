@@ -21,10 +21,11 @@ export const loginSchema = z.strictObject({
   password: z.string().min(1).max(128),
 });
 
-// POST /api/auth/register → { name, email, password, role }
+// POST /api/auth/register → { name, email, password, role, teacherCode? }
 export const registerSchema = z.strictObject({
   name: z.string().trim().min(2).max(80), // mismos límites que User.name
   email,
   password: z.string().min(6).max(128), // mínimo 6 = validatePassword() del frontend
   role: z.enum(["student", "teacher"]),
+  teacherCode: z.string().optional(), // requerido solo si role === "teacher" (validado en handler)
 });

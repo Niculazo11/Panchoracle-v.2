@@ -46,6 +46,11 @@ async function hit(key, windowMs) {
 
 function createAuthRateLimit({ name, windowMs, rules, resetOnSuccess = false }) {
   return async function authRateLimit(req, res, next) {
+    // Skip rate limiting in test environment
+    if (process.env.NODE_ENV === "test") {
+      return next();
+    }
+
     indexesReady ??= RateLimit.init().catch((error) => {
       indexesReady = undefined;
       throw error;
