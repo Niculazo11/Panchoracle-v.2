@@ -5,6 +5,8 @@
 // No localStorage flag anymore; token lives in httpOnly cookie managed by backend.
 // useAccess() handles login/logout via API calls to /api/auth/*.
 
+import { api } from "./api.js";
+
 export function getAuthToken() {
   // httpOnly cookie cannot be read from JS; this returns null.
   // Kept for API compatibility if needed.
@@ -14,4 +16,9 @@ export function getAuthToken() {
 export function clearAuthToken() {
   // httpOnly cookie cleared by backend on POST /api/auth/logout.
   // Kept for API compatibility if needed.
+}
+
+export async function revokeAccess() {
+  // Llama al backend para limpiar la cookie httpOnly
+  await api.post("/api/auth/logout").catch(() => {});
 }
