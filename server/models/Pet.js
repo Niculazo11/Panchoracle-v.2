@@ -56,6 +56,22 @@ const petSchema = new Schema(
       enum: { values: ["alive", "dead"], message: "status debe ser alive o dead" },
       default: "alive",
     },
+        // [Rev. 2] cosmeticId comprados, sin duplicados.
+    inventory: {
+      type: [Number],
+      default: [],
+      validate: {
+        validator: (v) => v.every(Number.isInteger) && new Set(v).size === v.length,
+        message: "inventory no admite duplicados ni valores no enteros",
+      },
+    },
+    // [Rev. 2] slot -> cosmeticId | null
+    equipped: {
+      head: { type: Number, default: null },
+      face: { type: Number, default: null },
+      neck: { type: Number, default: null },
+      body: { type: Number, default: null },
+    },
   },
   {
     collection: "pets",
