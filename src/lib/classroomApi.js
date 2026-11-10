@@ -4,11 +4,13 @@ import { api } from "./api.js";
 
 // Returns the teacher's classroom, or null when they have none yet.
 export async function getMyClassroom(signal) {
-  const data = await api.get("/classrooms", { signal });
-  if (data.classrooms.length === 0) {
-    return null;
+  try {
+    const data = await api.get("/classrooms/me", { signal });
+    return data.classroom;
+  } catch (error) {
+    if (error.status === 404) return null;
+    throw error;
   }
-  return data.classrooms[0];
 }
 
 export async function createClassroom(name, startDate, endDate) {

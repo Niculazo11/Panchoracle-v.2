@@ -10,6 +10,7 @@ import {
   joinClassroomSchema,
 } from "../validators/classroom.js";
 import * as service from "../services/classroomService.js";
+import AppError from "../utils/AppError.js";
 
 const router = Router();
 const teacherOnly = authorize("teacher");
@@ -21,12 +22,12 @@ router.post("/", teacherOnly, validateBody(createClassroomSchema), async (req, r
   res.status(201).json({ classroom: service.toClassroomJson(classroom) });
 });
 
-// GET /api/classrooms -> 200
-router.get("/", async (req, res) => {
+// GET /api/classrooms -> 200 { classroom } | 404
+router.get("/me", async (req, res) => {
   const classrooms = await service.listClassrooms(req.user);
   const items = [];
-  for (let i = 0; i < classrooms.length; i++) items.push(service.toClassroomJson(classrooms[i]));
-  res.status(200).json({ classrooms: items });
+  if (!classroom) throw new AppError(404, "NOT_FOUND", "Aún no perteneces a un classroom");
+  res.status(200).json({ classrooms: service.toClassroomJson(classroom) });
 });
 
 // POST /api/classrooms/join -> 201 first time, 200 if the student was already in it
