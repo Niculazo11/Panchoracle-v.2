@@ -15,7 +15,7 @@ const MINUTE = 60 * 1000;
 // Los topes por IP son altos a propósito: en un aula, decenas de estudiantes
 // comparten la IP pública del colegio (NAT). Ajustar aquí si hace falta.
 export const LOGIN_MAX_ATTEMPTS = 5; // por IP + email (frena fuerza bruta a una cuenta)
-export const LOGIN_IP_MAX_ATTEMPTS = 100; // por IP (frena probar muchos emails desde una IP)
+export const LOGIN_IP_MAX_ATTEMPTS = 10; // por IP (frena probar muchos emails desde una IP)
 export const LOGIN_WINDOW_MS = 15 * MINUTE;
 export const REGISTER_MAX_ATTEMPTS = 30; // por IP (una clase completa registrándose)
 export const REGISTER_WINDOW_MS = 60 * MINUTE;
@@ -111,5 +111,8 @@ export const loginRateLimit = createAuthRateLimit({
 export const registerRateLimit = createAuthRateLimit({
   name: "register",
   windowMs: REGISTER_WINDOW_MS,
-  rules: [{ byEmail: false, max: REGISTER_MAX_ATTEMPTS }],
+  rules: [
+    { byEmail: true, max: REGISTER_MAX_ATTEMPTS },
+    { byEmail: false, max: REGISTER_IP_MAX_ATTEMPTS },
+  ],
 });
