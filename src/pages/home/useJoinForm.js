@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { validateJoinForm, EMPTY_JOIN_ERRORS } from "../../lib/formValidators.js";
 import { hasErrors } from "../../lib/validation.js";
@@ -9,7 +10,7 @@ export function useJoinForm() {
     const [formData, setFormData] = useState(EMPTY_FORM);
     const [errors, setErrors] = useState(EMPTY_JOIN_ERRORS);
     const [formSuccessText, setFormSuccessText] = useState("Thanks for raising a Pancho!");
-    const { login } = useAccess();
+    const { register } = useAccess();
 
     function handleChange(field) {
         return (event) => {
@@ -31,7 +32,13 @@ export function useJoinForm() {
         event.preventDefault();
 
         try {
-            await login(formData.email.trim(), formData.password);
+            await register({
+                name: formData.name.trim(),
+                email: formData.email.trim(),
+                password: formData.password,
+                role: "student",
+            });
+
             setFormSuccessText("Welcome to Raise a Pancho!");
             setFormData(EMPTY_FORM);
             setErrors(EMPTY_JOIN_ERRORS);
