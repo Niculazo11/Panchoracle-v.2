@@ -58,6 +58,7 @@ const classroomSchema = new Schema(
       type: String,
       required: [true, "joinCode es obligatorio"],
       trim: true,
+      uppercase: true, // ADR 8.2: se guarda en mayúsculas
       maxlength: 32, // decisión técnica
       unique: true,
     },
