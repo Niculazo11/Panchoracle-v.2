@@ -1,6 +1,6 @@
 # Raise a Pancho — Project Technical Documentation
 
-> **Document status:** generated from a real review of the `Panchoracle-v.2` repository code (frontend snapshot). Phase 1, as described here, **is implemented and verified against the code**. Phase 2 (backend, JWT, MongoDB, Helmet, deployment on Vercel) is documented as a **target architecture / work plan**, because that code **does not exist in this repository yet**. When it is implemented, every Phase 2 section must be updated to reflect the real code, just as was done with Phase 1.
+> **Document status:** generated from a real review of the repository code. Phase 1 (frontend) and the first part of Phase 2 (Express API, MongoDB models, authentication with sessions, classrooms, security middleware) **are implemented and verified against the code**. The rest of Phase 2 (assignments, submissions, Pancho gameplay endpoints, production verification on Vercel) is documented as **target architecture / work plan**. Every section must be updated when its code changes.
 
 ---
 
@@ -13,7 +13,7 @@ The project is designed around two user roles:
 - **Student:** adopts a Pancho, completes assignments, earns coins, buys and equips cosmetics, and checks their own statistics.
 - **Teacher:** creates and manages assignments, registers/manages students, and supervises the progress of the course.
 
-> **Status note:** in the current code, the **Teacher** role and the backend that would support it are not implemented. Today the project is a working React frontend that simulates the Student's progress with data stored in `localStorage`, with no backend and no real database. Section 3 details what exists and what is missing for each role.
+> **Status note:** the **Teacher** role and the backend exist: `server/` provides registration, login, logout, current user and classroom endpoints on MongoDB. The game state of the Student (hunger, coins, cosmetics, quiz) is still simulated in the frontend with `localStorage` until the Pancho endpoints are connected. Section 3 details what exists and what is missing for each role.
 
 ---
 
@@ -37,8 +37,8 @@ Phase 1 built the complete frontend in React, with all data persisted locally in
 - **Vite 5** as bundler/dev server.
 - **Tailwind CSS 3** for styling.
 - **Game state:** a custom `Context` (`src/state/GameStateContext.jsx` + `src/state/gameState.js`) that centralizes the student's and the Pancho's state (hunger, happiness, coins, equipped cosmetics, active assignment), with pure actions separated by domain in `src/state/actions/` (`pancho.js`, `shop.js`, `assignment.js`, `lifecycle.js`).
-- **Persistence:** `localStorage`, through `src/state/storage.js` and `src/lib/dogStorage.js`. There are no calls to a backend of our own; the only real network request is to the public API `https://dog.ceo/api/...` for one of the dog images when choosing a pet (see `src/lib/dogApi.js`).
-- **Authentication:** the client no longer uses the `panchoAccess` flag. `src/lib/useAccess.js` requests the session from `GET /api/auth/me` (httpOnly cookie) and exposes `status`, `user`, `role`, `login` and `logout`; `useRole()` returns the role. `src/lib/auth.js` is kept only for backwards compatibility. 🟡 The auth backend (UN-104) does not exist yet.
+- **Persistence:** the game state still lives in `localStorage`, through `src/state/storage.js` and `src/lib/dogStorage.js`. Accounts, sessions and classrooms go through our own API (`src/lib/api.js`, base `/api`), plus the public API `https://dog.ceo/api/...` for the Pancho images (see `src/lib/dogApi.js`).
+- **Authentication:** `AccessProvider` (`src/lib/AccessContext.jsx`, mounted in `main.jsx`) loads the session from `GET /api/me` and exposes `status`, `user`, `role`, `login`, `register` and `logout` through `useAccess()`; `useRole()` returns the role. The session is an httpOnly cookie (`session`) issued by the server, so the client never handles the token. Any `401` outside login/register closes the client session (`auth:expired` event). `src/lib/auth.js` is kept only for backwards compatibility.
 
 #### 2.1.1 Route table (`src/routes/routesConfig.jsx`, rendered by `src/App.jsx`)
 
@@ -58,7 +58,7 @@ Phase 1 built the complete frontend in React, with all data persisted locally in
 
 Private routes are wrapped in `<ProtectedRoute>`, which reads `useAccess()` (`checking` / `authenticated` / `anonymous`): while it is checking it renders nothing; if there is no session it redirects to `/login`, saving the origin route in `state.from`. `/teachersPark` uses `withRole(["teacher"])` (`src/routes/withRole.js`), which additionally requires the role.
 
-> 🟡 The session is loaded with `GET /api/auth/me`, but the server does not have auth routes yet (UN-104). Until then the client always stays anonymous.
+> The session comes from the server (`GET /api/me`), and the role is read from the database on every request, never from the client. `/teachersPark` is guarded in the client by `withRole(["teacher"])` and the API enforces the role with `authorize`.
 
 **Removed (UN-202):** `dogParkAuth.js`, `useDogParkAccess.js`, `useDogParkLogin.js` and the `pages/dogpark/` folder (`DogParkLogin`, `DogParkField`, `DogParkPlaceholder`). `DogParkPlaceholder` is no longer listed. Teacher folder: `src/pages/teacherspark/` (`TeachersPark`, `TeachersParkNav`, `TeachersParkNavItem`, `ParkDog`, `navItems.js`, `parkDogs.js`; the latter with hard-coded data that UN-403 will replace).
 
@@ -82,18 +82,18 @@ Other custom hooks (15 in use in total, counting `useDogImages`): `useAccess`, `
 - **`src/state/actions/minigames.js` → `awardMinigameCoins`:** follows the same pattern as the rest of `state/actions/` (receives the state, returns a new state without mutating). It awards 1 coin per correct answer, up to the cap `MINIGAME_REWARD_COINS = 5` defined in `state/constants.js` (the same value the `AboutUs` FAQ already documented: "+5 coins" per completed mini game). Coins are only awarded when the student explicitly presses "Claim coins", never automatically.
 - It remains 100% `localStorage` (Phase 1): it does not depend on anything from Phase 2.
 
-### 2.2 Phase 2 — Backend, Security and Full Stack Deployment (🔲 Planned, not implemented)
+### 2.2 Phase 2 — Backend, Security and Full Stack Deployment (🟡 In progress)
 
-> Everything that follows in this section is the **target design**. No backend file exists yet in the repository (there is no `server/` folder, no `package.json` with `express`/`jsonwebtoken`/`mongoose`/`helmet`, and no `vercel.json`). This section serves as a specification to implement and as a checklist to mark/update as it gets built.
+> The API in `server/` (Express 5 + Mongoose) is implemented for authentication, the current user and classrooms. Assignments, submissions, Pancho gameplay endpoints and the seed script are still pending or recently added; this section is updated as each one is verified.
 
-**Phase 2 goal:** replace `localStorage` and the client's access flag with a real backend with database persistence and server-verified authentication, without removing or breaking the Phase 1 frontend (the `GameStateContext` data contract must be able to be fed from the API instead of from `localStorage`).
+**Phase 2 goal:** replace `localStorage` and the client's access flag with a real backend with database persistence and server-verified authentication, without removing or breaking the Phase 1 frontend.
 
-| Requirement | Status | What is left to build |
+| Requirement | Status | Current state / what is left |
 |---|---|---|
-| Full CRUD against MongoDB Atlas (no in-memory data) | 🔲 Not implemented | Node/Express server, Mongoose models (`Student`, `Teacher`, `Assignment`, `Pancho`/`Dog`, `Cosmetic`/inventory), connection to Atlas through an environment variable, and real CRUD endpoints. |
-| JWT with `Student` and `Teacher` roles, validated in the backend | 🔲 Not implemented | Login endpoint that issues a signed JWT, token verification middleware, role authorization middleware that blocks on the server (not just hides in the UI) the Teacher-only actions. |
-| Full stack deployment on Vercel (frontend + API) | 🔲 Not implemented | Today the frontend is deployed on **GitHub Pages**, not on Vercel. It would be necessary to decide whether Vercel replaces GitHub Pages for the frontend or coexists with it, and to deploy the backend as serverless functions or a Node server on Vercel. |
-| Security: XSS, NoSQL injection, `helmet` | 🔲 Not implemented | Add `helmet` to the Express server, input sanitization (e.g. `express-mongo-sanitize` against NoSQL injection, `express-validator`/`zod` to validate payloads), escaping/sanitization of any HTML generated from user input to mitigate XSS, explicitly configured CORS, rate limiting on sensitive endpoints (login). |
+| Full CRUD against MongoDB Atlas (no in-memory data) | 🟡 In progress | Models `User`, `Classroom`, `Assignment`, `Pet`, `Submission`, `MinigamePlay`, `Cosmetic`, `QuizQuestion`; endpoints for auth, `/api/me` and classrooms. Pending: assignment, submission and Pancho endpoints. |
+| JWT with `Student` and `Teacher` roles, validated in the backend | 🟡 In progress | JWT (HS256, 1 hour) in an httpOnly cookie; `authenticate` loads the user and its role from the database; `authorize(...roles)` blocks on the server. Pending: apply it to the endpoints that are still missing. |
+| Full stack deployment on Vercel (frontend + API) | 🟡 In progress | One Vercel project serves the frontend and the API (`api/index.js`, `vercel.json`). Pending: environment variables, production verification and the delivery URL. |
+| Security: XSS, NoSQL injection, `helmet` | 🟡 In progress | Done: `helmet`, NoSQL sanitization, strict `zod` validation, rate limiting on login/register, CORS restricted to the same origin and configured origins, `passwordHash` never serialized. Pending: review escaping of free text (Pancho name, answers) and a stronger password rule. |
 
 #### 2.2.1 Proposed target architecture
 
@@ -121,7 +121,7 @@ This migration implies, in the frontend, gradually replacing:
 
 ### 3.1 Current state (Phase 1)
 
-De facto, only a **Student** flow exists: anyone who completes the `ChoosePancho` form "creates an account" locally (name saved in `localStorage`) and gets access to the protected routes. There is no Teacher role or real distinction of permissions; nothing prevents any browser user from viewing or modifying any data, because everything lives in their own `localStorage`.
+Both roles exist in the system. Students register from the Home form and teachers register with the `TEACHER_CODE` through the API. The server stores the role and enforces it; the client shows `/teachersPark` only to teachers. The student's game state is still local until the Pancho endpoints are connected.
 
 ### 3.2 Target permission design (Phase 2, to be implemented)
 
@@ -142,15 +142,17 @@ De facto, only a **Student** flow exists: anyone who completes the `ChoosePancho
 
 ## 4. API Endpoints and Security (CRUD, JWT, Helmet, Sanitization)
 
-> ⚠️ None of the endpoints listed below exists yet in the repository. They are documented as the target contract to implement in Phase 2, so that frontend and backend are developed against the same reference. When implementing them, update this table with the real route, and move this warning note.
+> The endpoints in 4.1 are implemented. The classroom and `/api/me` endpoints are documented in `docs/classrooms-api.md`. Sections 4.2 and 4.3 remain the target contract and are not implemented yet.
 
 ### 4.1 Authentication
 
 | Method | Route | Required role | Description |
 |---|---|---|---|
-| `POST` | `/api/auth/register` | Public | Creates a user (`role: "student" \| "teacher"`), hashes the password (`bcrypt`). |
-| `POST` | `/api/auth/login` | Public | Verifies credentials, issues a JWT signed with `{ sub, role }` and a short expiration. |
-| `POST` | `/api/auth/logout` | Authenticated | Invalidates the session (if an httpOnly cookie is used) or is a no-op if the token is discarded on the client. |
+| `POST` | `/api/auth/register` | Public | Body `{ name, email, password, role, teacherCode? }` (strict `zod`, password 6–128 characters). Hashes with `bcrypt`, starts the session cookie and returns `201 { user }`. `403` if the teacher code is wrong, `409` if the email exists. Rate limited. |
+| `POST` | `/api/auth/login` | Public | Body `{ email, password }`. Returns `{ user }` and sets the session cookie, or `401` "Credenciales inválidas". Rate limited (`429`). |
+| `POST` | `/api/auth/logout` | Public | Clears the session cookie and returns `204`. |
+| `GET` | `/api/me` | Authenticated | Returns the current user, with the role read from the database. |
+
 
 ### 4.2 Students
 
@@ -203,37 +205,33 @@ npm run build
 npm run preview
 ```
 
-**Current deployment (GitHub Pages):**
+**Deployment (Vercel):** a single project serves the frontend and the API from the repository root (Framework Preset: Vite, build `npm run build`, output `dist`). See section 5.2.
 
 ```bash
 npm run deploy
 ```
 
 
-### 5.2 Backend and Full Stack deployment on Vercel (Phase 2 — pending)
-
-This subsection is a template to complete when the backend exists:
+### 5.2 Backend and Full Stack deployment on Vercel
 
 ```bash
-# Inside the future server folder (e.g. /server)
 npm install
-cp .env.example .env   # define MONGODB_URI, JWT_SECRET, PORT, etc.
-npm run dev            # local server, e.g. http://localhost:4000
+cp .env.example .env
+npm run dev:server
+npm run dev
 ```
 
-Minimum environment variables to define (do not commit `.env`):
+The API listens on `http://localhost:3000`; Vite proxies `/api` to it. Environment variables (do not commit `.env`):
 
 | Variable | Description |
 |---|---|
 | `MONGODB_URI` | Connection string to MongoDB Atlas. |
-| `JWT_SECRET` | Secret to sign/verify tokens. |
-| `CORS_ORIGIN` | Allowed frontend domain. |
+| `JWT_SECRET` | Secret to sign/verify tokens. Required: without it login and register fail with `500`. |
+| `TEACHER_CODE` | Code a teacher must enter to register. |
+| `PORT` | Local API port (`3000`). |
+| `ALLOWED_ORIGINS` | Optional extra allowed origins; normally empty because frontend and API share a domain. |
 
-Steps still to be decided and documented when the deployment is implemented:
-1. Whether the frontend migrates from GitHub Pages to Vercel, or whether Vercel hosts only the API and GitHub Pages keeps serving the frontend.
-2. Project configuration on Vercel (`vercel.json` if needed, environment variables in the Vercel dashboard, not in the repo).
-3. Final delivery URL, to be replaced here once deployed.
-
+Vercel: leave Root Directory empty, load the variables in the dashboard (never in the repo), and allow `0.0.0.0/0` in Atlas Network Access. Delivery URL: pending.
 ---
 
 ## 6. Document Update Policy (mandatory)

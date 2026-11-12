@@ -18,6 +18,7 @@ export const LOGIN_MAX_ATTEMPTS = 5; // por IP + email (frena fuerza bruta a una
 export const LOGIN_IP_MAX_ATTEMPTS = 10; // por IP (frena probar muchos emails desde una IP)
 export const LOGIN_WINDOW_MS = 15 * MINUTE;
 export const REGISTER_MAX_ATTEMPTS = 30; // por IP (una clase completa registrándose)
+export const REGISTER_IP_MAX_ATTEMPTS = 30;
 export const REGISTER_WINDOW_MS = 60 * MINUTE;
 
 let indexesReady; // crea (una vez por instancia) el índice único y el TTL de rate_limits
