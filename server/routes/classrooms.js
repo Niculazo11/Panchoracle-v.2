@@ -22,12 +22,11 @@ router.post("/", teacherOnly, validateBody(createClassroomSchema), async (req, r
   res.status(201).json({ classroom: service.toClassroomJson(classroom) });
 });
 
-// GET /api/classrooms -> 200 { classroom } | 404
+// GET /api/classrooms/me -> 200 { classroom } | 404 (ADR 7.3)
 router.get("/me", async (req, res) => {
-  const classrooms = await service.listClassrooms(req.user);
-  const items = [];
+  const [classroom] = await service.listClassrooms(req.user);
   if (!classroom) throw new AppError(404, "NOT_FOUND", "Aún no perteneces a un classroom");
-  res.status(200).json({ classrooms: service.toClassroomJson(classroom) });
+  res.status(200).json({ classroom: service.toClassroomJson(classroom) });
 });
 
 // POST /api/classrooms/join -> 201 first time, 200 if the student was already in it

@@ -27,6 +27,12 @@ export function errorHandler(err, req, res, next) {
     status = 400;
     code = "VALIDATION_ERROR";
     message = "El cuerpo de la petición es demasiado grande";
+  } else if (/^Mongo(ServerSelection|Network|NetworkTimeout|NotConnected|PoolCleared)/.test(err.name)) {
+    // Atlas inalcanzable DESPUÉS de haber conectado (la conexión cacheada sigue "viva" pero cae).
+    status = 503;
+    code = "SERVICE_UNAVAILABLE";
+    message = "Base de datos no disponible. Inténtalo de nuevo en un momento.";
+    logError(err, req);
   } else {
 
     // Error inesperado: el detalle real solo va a la consola del servidor,

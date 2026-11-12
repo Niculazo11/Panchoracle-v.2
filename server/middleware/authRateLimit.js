@@ -15,10 +15,10 @@ const MINUTE = 60 * 1000;
 // Los topes por IP son altos a propósito: en un aula, decenas de estudiantes
 // comparten la IP pública del colegio (NAT). Ajustar aquí si hace falta.
 export const LOGIN_MAX_ATTEMPTS = 5; // por IP + email (frena fuerza bruta a una cuenta)
-export const LOGIN_IP_MAX_ATTEMPTS = 10; // por IP (frena probar muchos emails desde una IP)
+export const LOGIN_IP_MAX_ATTEMPTS = 300; // por IP (frena probar muchos emails desde una IP)
 export const LOGIN_WINDOW_MS = 15 * MINUTE;
 export const REGISTER_MAX_ATTEMPTS = 30; // por IP (una clase completa registrándose)
-export const REGISTER_IP_MAX_ATTEMPTS = 30;
+export const REGISTER_IP_MAX_ATTEMPTS = 120;
 export const REGISTER_WINDOW_MS = 60 * MINUTE;
 
 let indexesReady; // crea (una vez por instancia) el índice único y el TTL de rate_limits
@@ -82,7 +82,7 @@ function createAuthRateLimit({ name, windowMs, rules, resetOnSuccess = false }) 
     });
     if (retryAfter > 0) {
       res.set("Retry-After", String(retryAfter));
-      throw new AppError(429, "TOO_MANY_REQUESTS", "Demasiados intentos. Inténtalo de nuevo más tarde.");
+      throw new AppError(429, "RATE_LIMITED", "Demasiados intentos. Inténtalo de nuevo más tarde.");
     }
 
     // Un acceso correcto reinicia el contador IP+email (mejor esfuerzo: si la

@@ -1,6 +1,5 @@
 // UN-104 · Pruebas de integración para API de autenticación
-// Ejecutar con: npx vitest run server/tests/auth.test.js
-// Requiere: npx vitest run --pool=forks (para aislar MongoDB memory server)
+// Ejecutar con: node --test server/tests/auth.test.js   (usa node:test, no vitest)
 
 import { describe, it, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
@@ -78,7 +77,7 @@ describe("UN-104 · API de Autenticación", () => {
       assert.equal(res.body.user.passwordHash, undefined);
     });
 
-    it("✅ Debe crear automáticamente un Pet para el estudiante", async () => {
+    it("✅ El registro NO crea a Pancho: se crea al unirse a un classroom (ADR 5.6 / 8.4)", async () => {
       const res = await agent
         .post("/api/auth/register")
         .send({
@@ -89,11 +88,8 @@ describe("UN-104 · API de Autenticación", () => {
         })
         .expect(201);
 
-      const pets = await Pet.find({ ownerId: res.body.user.id });
-      assert.equal(pets.length, 1);
-      assert.equal(pets[0].ownerId.toString(), res.body.user.id);
-      assert.equal(pets[0].coins, 270);
-      assert.equal(pets[0].status, "alive");
+      assert.equal(res.body.user.classroomId, null);
+      assert.equal(await Pet.countDocuments({ ownerId: res.body.user.id }), 0);
     });
 
     it("✅ Debe registrar un profesor con TEACHER_CODE válido", async () => {
@@ -294,7 +290,7 @@ describe("UN-104 · API de Autenticación", () => {
   });
 
   // ===== ME =====
-  describe("GET /api/auth/me", () => {
+  describe("GET /api/me", () => {
     it("✅ Debe devolver usuario autenticado con cookie válida", async () => {
       // Registrar y loguear
       await agent
@@ -307,7 +303,7 @@ describe("UN-104 · API de Autenticación", () => {
           teacherCode: TEST_TEACHER_CODE,
         });
 
-      const res = await agent.get("/api/auth/me").expect(200);
+      const res = await agent.get("/api/me").expect(200);
 
       assert.equal(res.body.user.email, "me@test.com");
       assert.equal(res.body.user.role, "teacher");
@@ -317,7 +313,7 @@ describe("UN-104 · API de Autenticación", () => {
 
     it("❌ Debe rechazar sin cookie (401)", async () => {
       // Request sin cookies (no usar agent)
-      const res = await request(server).get("/api/auth/me").expect(401);
+      const res = await request(server).get("/api/me").expect(401);
       assert.equal(res.body.error.code, "UNAUTHORIZED");
     });
 
@@ -361,7 +357,7 @@ describe("UN-104 · API de Autenticación", () => {
 
       await agent.post("/api/auth/logout").expect(204);
 
-      const res = await agent.get("/api/auth/me").expect(401);
+      const res = await agent.get("/api/me").expect(401);
       assert.equal(res.body.error.code, "UNAUTHORIZED");
     });
   });
@@ -410,7 +406,7 @@ describe("UN-104 · API de Autenticación", () => {
           role: "student",
         });
 
-      const res = await agent.get("/api/auth/me").expect(200);
+      const res = await agent.get("/api/me").expect(200);
       assert.equal(res.body.user.passwordHash, undefined);
     });
   });
@@ -421,7 +417,7 @@ console.log("\n=== RESUMEN UN-104 ===");
 console.log("Endpoints probados:");
 console.log("  POST   /api/auth/register");
 console.log("  POST   /api/auth/login");
-console.log("  GET    /api/auth/me");
+console.log("  GET    /api/me");
 console.log("  POST   /api/auth/logout");
 console.log("\nCriterios validados:");
 console.log("  ✅ Registro student/teacher con validaciones");
