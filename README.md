@@ -1,7 +1,7 @@
 # Panchoracle Milestone
 
 ## Isaac Bonilla Cerón
-## Mariana Gonzales Correa
+## Mariana González Correa
 ## Nicolas Moreno Parra
 ## Karol Dayanne Rodriguez Gonzales
 
