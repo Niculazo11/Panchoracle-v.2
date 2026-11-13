@@ -3,7 +3,8 @@ import { useAccess } from "../../lib/useAccess.js";
 import { asset } from "../../lib/asset.js";
 
 export default function HeroSection() {
-    const isLoggedIn = useAccess();
+    const { status } = useAccess();
+    const isLoggedIn = status === "authenticated";
 
     return (
         <>
