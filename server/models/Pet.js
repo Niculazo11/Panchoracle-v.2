@@ -41,6 +41,10 @@ const petSchema = new Schema(
       max: 100,
       validate: { validator: isFiniteNumber, message: "hunger debe ser un número" },
     },
+    // UN-301: Pancho elegido (id derivado de la URL de dog.ceo e imagen). null hasta que
+    // el estudiante lo elige en /choosePancho; el cliente redirige mientras sea null.
+    panchoId: { type: String, trim: true, maxlength: 100, default: null },
+    imgUrl: { type: String, trim: true, maxlength: 500, default: null },
     // ADR 8.4: saldo entero. El ADR NO define las monedas iniciales (el
     // frontend usa 270), por eso es obligatorio y sin default: lo decide quien
     // cree a Pancho (join del classroom).

@@ -17,6 +17,11 @@ export function errorHandler(err, req, res, next) {
     status = err.status;
     code = err.code;
     message = err.message;
+  } else if (err.name === "ValidationError" || err.name === "CastError") {
+    // Mongoose rejected a value: it is the client's fault. The offending value is never echoed.
+    status = 400;
+    code = "VALIDATION_ERROR";
+    message = "Datos inválidos";
   } else if (err.type === "entity.parse.failed") {
     
     // JSON mal formado en el cuerpo de la petición

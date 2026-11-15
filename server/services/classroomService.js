@@ -2,9 +2,8 @@
 import AppError from "../utils/AppError.js";
 import { generateJoinCode, normalizeJoinCode } from "../utils/joinCode.js";
 import { Classroom, User, Pet } from "../models/index.js";
+import { STARTING_COINS } from "../config/game.js";
 
-// ADR section 12 leaves the starting coins undefined; 270 is the prototype value.
-const INITIAL_COINS = 270;
 const MAX_CODE_ATTEMPTS = 5;
 
 function isDuplicateKey(error) {
@@ -151,7 +150,7 @@ async function ensurePet(ownerId, periodId) {
           name: "Pancho",
           health: 100,
           hunger: 100,
-          coins: INITIAL_COINS,
+          coins: STARTING_COINS,
           status: "alive",
         },
       },

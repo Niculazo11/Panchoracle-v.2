@@ -47,8 +47,9 @@ async function hit(key, windowMs) {
 
 function createAuthRateLimit({ name, windowMs, rules, resetOnSuccess = false }) {
   return async function authRateLimit(req, res, next) {
-    // Skip rate limiting in test environment
-    if (process.env.NODE_ENV === "test") {
+    // Skip rate limiting only in the test environment, never on Vercel or in production
+    // (a stray NODE_ENV=test there must not switch the protection off).
+    if (process.env.NODE_ENV === "test" && !process.env.VERCEL) {
       return next();
     }
 

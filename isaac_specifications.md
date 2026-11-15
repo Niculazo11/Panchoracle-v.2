@@ -7,7 +7,7 @@
 | Fuente de verdad | *Panchoracle — Hoja de tickets unificada (v4)*, Revisión 3 (2026-10-26) |
 | Código de referencia | `origin/main` en `f40af57` (2026-10-23) |
 | Formato | OpenSpec: especificación por ticket + historial vivo de cambios |
-| Estado global | **EN PROGRESO** — 5 de 12 tickets completados · 25 de 59 SP · 42% |
+| Estado global | **EN PROGRESO** — 7 de 12 tickets completados · 33 de 59 SP · 56% |
 | Última actualización | 2026-11-14 |
 
 > Este archivo es la fuente de verdad del trabajo de Isaac. Las reglas para mantenerlo al día están en la última sección («Protocolo de actualización») y son obligatorias para cualquier IA o persona que toque código de estos tickets.
@@ -23,8 +23,8 @@
 | UN-104 | API de autenticación (backend) | S1 | P0 | 8 | **COMPLETADO** | UN-001 |
 | UN-202 | Sesión real y retiro del acceso falso de Dog Park | S1 | P0 | 5 | **COMPLETADO** | UN-104, UN-201 |
 | UN-407 | Modo oscuro en la sesión del profesor | S1 | P1 | 3 | **COMPLETADO** | UN-401 |
-| UN-107 | API de tareas del profesor (CRUD) | S2 | P1 | 3 | EN PROGRESO | UN-106 |
-| UN-301 | API del estado del juego (adoptar, comprar, equipar) | S2 | P0 | 5 | PENDIENTE | UN-102, UN-105 |
+| UN-107 | API de tareas del profesor (CRUD) | S2 | P1 | 3 | **COMPLETADO** | UN-106 |
+| UN-301 | API del estado del juego (adoptar, comprar, equipar) | S2 | P0 | 5 | **COMPLETADO** | UN-102, UN-105 |
 | UN-302 | API de pasos y entrega de tareas | S2 | P1 | 5 | PENDIENTE | UN-107, UN-301 |
 | UN-303 | Migrar GameState de `localStorage` a la API | S2 | P0 | 8 | PENDIENTE | UN-201, UN-202, UN-301, UN-302 |
 | UN-403 | Vista del salón: lista de estudiantes | S2 | P0 | 5 | PENDIENTE | UN-106, UN-401 |
@@ -47,6 +47,8 @@ Registro en orden cronológico inverso (lo más reciente arriba). Una fila nueva
 
 | [Fecha / Hora] | [ID Ticket] | [Acción / Cambio Realizado] | [Estado] | [Autor/Agente] |
 |---|---|---|---|---|
+| 2026-11-14 / 15:00 | UN-301 | API del estado del juego. Nuevos: `server/config/game.js`, `validators/game.js`, `services/gameService.js`, `routes/pets.js`, `routes/cosmetics.js`, `tests/game.test.js`, `docs/game-api.md`. Editados: `routes/me.js` (GET /api/me/game, solo estudiantes), `app.js`, `models/Pet.js` (+`panchoId`, `imgUrl`), `services/classroomService.js` (usa `STARTING_COINS`). Compra atómica (un solo `findOneAndUpdate` con saldo y no-duplicado en el filtro), equipar todo-o-nada validando propiedad y ranura (ADR 6.10, 6.11). Pruebas: `npm test` 52/52 (18 nuevas). Supuestos: (1) rutas bajo `/api` según ADR 7.1 (`/api/me/game`, `/api/cosmetics`); (2) elegir Pancho NO reinicia salud/hambre/estado, a diferencia del cliente, porque sería un revivir/curar encubierto (ADR 5.3 y 5.4); un Pancho nuevo ya nace 100/100; (3) `status` se devuelve como `ALIVE`/`DEAD` (forma del cliente; el ADR 5.4 pide minúsculas: decidir en UN-303); (4) `currentAssignment` sale de la tarea activa (ADR 5.3) con los 4 pasos sin completar; el progreso de pasos es UN-302; (5) hambre sin cálculo perezoso hasta UN-108; (6) un Pancho muerto puede comprar y equipar, como en el cliente (decisión abierta del ADR 12). | COMPLETADO (100%) | Claude (agente) |
+| 2026-11-14 / 14:30 | UN-107 | Cierre: con un `mongod` real las 12 pruebas de `server/tests/assignments.test.js` pasan (antes figuraban 13 y sin ejecutar). Criterios marcados. | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-14 / 12:00 | UN-305 | Se descarta UN-109 (endpoint de revivir): el ADR-001 (D5, secciones 5.4 y 7.3) ya establece que revivir no existe. UN-305 deja de depender de UN-109; su criterio de revivir se reformula como refresco ante cambios de estado en el servidor. Solo documentación; sin código. | PENDIENTE (0%) | Claude (agente) |
 | 2026-11-14 / 11:45 | UN-107 | Implementación de la API de tareas: creados `server/validators/assignment.js`, `server/services/assignmentService.js`, `server/routes/assignments.js` y `server/tests/assignments.test.js` (13 pruebas); editados `server/app.js` (monta `/api/assignments`) y comentario de `server/models/Assignment.js`. Rutas: GET /, POST /, GET /:id, PATCH /:id, DELETE /:id. Crear/editar/borrar solo antes de `startDate` (409 PERIOD_LOCKED, ADR 6.2); `dueAt` dentro del periodo y único; contador `period.totalAssignments` se mantiene con `$inc`. Pruebas: validadores y 401 sin sesión verificados sin base de datos; las 13 pruebas con MongoDB NO se pudieron ejecutar (sin acceso para descargar mongodb-memory-server). Supuesto: PATCH/DELETE son una enmienda menor al ADR 7.3 (Rev. 2.1), por confirmar con Karol e Isaac. Bloqueo para cerrar: correr `npm test` donde mongodb-memory-server pueda descargar su binario. | EN PROGRESO (código listo, 0/4 criterios comprobados con BD) | Claude (agente) |
 | 2026-11-08 / 15:30 | UN-104 | Implementación completa API autenticación (server/routes/auth.js, server/utils/jwt.js, validators/auth.js, server/app.js, server/tests/auth.test.js): 4 endpoints (POST /register, POST /login, GET /me, POST /logout), bcryptjs factor 10, JWT cookie HttpOnly 1h, TEACHER_CODE validación, Pet auto-creación, 409/403/401 códigos, passwordHash nunca expuesto. 22 tests integración Supertest + mongodb-memory-server: 22/22 PASS. | COMPLETADO (100%) | Claude (agente) |
@@ -294,10 +296,10 @@ Las tareas de un salón se guardan en MongoDB (colección `assignments`: título
 - RNF-3: validación estricta de entradas y formato de errores de UN-001; sin datos en memoria (M3).
 
 **Criterios de aceptación**
-- [ ] Solo el profesor del salón crea, edita o borra.
-- [ ] Los estudiantes inscritos solo leen.
-- [ ] Las fechas se validan.
-- [ ] Un título con `<script>` se guarda como texto y se devuelve intacto.
+- [x] Solo el profesor del salón crea, edita o borra.
+- [x] Los estudiantes inscritos solo leen.
+- [x] Las fechas se validan.
+- [x] Un título con `<script>` se guarda como texto y se devuelve intacto.
 
 **Dependencias y archivos afectados**
 - Depende de: UN-106 (API de salones, Mariana), que a su vez necesita UN-105 (Karol).
@@ -305,7 +307,7 @@ Las tareas de un salón se guardan en MongoDB (colección `assignments`: título
 - Archivos: `server/validators/assignment.js`, `server/services/assignmentService.js`, `server/routes/assignments.js`, `server/tests/assignments.test.js` (nuevos); `server/app.js` y `server/models/Assignment.js` (editados). Usa el modelo `assignments` de UN-102. No toca el cliente (la UI es UN-405).
 - Reglas aplicadas (ADR 6.2, 6.4): crear, editar y borrar solo antes de `period.startDate`; `dueAt` dentro del periodo y único.
 
-**Estado Actual:** `EN PROGRESO` · Avance: código implementado; criterios sin marcar hasta correr `npm test` con MongoDB (0%)
+**Estado Actual:** `COMPLETADO` · Avance: 100% (12 pruebas de integración pasan con MongoDB)
 
 ---
 
@@ -330,17 +332,18 @@ Hoy las reglas de adoptar, comprar y equipar viven en el cliente (`state/actions
 - RNF-4: UN-108 (hambre perezosa, Karol) depende de este ticket.
 
 **Criterios de aceptación**
-- [ ] Comprar sin saldo, un cosmético duplicado o uno inexistente devuelve error y no cambia nada.
-- [ ] Las reglas coinciden con las del cliente (mismos casos de prueba).
-- [ ] Un profesor que llama estas rutas recibe 403.
+- [x] Comprar sin saldo, un cosmético duplicado o uno inexistente devuelve error y no cambia nada.
+- [x] Las reglas coinciden con las del cliente (mismos casos de prueba). Excepción documentada: elegir Pancho NO reinicia salud/hambre/estado (ver historial).
+- [x] Un profesor que llama estas rutas recibe 403.
 
 **Dependencias y archivos afectados**
 - Depende de: UN-102 (modelos, Karol) y UN-105 (middleware, Karol).
 - Bloquea: UN-302 y UN-303 (Isaac), UN-108 (Karol).
 - Referencia (reglas a portar): `src/state/actions/pancho.js`, `src/state/actions/shop.js`, `src/state/constants.js` (`STARTING_COINS = 270`), `src/data/dataset.json`.
-- Archivos: nuevos, en `server/` (nombres por definir).
+- Archivos: nuevos `server/config/game.js`, `server/validators/game.js`, `server/services/gameService.js`, `server/routes/pets.js`, `server/routes/cosmetics.js`, `server/tests/game.test.js`, `docs/game-api.md`; editados `server/routes/me.js` (`GET /api/me/game`), `server/app.js`, `server/models/Pet.js` (`panchoId`, `imgUrl`).
+- Rutas (prefijo único `/api`, ADR 7.1): `GET /api/me/game`, `GET /api/cosmetics`, `PUT /api/pets/me/pancho`, `POST /api/pets/me/inventory`, `PUT /api/pets/me/equipped`.
 
-**Estado Actual:** `PENDIENTE` · Avance: 0%
+**Estado Actual:** `COMPLETADO` · Avance: 100% (18 pruebas de integración pasan con MongoDB)
 
 ---
 

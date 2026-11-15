@@ -24,6 +24,7 @@ Todos los participantes (Karol, Isaac, Nicolás y Mariana) ya aceptaron el ADR: 
 | 1 | 2026-11-14 (confirmada) | `users.username` opcional con índice único parcial (referenciada en `server/models/User.js`). Confirmada por los cuatro integrantes junto con la rev. 2. |
 | 2 | 2026-11-01 | Hosting en **un único proyecto Vercel** (sección 10); política de origen en lugar de CORS (5.2); hardening de seguridad y código `429` (5.8, 7.6); `GET /api/health` pública (7.2, 7.3); cosméticos e inventario (`pets.inventory`, `pets.equipped`, colecciones `cosmetics` y `quiz_questions`, secciones 8.4, 8.7, 8.8); colección de infraestructura `rate_limits` (8.9); decisiones pendientes actualizadas (12); tabla de criterios de UN-001 (14). |
 | 2 | 2026-11-14 (firma) | Aprobación de la revisión 2 por los cuatro integrantes; sin cambios de contenido. |
+| 2.2 | 2026-11-14 | Enmienda de UN-301: `GET /api/me/game`; `PUT /api/pets/me/pancho`; `PUT /api/pets/me/equipped` acepta ranuras sueltas; `pets.panchoId` e `pets.imgUrl`; elegir Pancho no restablece `health`, `hunger` ni `status`. **Confirmar con Karol e Isaac.** |
 | 2.1 | 2026-11-14 | Enmienda de UN-107: `PATCH` y `DELETE /api/assignments/:id` permitidos **solo antes de `startDate`** (regla 6.2 ya vigente); `PERIOD_LOCKED` después. Se retira la frase "no existen rutas de edición/borrado de tareas". Revivir sigue sin existir (UN-109 descartado). **Confirmar con Karol e Isaac.** |
 
 ## 3. Responsables
@@ -265,11 +266,13 @@ En el cliente, las rutas se escriben sin el prefijo y la URL base es `/api` (rel
 | POST | `/api/assignments/:id/submissions` | Registrar entrega | Sí | student | Base |
 | GET | `/api/assignments/:id/submissions` | Entregas de una tarea | Sí | teacher | Propuesta |
 | GET | `/api/pets/me` | Estado actual de Pancho | Sí | student | Base |
+| GET | `/api/me/game` | Estado de juego en la forma del cliente `{ student, dog, currentAssignment }` | Sí | student | UN-301 **[Rev. 2.2]** |
+| PUT | `/api/pets/me/pancho` | Guardar el Pancho elegido (`{ panchoId, imgUrl }`, imagen de `images.dog.ceo`); no cambia `health`, `hunger` ni `status` | Sí | student | UN-301 **[Rev. 2.2]** |
 | GET | `/api/pets/:id` | Estado de un Pancho | Sí | dueño o teacher del classroom | Propuesta |
 | POST | `/api/minigames/:id/plays` | Registrar partida y otorgar recompensa | Sí | student | Base |
 | GET | `/api/cosmetics` | Catálogo de cosméticos | Sí | cualquiera | Propuesta **[Rev. 2]** |
 | POST | `/api/pets/me/inventory` | Comprar un cosmético (`{ "cosmeticId": 3 }`) | Sí | student | Propuesta **[Rev. 2]** |
-| PUT | `/api/pets/me/equipped` | Equipar/desequipar (`{ "head": 3, "face": null, "neck": null, "body": null }`) | Sí | student | Propuesta **[Rev. 2]** |
+| PUT | `/api/pets/me/equipped` | Equipar/desequipar por ranura (`{ "head": 3, "face": null }`; null desequipa; las ranuras omitidas no cambian) | Sí | student | Propuesta **[Rev. 2]**; subconjunto de ranuras **[Rev. 2.2]** |
 | GET | `/api/quiz-questions` | Preguntas del quiz **sin** `correctIndex` | Sí | student | Propuesta **[Rev. 2]** |
 
 Editar y borrar tareas solo funciona antes de `startDate` (después: `409 PERIOD_LOCKED`, regla 6.2). No existen rutas de revivir (por diseño; UN-109 descartado). La forma de validar las respuestas del quiz y de considerar "válida" una partida está pendiente (sección 12); en ningún caso `correctIndex` se envía al cliente.
@@ -505,6 +508,8 @@ Representa a Pancho. Un documento por estudiante; al empezar un nuevo periodo se
 | `hunger` | number | 0–100 (snapshot; el valor vigente se calcula) |
 | `coins` | int | Saldo; incrementado/decrementado con operadores atómicos (`$inc`) |
 | `inventory` | `[number]` | **[Rev. 2]** `cosmeticId` de los cosméticos comprados. Por defecto `[]`. Sin duplicados |
+| `panchoId` | string \| null | **[Rev. 2.2]** Id del perro elegido (derivado de la URL de dog.ceo). `null` hasta que el estudiante lo elige |
+| `imgUrl` | string \| null | **[Rev. 2.2]** Imagen del perro elegido (solo `https://images.dog.ceo/...`). `null` hasta que lo elige |
 | `equipped` | objeto | **[Rev. 2]** `{ head, face, neck, body }`; cada valor es un `cosmeticId` (number) o `null`. Por defecto todos `null` |
 | `status` | `"alive"` \| `"dead"` | Minúsculas |
 | `createdAt` | Date | |
