@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 
 const { Schema } = mongoose;
 
-// ADR 8.3. Sin rutas de edición/borrado por diseño; la "tarea activa" se
-// calcula por consulta, no se guarda.
+// ADR 8.3. Crear, editar y borrar solo se permite ANTES de period.startDate
+// (UN-107, ADR 6.2); la "tarea activa" se calcula por consulta, no se guarda.
 const assignmentSchema = new Schema(
   {
     classroomId: {

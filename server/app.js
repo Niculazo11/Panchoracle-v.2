@@ -5,6 +5,7 @@ import healthRouter from "./routes/health.js";
 import authRouter from "./routes/auth.js";
 import meRouter from "./routes/me.js";
 import classroomsRouter from "./routes/classrooms.js";
+import assignmentsRouter from "./routes/assignments.js";
 import { authenticate } from "./middleware/authenticate.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
 import { securityHeaders, sanitizeInput, hideSensitiveFields } from "./middleware/security.js";
@@ -23,6 +24,7 @@ app.use("/api/health", healthRouter); // público; reporta el estado de la BD (A
 app.use("/api/auth", ensureDb, authRouter);
 app.use("/api/me", ensureDb, authenticate, meRouter);
 app.use("/api/classrooms", ensureDb, authenticate, classroomsRouter);
+app.use("/api/assignments", ensureDb, authenticate, assignmentsRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

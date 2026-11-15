@@ -11,18 +11,20 @@
 | Parte | Estado |
 |---|---|
 | Revisión 0 (decisiones D2, D4, D5, D6, D7, D8, contrato y esquema originales) | **Aceptado** — aprobado por los cuatro integrantes (sección 13) |
-| Revisión 1 (`users.username` opcional) | **Pendiente de confirmar** — el código la cita como decisión del equipo (`User.js`), pero no consta en la versión 0 de este documento |
-| Revisión 2 (secciones marcadas con **[Rev. 2]**) | **Propuesta — pendiente de firma** de los cuatro integrantes |
+| Revisión 1 (`users.username` opcional) | **Aceptado** — confirmado por los cuatro integrantes junto con la revisión 2 (2026-11-14) |
+| Revisión 2 (secciones marcadas con **[Rev. 2]**) | **Aceptado** — firmada por los cuatro integrantes (2026-11-14) |
 
-Mientras la revisión 2 no esté firmada, lo marcado como **[Rev. 2]** es una propuesta de implementación y no una decisión cerrada.
+Todos los participantes (Karol, Isaac, Nicolás y Mariana) ya aceptaron el ADR: lo marcado como **[Rev. 2]** es una decisión cerrada y no requiere más firmas.
 
 ## 2. Fecha e historial de revisiones
 
 | Rev. | Fecha | Cambios |
 |---|---|---|
 | 0 | 2026-10-29 | Versión original aprobada por los cuatro integrantes. |
-| 1 | — | `users.username` opcional con índice único parcial (referenciada en `server/models/User.js`; fecha por confirmar). |
+| 1 | 2026-11-14 (confirmada) | `users.username` opcional con índice único parcial (referenciada en `server/models/User.js`). Confirmada por los cuatro integrantes junto con la rev. 2. |
 | 2 | 2026-11-01 | Hosting en **un único proyecto Vercel** (sección 10); política de origen en lugar de CORS (5.2); hardening de seguridad y código `429` (5.8, 7.6); `GET /api/health` pública (7.2, 7.3); cosméticos e inventario (`pets.inventory`, `pets.equipped`, colecciones `cosmetics` y `quiz_questions`, secciones 8.4, 8.7, 8.8); colección de infraestructura `rate_limits` (8.9); decisiones pendientes actualizadas (12); tabla de criterios de UN-001 (14). |
+| 2 | 2026-11-14 (firma) | Aprobación de la revisión 2 por los cuatro integrantes; sin cambios de contenido. |
+| 2.1 | 2026-11-14 | Enmienda de UN-107: `PATCH` y `DELETE /api/assignments/:id` permitidos **solo antes de `startDate`** (regla 6.2 ya vigente); `PERIOD_LOCKED` después. Se retira la frase "no existen rutas de edición/borrado de tareas". Revivir sigue sin existir (UN-109 descartado). **Confirmar con Karol e Isaac.** |
 
 ## 3. Responsables
 
@@ -258,6 +260,8 @@ En el cliente, las rutas se escriben sin el prefijo y la URL base es `/api` (rel
 | GET | `/api/assignments` | Tareas del periodo actual del classroom | Sí | cualquiera | Base |
 | POST | `/api/assignments` | Crear tarea (solo antes de `startDate`) | Sí | teacher | Base |
 | GET | `/api/assignments/:id` | Detalle de una tarea | Sí | cualquiera | Propuesta |
+| PATCH | `/api/assignments/:id` | Editar `title`, `description` o `dueAt` (solo antes de `startDate`) | Sí | teacher (dueño) | UN-107 **[Rev. 2.1]** |
+| DELETE | `/api/assignments/:id` | Borrar una tarea (solo antes de `startDate`) | Sí | teacher (dueño) | UN-107 **[Rev. 2.1]** |
 | POST | `/api/assignments/:id/submissions` | Registrar entrega | Sí | student | Base |
 | GET | `/api/assignments/:id/submissions` | Entregas de una tarea | Sí | teacher | Propuesta |
 | GET | `/api/pets/me` | Estado actual de Pancho | Sí | student | Base |
@@ -268,7 +272,7 @@ En el cliente, las rutas se escriben sin el prefijo y la URL base es `/api` (rel
 | PUT | `/api/pets/me/equipped` | Equipar/desequipar (`{ "head": 3, "face": null, "neck": null, "body": null }`) | Sí | student | Propuesta **[Rev. 2]** |
 | GET | `/api/quiz-questions` | Preguntas del quiz **sin** `correctIndex` | Sí | student | Propuesta **[Rev. 2]** |
 
-No existen rutas de edición/borrado de tareas ni de revivir (por diseño). La forma de validar las respuestas del quiz y de considerar "válida" una partida está pendiente (sección 12); en ningún caso `correctIndex` se envía al cliente.
+Editar y borrar tareas solo funciona antes de `startDate` (después: `409 PERIOD_LOCKED`, regla 6.2). No existen rutas de revivir (por diseño; UN-109 descartado). La forma de validar las respuestas del quiz y de considerar "válida" una partida está pendiente (sección 12); en ningún caso `correctIndex` se envía al cliente.
 
 ### 7.4 Requests
 
@@ -315,6 +319,11 @@ Validaciones: `startDate < endDate` y que no se solape con el periodo vigente.
 { "title": "Taller 1", "description": "Resolver ejercicios 1–5", "dueAt": "2026-08-10T23:59:00Z" }
 ```
 `classroomId` y `periodId` se toman del classroom del profesor autenticado.
+
+`PATCH /api/assignments/:id` — al menos uno de los campos; mismas validaciones que el `POST`:
+```json
+{ "title": "Taller 1 (revisado)", "dueAt": "2026-08-12T23:59:00Z" }
+```
 
 `POST /api/assignments/:id/submissions` — solo metadata; el archivo vive en el almacenamiento externo:
 ```json
@@ -646,7 +655,6 @@ Implicaciones: las credenciales (cadena de conexión a Atlas `MONGODB_URI`, secr
 - Catálogo de `gameId` válidos y validación de que una partida es legítima (incluida la forma de validar las respuestas del quiz sin exponer `correctIndex`).
 - **[Rev. 2]** Monedas iniciales de Pancho al crearse: el prototipo usa 270, pero el ADR no las define; el modelo exige indicarlas explícitamente al unirse al classroom.
 - **[Rev. 2]** Valores definitivos del rate limit (5.8) y si el contador de login se reinicia tras un inicio de sesión correcto.
-- **[Rev. 2]** Confirmación de la revisión 1 (`users.username`).
 
 **Fuera del alcance de este ADR**
 
@@ -664,20 +672,20 @@ Implicaciones: las credenciales (cadena de conexión a Atlas `MONGODB_URI`, secr
 
 | Integrante | Rol | Rev. 0 | Rev. 2 |
 |---|---|---|---|
-| Karol | Lead | Aprobado | Pendiente |
-| Isaac | API / Desarrollo | Aprobado | Pendiente |
-| Nicolás | MongoDB / Desarrollo | Aprobado | Pendiente |
-| Mariana | UX/UI | Aprobado | Pendiente |
+| Karol | Lead | Aprobado | Aprobado (2026-11-14) |
+| Isaac | API / Desarrollo | Aprobado | Aprobado (2026-11-14) |
+| Nicolás | MongoDB / Desarrollo | Aprobado | Aprobado (2026-11-14) |
+| Mariana | UX/UI | Aprobado | Aprobado (2026-11-14) |
 
-**Estado de aprobación de la revisión 2:** pendiente. Cuando los cuatro integrantes confirmen, se cambia cada celda a "Aprobado" con la fecha y se actualiza la sección 1.
+**Estado de aprobación de la revisión 2:** completada. Los cuatro integrantes aceptaron el ADR el 2026-11-14; ya no requiere firmas.
 
 ## 14. Criterios de aceptación de UN-001
 
 | Criterio del ticket | Dónde se cumple | Estado |
 |---|---|---|
-| ADR en `/docs` firmado por los 4 | Este archivo (`docs/ADR-001-api-mongodb.md`); firmas en la sección 13 | Rev. 0 firmada; **rev. 2 pendiente** |
+| ADR en `/docs` firmado por los 4 | Este archivo (`docs/ADR-001-api-mongodb.md`); firmas en la sección 13 | Rev. 0 y rev. 2 firmadas por los 4 (completado) |
 | Constantes de decaimiento con números | 5.3 (tabla de constantes y ejemplos) | Cumplido |
-| Contrato acordado por Karol e Isaac | Sección 7 | Rev. 0 acordado; **cambios de rev. 2 pendientes de su firma** |
+| Contrato acordado por Karol e Isaac | Sección 7 | Rev. 0 y cambios de rev. 2 acordados (completado) |
 | Core features confirmadas | Sección 4 (funcionalidades núcleo) y 7.3 (endpoints Base) | Cumplido |
 | Decisión escrita sobre el hosting del front | Sección 10 | Cumplido (rev. 2: un solo proyecto Vercel) |
 | D2, D4, D5, D6, D7, D8 cerradas | Tabla de decisiones en la sección 4 | Cumplido |

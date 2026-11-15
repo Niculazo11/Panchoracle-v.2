@@ -8,7 +8,7 @@
 | Código de referencia | `origin/main` en `f40af57` (2026-10-23) |
 | Formato | OpenSpec: especificación por ticket + historial vivo de cambios |
 | Estado global | **EN PROGRESO** — 5 de 12 tickets completados · 25 de 59 SP · 42% |
-| Última actualización | 2026-11-08 |
+| Última actualización | 2026-11-14 |
 
 > Este archivo es la fuente de verdad del trabajo de Isaac. Las reglas para mantenerlo al día están en la última sección («Protocolo de actualización») y son obligatorias para cualquier IA o persona que toque código de estos tickets.
 
@@ -23,12 +23,12 @@
 | UN-104 | API de autenticación (backend) | S1 | P0 | 8 | **COMPLETADO** | UN-001 |
 | UN-202 | Sesión real y retiro del acceso falso de Dog Park | S1 | P0 | 5 | **COMPLETADO** | UN-104, UN-201 |
 | UN-407 | Modo oscuro en la sesión del profesor | S1 | P1 | 3 | **COMPLETADO** | UN-401 |
-| UN-107 | API de tareas del profesor (CRUD) | S2 | P1 | 3 | PENDIENTE | UN-106 |
+| UN-107 | API de tareas del profesor (CRUD) | S2 | P1 | 3 | EN PROGRESO | UN-106 |
 | UN-301 | API del estado del juego (adoptar, comprar, equipar) | S2 | P0 | 5 | PENDIENTE | UN-102, UN-105 |
 | UN-302 | API de pasos y entrega de tareas | S2 | P1 | 5 | PENDIENTE | UN-107, UN-301 |
 | UN-303 | Migrar GameState de `localStorage` a la API | S2 | P0 | 8 | PENDIENTE | UN-201, UN-202, UN-301, UN-302 |
 | UN-403 | Vista del salón: lista de estudiantes | S2 | P0 | 5 | PENDIENTE | UN-106, UN-401 |
-| UN-305 | `usePolling` y sincronización de la sesión del estudiante | S3 | P1 | 3 | PENDIENTE | UN-303, UN-109 |
+| UN-305 | `usePolling` y sincronización de la sesión del estudiante | S3 | P1 | 3 | PENDIENTE | UN-303 |
 | UN-501 | Quiz calificado en servidor y tope diario | S3 | P0 | 5 | PENDIENTE | UN-102, UN-105 |
 
 **Carga por sprint:** S1 = 25 SP (5 tickets) · S2 = 26 SP (5 tickets) · S3 = 8 SP (2 tickets) · **Total = 59 SP (12 tickets)**.
@@ -47,6 +47,8 @@ Registro en orden cronológico inverso (lo más reciente arriba). Una fila nueva
 
 | [Fecha / Hora] | [ID Ticket] | [Acción / Cambio Realizado] | [Estado] | [Autor/Agente] |
 |---|---|---|---|---|
+| 2026-11-14 / 12:00 | UN-305 | Se descarta UN-109 (endpoint de revivir): el ADR-001 (D5, secciones 5.4 y 7.3) ya establece que revivir no existe. UN-305 deja de depender de UN-109; su criterio de revivir se reformula como refresco ante cambios de estado en el servidor. Solo documentación; sin código. | PENDIENTE (0%) | Claude (agente) |
+| 2026-11-14 / 11:45 | UN-107 | Implementación de la API de tareas: creados `server/validators/assignment.js`, `server/services/assignmentService.js`, `server/routes/assignments.js` y `server/tests/assignments.test.js` (13 pruebas); editados `server/app.js` (monta `/api/assignments`) y comentario de `server/models/Assignment.js`. Rutas: GET /, POST /, GET /:id, PATCH /:id, DELETE /:id. Crear/editar/borrar solo antes de `startDate` (409 PERIOD_LOCKED, ADR 6.2); `dueAt` dentro del periodo y único; contador `period.totalAssignments` se mantiene con `$inc`. Pruebas: validadores y 401 sin sesión verificados sin base de datos; las 13 pruebas con MongoDB NO se pudieron ejecutar (sin acceso para descargar mongodb-memory-server). Supuesto: PATCH/DELETE son una enmienda menor al ADR 7.3 (Rev. 2.1), por confirmar con Karol e Isaac. Bloqueo para cerrar: correr `npm test` donde mongodb-memory-server pueda descargar su binario. | EN PROGRESO (código listo, 0/4 criterios comprobados con BD) | Claude (agente) |
 | 2026-11-08 / 15:30 | UN-104 | Implementación completa API autenticación (server/routes/auth.js, server/utils/jwt.js, validators/auth.js, server/app.js, server/tests/auth.test.js): 4 endpoints (POST /register, POST /login, GET /me, POST /logout), bcryptjs factor 10, JWT cookie HttpOnly 1h, TEACHER_CODE validación, Pet auto-creación, 409/403/401 códigos, passwordHash nunca expuesto. 22 tests integración Supertest + mongodb-memory-server: 22/22 PASS. | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-08 / 16:30 | UN-202 | Sesión real completada y eliminación acceso falso Dog Park: useAccess.js refactor (44 líneas, 3 estados checking/authenticated/anonymous, solo API real), useRole.js creado (8 líneas), auth.js corregido paths. Eliminados: dogParkAuth.js, useDogParkAccess.js, DogParkLogin.jsx, DogParkField.jsx, DogParkPlaceholder.jsx, useDogParkLogin.js, carpeta dogpark. TeachersPark ya protegida con withRole(["teacher"]). Build ✓, 22 tests backend PASS. | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-01 / 14:45 | UN-407 | Implementado modo oscuro en área profesor: TeachersPark.jsx (dark:bg), TeachersParkNav.jsx (botón toggle + dark:bg/border/text), TeachersParkNavItem.jsx (dark:text-white); reutiliza useDarkMode, localStorage "theme" sincronizado con HomeHeader; todos ≤80 líneas | COMPLETADO (100%) | Claude (agente) |
@@ -300,9 +302,10 @@ Las tareas de un salón se guardan en MongoDB (colección `assignments`: título
 **Dependencias y archivos afectados**
 - Depende de: UN-106 (API de salones, Mariana), que a su vez necesita UN-105 (Karol).
 - Bloquea: UN-302 (Isaac) y UN-405 (UI de tareas, Mariana).
-- Archivos: nuevos, en `server/` (nombres por definir según UN-101 y UN-001); usa el modelo `assignments` de UN-102. No toca el cliente (la UI es UN-405).
+- Archivos: `server/validators/assignment.js`, `server/services/assignmentService.js`, `server/routes/assignments.js`, `server/tests/assignments.test.js` (nuevos); `server/app.js` y `server/models/Assignment.js` (editados). Usa el modelo `assignments` de UN-102. No toca el cliente (la UI es UN-405).
+- Reglas aplicadas (ADR 6.2, 6.4): crear, editar y borrar solo antes de `period.startDate`; `dueAt` dentro del periodo y único.
 
-**Estado Actual:** `PENDIENTE` · Avance: 0%
+**Estado Actual:** `EN PROGRESO` · Avance: código implementado; criterios sin marcar hasta correr `npm test` con MongoDB (0%)
 
 ---
 
@@ -457,7 +460,7 @@ El estado del juego es un singleton en el navegador (`GameState`, conectado con 
 - **Origen:** v2 PAN-306; v3 §2 («PAN-307», mapeo por contenido)
 
 **Contexto / problema a resolver**
-Si el profesor revive al perro mientras el estudiante tiene el juego abierto, el estudiante debe verlo sin recargar. v3 propone `usePolling` como el hook que el equipo explicará en la defensa oral de M2: dependency array no trivial y cleanup real.
+Si el estado de Pancho cambia en el servidor (por ejemplo, el hambre calculada o una entrega) mientras el estudiante tiene el juego abierto, el estudiante debe verlo sin recargar. Revivir no existe (ADR D5; UN-109 descartado). v3 propone `usePolling` como el hook que el equipo explicará en la defensa oral de M2: dependency array no trivial y cleanup real.
 
 **Requerimientos funcionales**
 - RF-1: DEBE existir un hook reutilizable que recargue el estado periódicamente y al volver el foco a la pestaña.
@@ -471,13 +474,13 @@ Si el profesor revive al perro mientras el estudiante tiene el juego abierto, el
 - RNF-4: el hook se documenta por escrito: qué dispara el efecto (dependency array), qué limpia el cleanup y cuándo corre (insumo de UN-608).
 
 **Criterios de aceptación**
-- [ ] El cartel `DeadNotice` desaparece y las barras se actualizan en pocos segundos tras revivir.
+- [ ] Las barras y el cartel `DeadNotice` reflejan en pocos segundos el estado calculado por el servidor, sin recargar.
 - [ ] La recarga no pisa una acción en curso (por ejemplo una compra).
 - [ ] Los timers y listeners se limpian al desmontar.
 - [ ] La explicación escrita del hook dice qué dispara el efecto, qué limpia el cleanup y cuándo corre.
 
 **Dependencias y archivos afectados**
-- Depende de: UN-303 y UN-109 (endpoint de revivir, Karol).
+- Depende de: UN-303. (UN-109, endpoint de revivir, fue descartado.)
 - Nuevo: `usePolling` (ubicación sugerida: `src/lib/`, junto a los demás hooks).
 - Modificar: `src/pages/RaisePancho.jsx` (el límite de 80 líneas ya está al borde), panel del profesor (reutilización).
 
@@ -535,7 +538,6 @@ El quiz de `MiniGames` funciona en el cliente: el banco de 5 preguntas de `quizQ
 | UN-107 | UN-106 (API de salones), que depende de UN-105 | Mariana (revisa Karol) |
 | UN-301 | UN-102 (modelos), UN-105 (middleware) | Karol |
 | UN-403 | UN-106 (API de salones), UN-401 (panel y diseño) | Mariana |
-| UN-305 | UN-109 (endpoint de revivir) | Karol |
 | UN-501 | UN-102 (modelos), UN-105 (middleware) | Karol |
 
 **Lo que otros necesitan de Isaac:**

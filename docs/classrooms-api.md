@@ -48,11 +48,13 @@ The response of the delete reports how many students were unenrolled.
 
 ## Assumptions to confirm
 
-- **Auth is a temporary stand-in.** UN-104 (login) and UN-105 (auth middleware) are not in
-  the repo. `server/utils/jwt.js` and `server/middleware/authenticate.js` read an HS256 token
-  signed with `JWT_SECRET` from a cookie named `session` (payload `{ sub: <userId> }`).
-  Replace both files when UN-104/UN-105 land; the routes only use `authenticate` and
-  `authorize(role)`.
+- **Authentication is functional and final.** Login, register and logout come from UN-104
+  (`server/routes/auth.js`); the session is an HS256 JWT signed with `JWT_SECRET` (1 hour) in an
+  `httpOnly` cookie named `session` (payload `{ sub: <userId> }`, ADR 5.2). `authenticate`
+  (UN-105, `server/middleware/authenticate.js`) validates the token and loads the user from the
+  database, so the role never comes from the client; `authorize(role)` guards teacher/student
+  routes. Hardening from UN-103 applies (helmet, NoSQL sanitizing, zod validation, rate limit
+  stored in MongoDB). These routes only use `authenticate` and `authorize(role)`.
 - **Initial coins (270)** is the prototype value; ADR section 12 leaves it open.
 - **Join code format** is a proposal; ADR section 12 leaves it open.
 - **API messages are in English**, as requested. ADR 7.6 says validation messages are in
