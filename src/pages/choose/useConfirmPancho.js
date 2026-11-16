@@ -6,7 +6,7 @@ import { wait } from "../../lib/wait.js";
 const CONFIRM_DELAY_MS = 700;
 const REDIRECT_DELAY_MS = 1000;
 
-export function useConfirmPancho({ form, selectedImage, status, game }) {
+export function useConfirmPancho({ form, selectedImage, status, choosePancho }) {
     const navigate = useNavigate();
 
     async function handleConfirmPaw(event) {
@@ -35,9 +35,8 @@ export function useConfirmPancho({ form, selectedImage, status, game }) {
             return;
         }
 
-        game.init(username);
-        game.choosePancho(dogIdFromUrl(selectedImage), selectedImage);
-        // grantAccess removed: user already authenticated via join form login
+        // Initialize game state and choose Pancho via async API
+        await choosePancho(dogIdFromUrl(selectedImage), selectedImage);
 
         status.showSuccess();
         form.resetAfterSuccess();

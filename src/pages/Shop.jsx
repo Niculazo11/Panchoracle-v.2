@@ -27,18 +27,19 @@ export default function Shop() {
         return null;
     }
 
-    function handleBuy(item) {
-        showFeedback(buyCosmetic(item).message);
+    async function handleBuy(item) {
+        const result = await buyCosmetic(item);
+        showFeedback(result.message);
     }
 
-    function handleEquip(item, slot) {
-        const result = equipCosmetic(item.id, slot);
+    async function handleEquip(item, slot) {
+        const result = await equipCosmetic(item.id, slot);
         if (!result.success) showFeedback(result.message);
     }
 
-    function handleUnequip(item, slot) {
-        equipCosmetic(null, slot);
-        showFeedback(`You unequipped "${item.name}" from Pancho.`);
+    async function handleUnequip(item, slot) {
+        const result = await equipCosmetic(null, slot);
+        showFeedback(result.success ? `You unequipped "${item.name}" from Pancho.` : result.message);
     }
 
     return (

@@ -17,6 +17,11 @@ export function errorHandler(err, req, res, next) {
     status = err.status;
     code = err.code;
     message = err.message;
+  } else if (err.name === "ValidationError" || err.name === "CastError") {
+    // Mongoose rejected a value: it is the client's fault. The offending value is never echoed.
+    status = 400;
+    code = "VALIDATION_ERROR";
+    message = "Datos inválidos";
   } else if (err.type === "entity.parse.failed") {
     
     // JSON mal formado en el cuerpo de la petición
@@ -27,6 +32,12 @@ export function errorHandler(err, req, res, next) {
     status = 400;
     code = "VALIDATION_ERROR";
     message = "El cuerpo de la petición es demasiado grande";
+  } else if (/^Mongo(ServerSelection|Network|NetworkTimeout|NotConnected|PoolCleared)/.test(err.name)) {
+    // Atlas inalcanzable DESPUÉS de haber conectado (la conexión cacheada sigue "viva" pero cae).
+    status = 503;
+    code = "SERVICE_UNAVAILABLE";
+    message = "Base de datos no disponible. Inténtalo de nuevo en un momento.";
+    logError(err, req);
   } else {
 
     // Error inesperado: el detalle real solo va a la consola del servidor,

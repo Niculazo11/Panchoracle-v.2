@@ -11,7 +11,7 @@ import { useConfirmPancho } from "./choose/useConfirmPancho.js";
 import { asset } from "../lib/asset.js";
 
 export default function ChoosePancho() {
-    const game = useGameState();
+    const { choosePancho } = useGameState();
     const status = useStatus();
     const form = useChooseForm();
 
@@ -42,7 +42,7 @@ export default function ChoosePancho() {
         }
     }, [images, form.formData.name]);
 
-    const handleConfirmPaw = useConfirmPancho({ form, selectedImage, status, game });
+    const handleConfirmPaw = useConfirmPancho({ form, selectedImage, status, choosePancho });
     const showRetry = !loading && Boolean(error || offline);
 
     return (

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useGameState } from "../state/GameStateContext.jsx";
-import { GameState } from "../state/gameState.js";
+import { usePolling } from "../lib/usePolling.js";
 import StatsPanel from "./stats/StatsPanel.jsx";
 import { asset } from "../lib/asset.js";
 
@@ -12,7 +12,10 @@ import { asset } from "../lib/asset.js";
 export default function PanchoStats() {
     const navigate = useNavigate();
     const { username } = useParams();
-    const { dog, student, currentAssignment } = useGameState();
+    const { dog, student, currentAssignment, init } = useGameState();
+
+    // Poll server for state updates (hunger decay, etc.)
+    const { refresh } = usePolling(init, { intervalMs: 15000, enabled: true });
 
     // No Pancho chosen yet -> send the student to pick one first.
     useEffect(() => {
@@ -29,20 +32,6 @@ export default function PanchoStats() {
             navigate(`/stats/${encodeURIComponent(student.id)}`, { replace: true });
         }
     }, [dog.imgUrl, student.id, username, navigate]);
-
-    // Keep this page's numbers live even if the passive hunger/health
-    // tick (running on RaisePancho in another tab) writes to localStorage
-    // while this page is open.
-    useEffect(() => {
-        function handleStorage(event) {
-            if (event.key && event.key.indexOf("panchoGameState_") === 0) {
-                GameState.init();
-            }
-        }
-
-        window.addEventListener("storage", handleStorage);
-        return () => window.removeEventListener("storage", handleStorage);
-    }, []);
 
     if (!dog.imgUrl) {
         return null;

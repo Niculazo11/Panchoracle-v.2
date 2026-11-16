@@ -13,18 +13,19 @@ export default function CosmeticInfo({ item, isFavorite, onToggleFavorite, showF
     const owned = student.inventory.includes(item.id);
     const equipped = slot && dog.equippedCosmetics[slot] === item.id;
 
-    function handleBuy() {
-        showFeedback(buyCosmetic(item).message);
+    async function handleBuy() {
+        const result = await buyCosmetic(item);
+        showFeedback(result.message);
     }
 
-    function handleEquip() {
-        const result = equipCosmetic(item.id, slot);
+    async function handleEquip() {
+        const result = await equipCosmetic(item.id, slot);
         if (!result.success) showFeedback(result.message);
     }
 
-    function handleUnequip() {
-        equipCosmetic(null, slot);
-        showFeedback(`You unequipped "${item.name}" from Pancho.`);
+    async function handleUnequip() {
+        const result = await equipCosmetic(null, slot);
+        showFeedback(result.success ? `You unequipped "${item.name}" from Pancho.` : result.message);
     }
 
     return (

@@ -2,9 +2,9 @@
 import AppError from "../utils/AppError.js";
 import { generateJoinCode, normalizeJoinCode } from "../utils/joinCode.js";
 import { Classroom, User, Pet } from "../models/index.js";
+import { STARTING_COINS } from "../config/game.js";
+import { reconcilePets } from "./petStateService.js";
 
-// ADR section 12 leaves the starting coins undefined; 270 is the prototype value.
-const INITIAL_COINS = 270;
 const MAX_CODE_ATTEMPTS = 5;
 
 function isDuplicateKey(error) {
@@ -30,7 +30,7 @@ export function toClassroomJson(classroom) {
 
 // Finds a classroom and checks that the teacher owns it.
 // Missing -> 404, someone else's -> 403 (ADR 7.2).
-async function getOwnedClassroom(classroomId, teacher) {
+export async function getOwnedClassroom(classroomId, teacher) {
   const classroom = await Classroom.findById(classroomId);
   if (!classroom) throw new AppError(404, "NOT_FOUND", "Classroom not found");
   if (!classroom.teacherId.equals(teacher._id)) {
@@ -151,7 +151,7 @@ async function ensurePet(ownerId, periodId) {
           name: "Pancho",
           health: 100,
           hunger: 100,
-          coins: INITIAL_COINS,
+          coins: STARTING_COINS,
           status: "alive",
         },
       },
@@ -164,12 +164,12 @@ async function ensurePet(ownerId, periodId) {
 
   await Pet.updateOne(
     { ownerId, periodId: { $ne: periodId } },
-    { $set: { periodId, health: 100, hunger: 100, status: "alive" } }
+    { $set: { periodId, health: 100, hunger: 100, status: "alive", healthAdjustment: 0 } }
   );
 }
 
 // Students of a classroom with a summary of their Pancho.
-// health/hunger are the stored snapshot, not the value reconciled at request time (ADR 5.3).
+// health/hunger/status are reconciled with the server clock on every call (UN-108, ADR 5.3).
 export async function listStudents(teacher, classroomId) {
   const classroom = await getOwnedClassroom(classroomId, teacher);
 
@@ -179,7 +179,8 @@ export async function listStudents(teacher, classroomId) {
 
   const ownerIds = [];
   for (let i = 0; i < users.length; i++) ownerIds.push(users[i]._id);
-  const pets = await Pet.find({ ownerId: { $in: ownerIds } });
+  const storedPets = await Pet.find({ ownerId: { $in: ownerIds } });
+  const pets = await reconcilePets(classroom, storedPets);
 
   const petsByOwner = {};
   for (let i = 0; i < pets.length; i++) petsByOwner[pets[i].ownerId.toString()] = pets[i];

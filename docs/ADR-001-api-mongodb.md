@@ -11,18 +11,26 @@
 | Parte | Estado |
 |---|---|
 | Revisión 0 (decisiones D2, D4, D5, D6, D7, D8, contrato y esquema originales) | **Aceptado** — aprobado por los cuatro integrantes (sección 13) |
-| Revisión 1 (`users.username` opcional) | **Pendiente de confirmar** — el código la cita como decisión del equipo (`User.js`), pero no consta en la versión 0 de este documento |
-| Revisión 2 (secciones marcadas con **[Rev. 2]**) | **Propuesta — pendiente de firma** de los cuatro integrantes |
+| Revisión 1 (`users.username` opcional) | **Aceptado** — confirmado por los cuatro integrantes junto con la revisión 2 (2026-11-14) |
+| Revisión 2 (secciones marcadas con **[Rev. 2]**) | **Aceptado** — firmada por los cuatro integrantes (2026-11-14) |
+| Revisión 2.3 (restaurar salud de un Pancho vivo) y 2.4 (apoyo de UN-302/UN-303, límites del minijuego) | **Aceptado** — Karol e Isaac (2026-11-15) |
+| Revisión 2.5 (estudiante que se une con el periodo iniciado) | **Aceptado** — decisión del equipo (2026-11-15) |
 
-Mientras la revisión 2 no esté firmada, lo marcado como **[Rev. 2]** es una propuesta de implementación y no una decisión cerrada.
+Todos los participantes (Karol, Isaac, Nicolás y Mariana) ya aceptaron el ADR: lo marcado como **[Rev. 2]** es una decisión cerrada y no requiere más firmas.
 
 ## 2. Fecha e historial de revisiones
 
 | Rev. | Fecha | Cambios |
 |---|---|---|
 | 0 | 2026-10-29 | Versión original aprobada por los cuatro integrantes. |
-| 1 | — | `users.username` opcional con índice único parcial (referenciada en `server/models/User.js`; fecha por confirmar). |
+| 1 | 2026-11-14 (confirmada) | `users.username` opcional con índice único parcial (referenciada en `server/models/User.js`). Confirmada por los cuatro integrantes junto con la rev. 2. |
 | 2 | 2026-11-01 | Hosting en **un único proyecto Vercel** (sección 10); política de origen en lugar de CORS (5.2); hardening de seguridad y código `429` (5.8, 7.6); `GET /api/health` pública (7.2, 7.3); cosméticos e inventario (`pets.inventory`, `pets.equipped`, colecciones `cosmetics` y `quiz_questions`, secciones 8.4, 8.7, 8.8); colección de infraestructura `rate_limits` (8.9); decisiones pendientes actualizadas (12); tabla de criterios de UN-001 (14). |
+| 2 | 2026-11-14 (firma) | Aprobación de la revisión 2 por los cuatro integrantes; sin cambios de contenido. |
+| 2.5 | 2026-11-15 | Decisión cerrada: un estudiante que se une con el periodo ya iniciado **cuenta como incumplidas las tareas ya vencidas** (sección 5.3). Deja de ser una decisión pendiente. |
+| 2.4 | 2026-11-15 | Campos de apoyo de UN-302/UN-303 en `pets`: `currentAssignmentStepsFor` (tarea a la que pertenece el progreso de pasos) y `lastMinigameAt` (enfriamiento atómico del minijuego). Entregar una tarea pone `hunger = 100` (5.5). Límites provisionales de `POST /api/minigames/reward`: 5 coins por partida, 30 s de enfriamiento y 10 partidas por día UTC (decisión 6 abierta; los reemplaza UN-501). **Aceptada por Karol e Isaac (2026-11-15).** |
+| 2.3 | 2026-11-15 | Enmienda de UN-108 (pedida por el equipo): el profesor puede **restaurar puntos de salud perdidos de un Pancho vivo** (excusa médica, etc.). Nuevo campo `pets.healthAdjustment` que se suma a la fórmula de 5.3, `pets.healthRestoreLog` y `POST /api/classrooms/:id/students/:studentId/restore-health`. **No es revivir**: un Pancho `dead` nunca se restaura (D5 vigente). Reemplaza la frase "no existe forma de recuperarla" de 5.3 y la prohibición de "campos relacionados" de 5.4 solo para este caso. Se descarta UN-109 definitivamente. **Aceptada por Karol e Isaac (2026-11-15).** |
+| 2.2 | 2026-11-14 | Enmienda de UN-301: `GET /api/me/game`; `PUT /api/pets/me/pancho`; `PUT /api/pets/me/equipped` acepta ranuras sueltas; `pets.panchoId` e `pets.imgUrl`; elegir Pancho no restablece `health`, `hunger` ni `status`. **Confirmar con Karol e Isaac.** |
+| 2.1 | 2026-11-14 | Enmienda de UN-107: `PATCH` y `DELETE /api/assignments/:id` permitidos **solo antes de `startDate`** (regla 6.2 ya vigente); `PERIOD_LOCKED` después. Se retira la frase "no existen rutas de edición/borrado de tareas". Revivir sigue sin existir (UN-109 descartado). **Confirmar con Karol e Isaac.** |
 
 ## 3. Responsables
 
@@ -125,7 +133,7 @@ Hambre y vida son sistemas **distintos**:
 | `hunger` al vencer una tarea sin entrega | `0` |
 | Recompensa de minijuego | `5` coins |
 
-**Vida.** Cada tarea tiene exactamente el mismo peso. Cuando `dueAt` llega y no hay entrega, `health = health − lifeLossPerTask`. Entregar a tiempo no resta vida. La vida nunca disminuye por el simple paso del tiempo y no existe forma de recuperarla dentro de un ciclo.
+**Vida.** Cada tarea tiene exactamente el mismo peso. Cuando `dueAt` llega y no hay entrega, `health = health − lifeLossPerTask`. Entregar a tiempo no resta vida. La vida nunca disminuye por el simple paso del tiempo. **[Rev. 2.3]** La única forma de recuperar vida dentro de un ciclo es que el profesor **perdone** puntos perdidos de un Pancho **vivo** (5.4): el servidor los guarda en `healthAdjustment` y nunca se supera `100`.
 
 | `totalAssignments` | `lifeLossPerTask` |
 |---|---|
@@ -160,17 +168,20 @@ Definiciones necesarias para que el cálculo sea determinista:
 
 ```
 missed  = nº de tareas del periodo con dueAt ≤ now sin entrega del estudiante
-health  = clamp( 100 − (missed × 100) / totalAssignments , 0 , 100 )   // 100 si totalAssignments = 0
+health  = clamp( 100 − (missed × 100) / totalAssignments + healthAdjustment , 0 , 100 )   // [Rev. 2.3] 100 si totalAssignments = 0; healthAdjustment ≥ 0 son los puntos perdonados por el profesor
 status  = (health ≤ 0) ? "dead" : "alive"
 ```
 
 Se multiplica antes de dividir para evitar errores de redondeo en coma flotante; `health` se persiste sin redondear (el redondeo de presentación queda fuera de este ADR). El valor de `hunger` almacenado es solo un snapshot; el valor devuelto por la API se calcula en cada petición. Los cálculos se hacen con el reloj del servidor, nunca con el del cliente.
 
+**Estudiantes que se unen con el periodo ya iniciado [Rev. 2.5].** La fórmula no hace excepciones por la fecha de ingreso: las tareas del periodo con `dueAt ≤ now` y sin entrega **cuentan como incumplidas** también para quien se une tarde. Su Pancho nace con `100`, pero en su primera lectura ya refleja esas faltas (por ejemplo, con 5 tareas y 2 vencidas al unirse, `health = 60`; si ya hubieran vencido todas, nace `dead`). El profesor puede perdonar puntos con la restauración de 5.4 mientras Pancho siga vivo; un Pancho que nace muerto no se restaura.
+
 ### 5.4 Muerte y ausencia de revivir — D5
 
 - Cuando `health ≤ 0`, `status = dead`.
-- **No existe revivir**: ni botón para el estudiante, ni revivir manual por el profesor, ni endpoint, ni campos en el modelo relacionados con ello.
-- Pancho permanece `dead` durante el resto del periodo actual.
+- **No existe revivir**: ni botón para el estudiante, ni revivir manual por el profesor, ni endpoint de revivir (UN-109 descartado).
+- Pancho permanece `dead` durante el resto del periodo actual: **nada lo restaura**, tampoco `healthAdjustment`.
+- **[Rev. 2.3] Restaurar salud ≠ revivir.** El profesor puede devolver puntos perdidos (p. ej. por una excusa médica) **solo si Pancho sigue vivo** (`status = alive` y `health > 0`). Reglas: (1) se rechaza con `409` si está `dead`; (2) `health` nunca supera `100` (se pueden devolver como máximo los puntos perdidos); (3) el perdón se guarda en `healthAdjustment`, que la reconciliación suma al cálculo base, así que recalcular no lo pisa y las tareas futuras incumplidas siguen restando; (4) cada restauración queda en `healthRestoreLog` (quién, cuándo, cuántos puntos, motivo); (5) un periodo nuevo reinicia `healthAdjustment` a `0`.
 - Al comenzar un **nuevo periodo** se inicia un nuevo ciclo: `health = 100`, `hunger = 100`, `status = alive`.
 - Los valores de `status` van **en minúsculas**: `"alive"` y `"dead"`. El prototipo actual del frontend usa `"ALIVE"`/`"DEAD"`; el frontend debe adaptarse al contrato.
 
@@ -255,20 +266,25 @@ En el cliente, las rutas se escriben sin el prefijo y la URL base es `/api` (rel
 | GET | `/api/classrooms/me` | Classroom del usuario (reemplaza `GET /api/classrooms`, dado que hay uno por usuario) | Sí | cualquiera | Propuesta |
 | POST | `/api/classrooms/join` | Unirse con `joinCode` (crea a Pancho) | Sí | student | Base |
 | POST | `/api/classrooms/:id/periods` | Iniciar un nuevo periodo/ciclo | Sí | teacher (dueño) | Propuesta |
+| POST | `/api/classrooms/:id/students/:studentId/restore-health` | Perdonar puntos de salud perdidos de un Pancho **vivo** (`{ points?, reason }`; sin `points` restaura todo lo perdido). `409` si está dead, si ya tiene 100 o si `points` supera lo perdido | Sí | teacher (dueño) | UN-108 **[Rev. 2.3]** |
 | GET | `/api/assignments` | Tareas del periodo actual del classroom | Sí | cualquiera | Base |
 | POST | `/api/assignments` | Crear tarea (solo antes de `startDate`) | Sí | teacher | Base |
 | GET | `/api/assignments/:id` | Detalle de una tarea | Sí | cualquiera | Propuesta |
+| PATCH | `/api/assignments/:id` | Editar `title`, `description` o `dueAt` (solo antes de `startDate`) | Sí | teacher (dueño) | UN-107 **[Rev. 2.1]** |
+| DELETE | `/api/assignments/:id` | Borrar una tarea (solo antes de `startDate`) | Sí | teacher (dueño) | UN-107 **[Rev. 2.1]** |
 | POST | `/api/assignments/:id/submissions` | Registrar entrega | Sí | student | Base |
 | GET | `/api/assignments/:id/submissions` | Entregas de una tarea | Sí | teacher | Propuesta |
 | GET | `/api/pets/me` | Estado actual de Pancho | Sí | student | Base |
+| GET | `/api/me/game` | Estado de juego en la forma del cliente `{ student, dog, currentAssignment }` | Sí | student | UN-301 **[Rev. 2.2]** |
+| PUT | `/api/pets/me/pancho` | Guardar el Pancho elegido (`{ panchoId, imgUrl }`, imagen de `images.dog.ceo`); no cambia `health`, `hunger` ni `status` | Sí | student | UN-301 **[Rev. 2.2]** |
 | GET | `/api/pets/:id` | Estado de un Pancho | Sí | dueño o teacher del classroom | Propuesta |
 | POST | `/api/minigames/:id/plays` | Registrar partida y otorgar recompensa | Sí | student | Base |
 | GET | `/api/cosmetics` | Catálogo de cosméticos | Sí | cualquiera | Propuesta **[Rev. 2]** |
 | POST | `/api/pets/me/inventory` | Comprar un cosmético (`{ "cosmeticId": 3 }`) | Sí | student | Propuesta **[Rev. 2]** |
-| PUT | `/api/pets/me/equipped` | Equipar/desequipar (`{ "head": 3, "face": null, "neck": null, "body": null }`) | Sí | student | Propuesta **[Rev. 2]** |
+| PUT | `/api/pets/me/equipped` | Equipar/desequipar por ranura (`{ "head": 3, "face": null }`; null desequipa; las ranuras omitidas no cambian) | Sí | student | Propuesta **[Rev. 2]**; subconjunto de ranuras **[Rev. 2.2]** |
 | GET | `/api/quiz-questions` | Preguntas del quiz **sin** `correctIndex` | Sí | student | Propuesta **[Rev. 2]** |
 
-No existen rutas de edición/borrado de tareas ni de revivir (por diseño). La forma de validar las respuestas del quiz y de considerar "válida" una partida está pendiente (sección 12); en ningún caso `correctIndex` se envía al cliente.
+Editar y borrar tareas solo funciona antes de `startDate` (después: `409 PERIOD_LOCKED`, regla 6.2). No existen rutas de revivir (por diseño; UN-109 descartado). La forma de validar las respuestas del quiz y de considerar "válida" una partida está pendiente (sección 12); en ningún caso `correctIndex` se envía al cliente.
 
 ### 7.4 Requests
 
@@ -304,6 +320,12 @@ El login se hace **por `email`**. `username` (rev. 1) es opcional y no se usa pa
 { "joinCode": "PROG-2026" }
 ```
 
+`POST /api/classrooms/:id/students/:studentId/restore-health` **[Rev. 2.3]** — solo el profesor dueño; el estudiante debe estar inscrito en ese classroom:
+```json
+{ "points": 20, "reason": "Excusa médica" }
+```
+Respuesta `200`: `{ "restored": 20, "student": { "id", "name" }, "pet": { "status": "alive", "health": 100, "hunger": 62.5, "healthAdjustment": 20 } }`. `points` es opcional (`0 < points ≤ 100`); `reason` es obligatoria (3–200 caracteres) y se registra.
+
 `POST /api/classrooms/:id/periods`
 ```json
 { "startDate": "2027-02-01T00:00:00Z", "endDate": "2027-06-04T23:59:59Z" }
@@ -315,6 +337,11 @@ Validaciones: `startDate < endDate` y que no se solape con el periodo vigente.
 { "title": "Taller 1", "description": "Resolver ejercicios 1–5", "dueAt": "2026-08-10T23:59:00Z" }
 ```
 `classroomId` y `periodId` se toman del classroom del profesor autenticado.
+
+`PATCH /api/assignments/:id` — al menos uno de los campos; mismas validaciones que el `POST`:
+```json
+{ "title": "Taller 1 (revisado)", "dueAt": "2026-08-12T23:59:00Z" }
+```
 
 `POST /api/assignments/:id/submissions` — solo metadata; el archivo vive en el almacenamiento externo:
 ```json
@@ -496,6 +523,10 @@ Representa a Pancho. Un documento por estudiante; al empezar un nuevo periodo se
 | `hunger` | number | 0–100 (snapshot; el valor vigente se calcula) |
 | `coins` | int | Saldo; incrementado/decrementado con operadores atómicos (`$inc`) |
 | `inventory` | `[number]` | **[Rev. 2]** `cosmeticId` de los cosméticos comprados. Por defecto `[]`. Sin duplicados |
+| `panchoId` | string \| null | **[Rev. 2.2]** Id del perro elegido (derivado de la URL de dog.ceo). `null` hasta que el estudiante lo elige |
+| `imgUrl` | string \| null | **[Rev. 2.2]** Imagen del perro elegido (solo `https://images.dog.ceo/...`). `null` hasta que lo elige |
+| `healthAdjustment` | number | **[Rev. 2.3]** Puntos de salud perdonados por el profesor. Default `0`, rango `0–100`; solo crece; se reinicia a `0` en un periodo nuevo. Se suma a la fórmula de 5.3 |
+| `healthRestoreLog` | array | **[Rev. 2.3]** Máx. 50 entradas `{ at, teacherId, points, healthBefore, healthAfter, reason }` |
 | `equipped` | objeto | **[Rev. 2]** `{ head, face, neck, body }`; cada valor es un `cosmeticId` (number) o `null`. Por defecto todos `null` |
 | `status` | `"alive"` \| `"dead"` | Minúsculas |
 | `createdAt` | Date | |
@@ -641,12 +672,10 @@ Implicaciones: las credenciales (cadena de conexión a Atlas `MONGODB_URI`, secr
 - Formato y longitud del `joinCode`.
 - Duración de la sesión y formato interno del valor de la cookie (JWT firmado o id de sesión en MongoDB; siempre dentro de la cookie, ver 5.2).
 - Si Pancho en estado `dead` puede seguir entregando tareas, jugando minijuegos, comprando o equipando cosméticos.
-- Tratamiento de estudiantes que se unen con el periodo ya iniciado (las tareas ya vencidas contarían como incumplidas salvo que se decida lo contrario).
 - Si `coins`, `inventory` y `equipped` se conservan al iniciar un nuevo periodo (el reinicio definido afecta solo a `health`, `hunger` y `status`).
 - Catálogo de `gameId` válidos y validación de que una partida es legítima (incluida la forma de validar las respuestas del quiz sin exponer `correctIndex`).
 - **[Rev. 2]** Monedas iniciales de Pancho al crearse: el prototipo usa 270, pero el ADR no las define; el modelo exige indicarlas explícitamente al unirse al classroom.
 - **[Rev. 2]** Valores definitivos del rate limit (5.8) y si el contador de login se reinicia tras un inicio de sesión correcto.
-- **[Rev. 2]** Confirmación de la revisión 1 (`users.username`).
 
 **Fuera del alcance de este ADR**
 
@@ -664,20 +693,22 @@ Implicaciones: las credenciales (cadena de conexión a Atlas `MONGODB_URI`, secr
 
 | Integrante | Rol | Rev. 0 | Rev. 2 |
 |---|---|---|---|
-| Karol | Lead | Aprobado | Pendiente |
-| Isaac | API / Desarrollo | Aprobado | Pendiente |
-| Nicolás | MongoDB / Desarrollo | Aprobado | Pendiente |
-| Mariana | UX/UI | Aprobado | Pendiente |
+| Karol | Lead | Aprobado | Aprobado (2026-11-14) |
+| Isaac | API / Desarrollo | Aprobado | Aprobado (2026-11-14) |
+| Nicolás | MongoDB / Desarrollo | Aprobado | Aprobado (2026-11-14) |
+| Mariana | UX/UI | Aprobado | Aprobado (2026-11-14) |
 
-**Estado de aprobación de la revisión 2:** pendiente. Cuando los cuatro integrantes confirmen, se cambia cada celda a "Aprobado" con la fecha y se actualiza la sección 1.
+**Revisiones 2.3, 2.4 y 2.5:** aceptadas por Karol e Isaac el 2026-11-15 (2.5 es una decisión del equipo).
+
+**Estado de aprobación de la revisión 2:** completada. Los cuatro integrantes aceptaron el ADR el 2026-11-14; ya no requiere firmas.
 
 ## 14. Criterios de aceptación de UN-001
 
 | Criterio del ticket | Dónde se cumple | Estado |
 |---|---|---|
-| ADR en `/docs` firmado por los 4 | Este archivo (`docs/ADR-001-api-mongodb.md`); firmas en la sección 13 | Rev. 0 firmada; **rev. 2 pendiente** |
+| ADR en `/docs` firmado por los 4 | Este archivo (`docs/ADR-001-api-mongodb.md`); firmas en la sección 13 | Rev. 0 y rev. 2 firmadas por los 4 (completado) |
 | Constantes de decaimiento con números | 5.3 (tabla de constantes y ejemplos) | Cumplido |
-| Contrato acordado por Karol e Isaac | Sección 7 | Rev. 0 acordado; **cambios de rev. 2 pendientes de su firma** |
+| Contrato acordado por Karol e Isaac | Sección 7 | Rev. 0 y cambios de rev. 2 acordados (completado) |
 | Core features confirmadas | Sección 4 (funcionalidades núcleo) y 7.3 (endpoints Base) | Cumplido |
 | Decisión escrita sobre el hosting del front | Sección 10 | Cumplido (rev. 2: un solo proyecto Vercel) |
 | D2, D4, D5, D6, D7, D8 cerradas | Tabla de decisiones en la sección 4 | Cumplido |

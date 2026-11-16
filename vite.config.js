@@ -4,8 +4,8 @@ import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  // GitHub Pages serves the site from /<repo-name>/ instead of the domain root.
-  base: process.env.VERCEL ? "/" : "/Panchoracle/",
+  // ADR 10 (Rev. 2): el sitio vive en la raíz del dominio de Vercel (ya no se usa GitHub Pages).
+  base: "/",
   plugins: [react()],
   resolve: {
     alias: {

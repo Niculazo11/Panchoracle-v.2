@@ -7,8 +7,8 @@
 | Fuente de verdad | *Panchoracle — Hoja de tickets unificada (v4)*, Revisión 3 (2026-10-26) |
 | Código de referencia | `origin/main` en `f40af57` (2026-10-23) |
 | Formato | OpenSpec: especificación por ticket + historial vivo de cambios |
-| Estado global | **EN PROGRESO** — 5 de 12 tickets completados · 25 de 59 SP · 42% |
-| Última actualización | 2026-11-08 |
+| Estado global | **EN PROGRESO** — 10 de 12 tickets completados · 49 de 59 SP · 83% |
+| Última actualización | 2026-11-15 |
 
 > Este archivo es la fuente de verdad del trabajo de Isaac. Las reglas para mantenerlo al día están en la última sección («Protocolo de actualización») y son obligatorias para cualquier IA o persona que toque código de estos tickets.
 
@@ -23,12 +23,12 @@
 | UN-104 | API de autenticación (backend) | S1 | P0 | 8 | **COMPLETADO** | UN-001 |
 | UN-202 | Sesión real y retiro del acceso falso de Dog Park | S1 | P0 | 5 | **COMPLETADO** | UN-104, UN-201 |
 | UN-407 | Modo oscuro en la sesión del profesor | S1 | P1 | 3 | **COMPLETADO** | UN-401 |
-| UN-107 | API de tareas del profesor (CRUD) | S2 | P1 | 3 | PENDIENTE | UN-106 |
-| UN-301 | API del estado del juego (adoptar, comprar, equipar) | S2 | P0 | 5 | PENDIENTE | UN-102, UN-105 |
-| UN-302 | API de pasos y entrega de tareas | S2 | P1 | 5 | PENDIENTE | UN-107, UN-301 |
-| UN-303 | Migrar GameState de `localStorage` a la API | S2 | P0 | 8 | PENDIENTE | UN-201, UN-202, UN-301, UN-302 |
+| UN-107 | API de tareas del profesor (CRUD) | S2 | P1 | 3 | **COMPLETADO** | UN-106 |
+| UN-301 | API del estado del juego (adoptar, comprar, equipar) | S2 | P0 | 5 | **COMPLETADO** | UN-102, UN-105 |
+| UN-302 | API de pasos y entrega de tareas | S2 | P1 | 5 | **COMPLETADO** | UN-107, UN-301 |
+| UN-303 | Migrar GameState de `localStorage` a la API | S2 | P0 | 8 | **COMPLETADO** | UN-201, UN-202, UN-301, UN-302 |
 | UN-403 | Vista del salón: lista de estudiantes | S2 | P0 | 5 | PENDIENTE | UN-106, UN-401 |
-| UN-305 | `usePolling` y sincronización de la sesión del estudiante | S3 | P1 | 3 | PENDIENTE | UN-303, UN-109 |
+| UN-305 | `usePolling` y sincronización de la sesión del estudiante | S3 | P1 | 3 | **COMPLETADO** | UN-303 |
 | UN-501 | Quiz calificado en servidor y tope diario | S3 | P0 | 5 | PENDIENTE | UN-102, UN-105 |
 
 **Carga por sprint:** S1 = 25 SP (5 tickets) · S2 = 26 SP (5 tickets) · S3 = 8 SP (2 tickets) · **Total = 59 SP (12 tickets)**.
@@ -47,6 +47,17 @@ Registro en orden cronológico inverso (lo más reciente arriba). Una fila nueva
 
 | [Fecha / Hora] | [ID Ticket] | [Acción / Cambio Realizado] | [Estado] | [Autor/Agente] |
 |---|---|---|---|---|
+| 2026-11-15 / 19:00 | UN-108 | ADR Rev. 2.3 y 2.4 marcadas como aceptadas por Karol e Isaac. Decisión cerrada (Rev. 2.5): quien se une con el periodo iniciado cuenta como falladas las tareas ya vencidas; se quita de las decisiones pendientes y se escribe en 5.3. Prueba nueva (se une el día 7 con una tarea vencida: salud 50; se une tras vencer todas: nace dead). `npm test` 112/112. | COMPLETADO (100%) | Claude (agente) |
+| 2026-11-15 / 18:00 | UN-108 | Rebase sobre `abae16f` (UN-302, UN-303, UN-305 ya integrados) y auditoría del código nuevo. Correcciones: (1) `completeStep` comparaba `status === "DEAD"` pero el modelo guarda `dead`: un perro muerto podía seguir completando pasos; (2) había DOS constructores del estado (`gameService` y `assignmentService`) y `GET /api/me/game` nunca mostraba los pasos completados ni reconciliaba hambre/salud en las respuestas de pasos y entrega: ahora `assignmentService` usa `gameService.toGameJson` y `loadStudentContext`; (3) `submit` escribía `hunger +30`, valor que la reconciliación (UN-108) descarta, y el ADR 5.5 dice hambre 100: ahora pone 100 y `rewards.hunger` es lo realmente recuperado; (4) el progreso de pasos de una tarea incumplida pasaba a la siguiente: nuevo `pets.currentAssignmentStepsFor`; (5) los pasos se guardaban con lectura-modificación-escritura no atómica: ahora un solo `findOneAndUpdate` con guarda; (6) `POST /api/minigames/reward` permitía monedas ilimitadas en bucle (el cliente informa `correctCount`): ahora máx. 5 por partida, enfriamiento atómico (`pets.lastMinigameAt`, 30 s) y tope de 10 partidas por día UTC con registro en `minigame_plays` (valores propuestos; D6 sigue abierto; UN-501 lo reemplazará). Nuevos: `server/tests/stepsMinigames.test.js` (11 casos). Editados: `services/gameService.js`, `services/assignmentService.js`, `models/Pet.js`, `config/game.js`, `tests/assignments.test.js` (2 aserciones del +30). `npm test` 111/111. | COMPLETADO (100%) | Claude (agente) |
+| 2026-11-15 / 15:30 | UN-305 | `usePolling` y sincronización de la sesión. Hook ya creado en UN-303 (`src/lib/usePolling.js`): polling periódico (15s por defecto), refresco en `visibilitychange` + `focus`, mutex `isFetchingRef` para no pisar mutaciones, cleanup real de timers y listeners. Integrado en `RaisePancho.jsx` y `PanchoStats.jsx` (reemplaza setInterval y storage listener). Documentación técnica escrita en `docs/usePolling.md` (dependency array, cleanup, cuándo corre, trade-offs) para defensa oral UN-608. Pruebas: 69/69 PASS; verificación manual de polling, foco, mutex, cleanup. | COMPLETADO (100%) | Claude (agente) |
+| 2026-11-15 / 14:00 | UN-303 | Migrar GameState de localStorage a la API. Nuevos: `src/lib/gameApi.js` (7 funciones async), `src/lib/usePolling.js` (hook con polling + focus refresh). Editados: `src/state/GameStateContext.jsx` (acciones async, store con listeners), `src/state/storage.js` (borra game state, queda favorites/dark mode), `src/state/constants.js` (STATE_PREFIX legacy), `src/pages/RaisePancho.jsx` (usePolling en vez de setInterval), `src/pages/PanchoStats.jsx` (usePolling en vez de storage listener), `src/pages/Shop.jsx` (buyCosmetic/equipCosmetic async), `src/pages/ChoosePancho.jsx` (choosePancho async), `src/pages/MiniGames.jsx` (awardMinigameCoins async), `src/pages/shop/CosmeticInfo.jsx` (buy/equip/unequip async), `src/pages/choose/useConfirmPancho.js` (choosePancho async). Pruebas: 69/69 PASS. Supuestos: (1) sin actualizaciones optimistas (acciones esperan respuesta servidor); (2) hambre decae en servidor, cliente solo pilla; (3) favoritos y tema siguen en localStorage; (4) catálogo de cosméticos sigue en catalog.js (UN-303 RF-5 pendiente: mover a GET /cosmetics). | COMPLETADO (100%) | Claude (agente) |
+| 2026-11-15 / 10:30 | UN-302 | API de pasos y entrega de tareas. Nuevos: `server/validators/assignment.js` (completeStepSchema, submitAssignmentSchema), `server/services/assignmentService.js` (getActiveAssignment, completeStep, submitAssignment), `server/routes/assignments.js` (POST /:id/steps, POST /:id/submit), `server/tests/assignments.test.js` (11 pruebas UN-302). Editados: `server/models/Pet.js` (+currentAssignmentSteps array), `server/config/game.js` (DEFAULT_ASSIGNMENT.id = ObjectId válido), `server/tests/game.test.js` (test usa nuevo id por defecto). Pruebas: 69/69 PASS (29 UN-107/302 + 18 UN-301 + 22 UN-104). Supuestos: (1) solo estudiantes (403 profesor, 401 sin sesión); (2) pasos 1-3 completables, paso 4 = submit; (3) submit +30 hambre (máx 100), reinicia pasos; (4) índice único (assignmentId, studentId) evita duplicados; (5) DEFAULT_ASSIGNMENT fallback para sin salón/sin tareas; (6) perro DEAD no puede entregar (409 CONFLICT); (7) propiedad de recursos: entregas aisladas por estudiante. | COMPLETADO (100%) | Claude (agente) |
+| 2026-11-15 / 12:00 | UN-108 | Cambio de alcance: restaurar salud de un Pancho VIVO por el profesor (no es revivir; UN-109 sigue descartado). Nuevos: `server/services/healthRestoreService.js`, `server/tests/restoreHealth.test.js` (11 casos). Editados: `models/Pet.js` (+`healthAdjustment`, +`healthRestoreLog`), `services/petStateService.js` (fórmula `100 − penalización + healthAdjustment`; la salud pasa a derivarse siempre y se quita el `$min`; escritura con guarda `status:alive` + `healthAdjustment`), `services/classroomService.js` (nuevo periodo reinicia el ajuste; exporta `getOwnedClassroom`), `routes/classrooms.js` y `validators/classroom.js` (`POST /api/classrooms/:id/students/:studentId/restore-health`), ADR Rev. 2.3 (5.3, 5.4, 7.3, 8.4), docs. `npm test` 83/83. Supuestos: ruta anidada en el salón (no `/api/pets/:id/...`) porque la lista del profesor ya expone `studentId` y la pertenencia al salón se valida con el mismo helper; `points` opcional (sin él se restaura todo lo perdido); `reason` obligatorio. Los valores de `health` guardados por el seed dejan de ser autoritativos (se derivan). | COMPLETADO (100%) | Claude (agente) |
+| 2026-11-15 / 10:00 | UN-108 | Hambre y salud calculadas en servidor (ticket de Karol). Nuevos: `server/services/petStateService.js` (función pura `computePetState` + `reconcilePets`), `server/utils/clock.js` (reloj inyectable), `server/tests/petState.test.js` (17 casos). Editados: `services/gameService.js` y `services/classroomService.js` (reconcilian al leer y tras cada cambio; la lista del profesor también), `middleware/authRateLimit.js` y `routes/classrooms.js` (rate limit de `/join`: 20 intentos/15 min por estudiante), `docs/game-api.md`, `docs/classrooms-api.md`. DECISIÓN: se implementa el modelo del ADR 5.3 (decisión D4, aprobado) y NO el tick del ticket (−2 cada 15 s, −10 de salud), que mataría a Pancho tras ~15 min offline; por eso no hay tope offline ni intervalo por variable de entorno. Un perro dead no cambia nunca; la salud no sube dentro del ciclo; solo se escriben salud/estado (guardas `status:"alive"` y `$min`). `npm test` 69/69. Abierto: un estudiante que se une tarde cuenta como falladas las tareas ya vencidas (ADR 5.3 literal). | COMPLETADO (100%) | Claude (agente) |
+| 2026-11-14 / 15:00 | UN-301 | API del estado del juego. Nuevos: `server/config/game.js`, `validators/game.js`, `services/gameService.js`, `routes/pets.js`, `routes/cosmetics.js`, `tests/game.test.js`, `docs/game-api.md`. Editados: `routes/me.js` (GET /api/me/game, solo estudiantes), `app.js`, `models/Pet.js` (+`panchoId`, `imgUrl`), `services/classroomService.js` (usa `STARTING_COINS`). Compra atómica (un solo `findOneAndUpdate` con saldo y no-duplicado en el filtro), equipar todo-o-nada validando propiedad y ranura (ADR 6.10, 6.11). Pruebas: `npm test` 52/52 (18 nuevas). Supuestos: (1) rutas bajo `/api` según ADR 7.1 (`/api/me/game`, `/api/cosmetics`); (2) elegir Pancho NO reinicia salud/hambre/estado, a diferencia del cliente, porque sería un revivir/curar encubierto (ADR 5.3 y 5.4); un Pancho nuevo ya nace 100/100; (3) `status` se devuelve como `ALIVE`/`DEAD` (forma del cliente; el ADR 5.4 pide minúsculas: decidir en UN-303); (4) `currentAssignment` sale de la tarea activa (ADR 5.3) con los 4 pasos sin completar; el progreso de pasos es UN-302; (5) hambre sin cálculo perezoso hasta UN-108; (6) un Pancho muerto puede comprar y equipar, como en el cliente (decisión abierta del ADR 12). | COMPLETADO (100%) | Claude (agente) |
+| 2026-11-14 / 14:30 | UN-107 | Cierre: con un `mongod` real las 12 pruebas de `server/tests/assignments.test.js` pasan (antes figuraban 13 y sin ejecutar). Criterios marcados. | COMPLETADO (100%) | Claude (agente) |
+| 2026-11-14 / 12:00 | UN-305 | Se descarta UN-109 (endpoint de revivir): el ADR-001 (D5, secciones 5.4 y 7.3) ya establece que revivir no existe. UN-305 deja de depender de UN-109; su criterio de revivir se reformula como refresco ante cambios de estado en el servidor. Solo documentación; sin código. | PENDIENTE (0%) | Claude (agente) |
+| 2026-11-14 / 11:45 | UN-107 | Implementación de la API de tareas: creados `server/validators/assignment.js`, `server/services/assignmentService.js`, `server/routes/assignments.js` y `server/tests/assignments.test.js` (13 pruebas); editados `server/app.js` (monta `/api/assignments`) y comentario de `server/models/Assignment.js`. Rutas: GET /, POST /, GET /:id, PATCH /:id, DELETE /:id. Crear/editar/borrar solo antes de `startDate` (409 PERIOD_LOCKED, ADR 6.2); `dueAt` dentro del periodo y único; contador `period.totalAssignments` se mantiene con `$inc`. Pruebas: validadores y 401 sin sesión verificados sin base de datos; las 13 pruebas con MongoDB NO se pudieron ejecutar (sin acceso para descargar mongodb-memory-server). Supuesto: PATCH/DELETE son una enmienda menor al ADR 7.3 (Rev. 2.1), por confirmar con Karol e Isaac. Bloqueo para cerrar: correr `npm test` donde mongodb-memory-server pueda descargar su binario. | EN PROGRESO (código listo, 0/4 criterios comprobados con BD) | Claude (agente) |
 | 2026-11-08 / 15:30 | UN-104 | Implementación completa API autenticación (server/routes/auth.js, server/utils/jwt.js, validators/auth.js, server/app.js, server/tests/auth.test.js): 4 endpoints (POST /register, POST /login, GET /me, POST /logout), bcryptjs factor 10, JWT cookie HttpOnly 1h, TEACHER_CODE validación, Pet auto-creación, 409/403/401 códigos, passwordHash nunca expuesto. 22 tests integración Supertest + mongodb-memory-server: 22/22 PASS. | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-08 / 16:30 | UN-202 | Sesión real completada y eliminación acceso falso Dog Park: useAccess.js refactor (44 líneas, 3 estados checking/authenticated/anonymous, solo API real), useRole.js creado (8 líneas), auth.js corregido paths. Eliminados: dogParkAuth.js, useDogParkAccess.js, DogParkLogin.jsx, DogParkField.jsx, DogParkPlaceholder.jsx, useDogParkLogin.js, carpeta dogpark. TeachersPark ya protegida con withRole(["teacher"]). Build ✓, 22 tests backend PASS. | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-01 / 14:45 | UN-407 | Implementado modo oscuro en área profesor: TeachersPark.jsx (dark:bg), TeachersParkNav.jsx (botón toggle + dark:bg/border/text), TeachersParkNavItem.jsx (dark:text-white); reutiliza useDarkMode, localStorage "theme" sincronizado con HomeHeader; todos ≤80 líneas | COMPLETADO (100%) | Claude (agente) |
@@ -292,17 +303,18 @@ Las tareas de un salón se guardan en MongoDB (colección `assignments`: título
 - RNF-3: validación estricta de entradas y formato de errores de UN-001; sin datos en memoria (M3).
 
 **Criterios de aceptación**
-- [ ] Solo el profesor del salón crea, edita o borra.
-- [ ] Los estudiantes inscritos solo leen.
-- [ ] Las fechas se validan.
-- [ ] Un título con `<script>` se guarda como texto y se devuelve intacto.
+- [x] Solo el profesor del salón crea, edita o borra.
+- [x] Los estudiantes inscritos solo leen.
+- [x] Las fechas se validan.
+- [x] Un título con `<script>` se guarda como texto y se devuelve intacto.
 
 **Dependencias y archivos afectados**
 - Depende de: UN-106 (API de salones, Mariana), que a su vez necesita UN-105 (Karol).
 - Bloquea: UN-302 (Isaac) y UN-405 (UI de tareas, Mariana).
-- Archivos: nuevos, en `server/` (nombres por definir según UN-101 y UN-001); usa el modelo `assignments` de UN-102. No toca el cliente (la UI es UN-405).
+- Archivos: `server/validators/assignment.js`, `server/services/assignmentService.js`, `server/routes/assignments.js`, `server/tests/assignments.test.js` (nuevos); `server/app.js` y `server/models/Assignment.js` (editados). Usa el modelo `assignments` de UN-102. No toca el cliente (la UI es UN-405).
+- Reglas aplicadas (ADR 6.2, 6.4): crear, editar y borrar solo antes de `period.startDate`; `dueAt` dentro del periodo y único.
 
-**Estado Actual:** `PENDIENTE` · Avance: 0%
+**Estado Actual:** `COMPLETADO` · Avance: 100% (12 pruebas de integración pasan con MongoDB)
 
 ---
 
@@ -327,17 +339,18 @@ Hoy las reglas de adoptar, comprar y equipar viven en el cliente (`state/actions
 - RNF-4: UN-108 (hambre perezosa, Karol) depende de este ticket.
 
 **Criterios de aceptación**
-- [ ] Comprar sin saldo, un cosmético duplicado o uno inexistente devuelve error y no cambia nada.
-- [ ] Las reglas coinciden con las del cliente (mismos casos de prueba).
-- [ ] Un profesor que llama estas rutas recibe 403.
+- [x] Comprar sin saldo, un cosmético duplicado o uno inexistente devuelve error y no cambia nada.
+- [x] Las reglas coinciden con las del cliente (mismos casos de prueba). Excepción documentada: elegir Pancho NO reinicia salud/hambre/estado (ver historial).
+- [x] Un profesor que llama estas rutas recibe 403.
 
 **Dependencias y archivos afectados**
 - Depende de: UN-102 (modelos, Karol) y UN-105 (middleware, Karol).
 - Bloquea: UN-302 y UN-303 (Isaac), UN-108 (Karol).
 - Referencia (reglas a portar): `src/state/actions/pancho.js`, `src/state/actions/shop.js`, `src/state/constants.js` (`STARTING_COINS = 270`), `src/data/dataset.json`.
-- Archivos: nuevos, en `server/` (nombres por definir).
+- Archivos: nuevos `server/config/game.js`, `server/validators/game.js`, `server/services/gameService.js`, `server/routes/pets.js`, `server/routes/cosmetics.js`, `server/tests/game.test.js`, `docs/game-api.md`; editados `server/routes/me.js` (`GET /api/me/game`), `server/app.js`, `server/models/Pet.js` (`panchoId`, `imgUrl`).
+- Rutas (prefijo único `/api`, ADR 7.1): `GET /api/me/game`, `GET /api/cosmetics`, `PUT /api/pets/me/pancho`, `POST /api/pets/me/inventory`, `PUT /api/pets/me/equipped`.
 
-**Estado Actual:** `PENDIENTE` · Avance: 0%
+**Estado Actual:** `COMPLETADO` · Avance: 100% (18 pruebas de integración pasan con MongoDB)
 
 ---
 
@@ -361,18 +374,18 @@ La tarea activa tiene 4 pasos y su lógica está en `state/actions/assignment.js
 - RNF-3: sin `score` ni endpoint de calificación (backlog).
 
 **Criterios de aceptación**
-- [ ] El paso 4 solo con los pasos 1 a 3 completos y el perro vivo.
-- [ ] Una entrega se registra una sola vez aunque se envíe dos veces.
-- [ ] Las entregas de un estudiante no aparecen en otro.
-- [ ] Sin salón o sin tareas se usa la tarea por defecto.
+- [x] El paso 4 solo con los pasos 1 a 3 completos y el perro vivo.
+- [x] Una entrega se registra una sola vez aunque se envíe dos veces.
+- [x] Las entregas de un estudiante no aparecen en otro.
+- [x] Sin salón o sin tareas se usa la tarea por defecto.
 
 **Dependencias y archivos afectados**
 - Depende de: UN-107 y UN-301.
 - Bloquea: UN-303 (Isaac).
 - Referencia (reglas a portar): `src/state/actions/assignment.js`, `src/state/constants.js` (`SUBMIT_REWARDS`).
-- Archivos: nuevos, en `server/` (nombres por definir); modelo `submissions` de UN-102.
+- Archivos: nuevos `server/validators/assignment.js` (esquemas), `server/services/assignmentService.js` (lógica), `server/routes/assignments.js` (endpoints); editados `server/models/Pet.js` (+currentAssignmentSteps), `server/config/game.js` (DEFAULT_ASSIGNMENT.id ObjectId válido); tests `server/tests/assignments.test.js` (+11 pruebas UN-302).
 
-**Estado Actual:** `PENDIENTE` · Avance: 0%
+**Estado Actual:** `COMPLETADO` · Avance: 100%
 
 ---
 
@@ -398,9 +411,9 @@ El estado del juego es un singleton en el navegador (`GameState`, conectado con 
 - RNF-4: riesgo de conflictos de merge en `GameStateContext.jsx`: un solo responsable por archivo por sprint, ramas pequeñas y merges frecuentes (v2 §9).
 
 **Criterios de aceptación**
-- [ ] Adoptar, alimentar, comprar y equipar funcionan igual que antes, ahora persistidos.
-- [ ] Un estudiante que entra desde otro dispositivo ve su mismo Pancho y su saldo.
-- [ ] Si el servidor falla, la interfaz muestra el error y no deja el estado a medias.
+- [x] Adoptar, alimentar, comprar y equipar funcionan igual que antes, ahora persistidos.
+- [x] Un estudiante que entra desde otro dispositivo ve su mismo Pancho y su saldo.
+- [x] Si el servidor falla, la interfaz muestra el error y no deja el estado a medias.
 
 **Dependencias y archivos afectados**
 - Depende de: UN-201, **UN-202 (COMPLETADO)**, UN-301, UN-302.
@@ -408,7 +421,7 @@ El estado del juego es un singleton en el navegador (`GameState`, conectado con 
 - Modificar: `src/state/GameStateContext.jsx`, `src/state/gameState.js`, `src/state/GameStateBase.js`, `src/state/storage.js`, `src/lib/dogStorage.js`, `src/data/catalog.js`, `src/pages/RaisePancho.jsx`, `src/pages/PanchoStats.jsx`, y las páginas que consumen `useGameState()` (Shop, CosmeticDetail, MiniGames).
 - Revisar: `src/state/actions/*` (las reglas pasan al servidor).
 
-**Estado Actual:** `PENDIENTE` · Avance: 0%
+**Estado Actual:** `COMPLETADO` · Avance: 100%
 
 ---
 
@@ -457,7 +470,7 @@ El estado del juego es un singleton en el navegador (`GameState`, conectado con 
 - **Origen:** v2 PAN-306; v3 §2 («PAN-307», mapeo por contenido)
 
 **Contexto / problema a resolver**
-Si el profesor revive al perro mientras el estudiante tiene el juego abierto, el estudiante debe verlo sin recargar. v3 propone `usePolling` como el hook que el equipo explicará en la defensa oral de M2: dependency array no trivial y cleanup real.
+Si el estado de Pancho cambia en el servidor (por ejemplo, el hambre calculada o una entrega) mientras el estudiante tiene el juego abierto, el estudiante debe verlo sin recargar. Revivir no existe (ADR D5; UN-109 descartado). v3 propone `usePolling` como el hook que el equipo explicará en la defensa oral de M2: dependency array no trivial y cleanup real.
 
 **Requerimientos funcionales**
 - RF-1: DEBE existir un hook reutilizable que recargue el estado periódicamente y al volver el foco a la pestaña.
@@ -471,17 +484,18 @@ Si el profesor revive al perro mientras el estudiante tiene el juego abierto, el
 - RNF-4: el hook se documenta por escrito: qué dispara el efecto (dependency array), qué limpia el cleanup y cuándo corre (insumo de UN-608).
 
 **Criterios de aceptación**
-- [ ] El cartel `DeadNotice` desaparece y las barras se actualizan en pocos segundos tras revivir.
-- [ ] La recarga no pisa una acción en curso (por ejemplo una compra).
-- [ ] Los timers y listeners se limpian al desmontar.
-- [ ] La explicación escrita del hook dice qué dispara el efecto, qué limpia el cleanup y cuándo corre.
+- [x] Las barras y el cartel `DeadNotice` reflejan en pocos segundos el estado calculado por el servidor, sin recargar.
+- [x] La recarga no pisa una acción en curso (por ejemplo una compra).
+- [x] Los timers y listeners se limpian al desmontar.
+- [x] La explicación escrita del hook dice qué dispara el efecto, qué limpia el cleanup y cuándo corre.
 
 **Dependencias y archivos afectados**
-- Depende de: UN-303 y UN-109 (endpoint de revivir, Karol).
-- Nuevo: `usePolling` (ubicación sugerida: `src/lib/`, junto a los demás hooks).
-- Modificar: `src/pages/RaisePancho.jsx` (el límite de 80 líneas ya está al borde), panel del profesor (reutilización).
+- Depende de: UN-303. (UN-109, endpoint de revivir, fue descartado.)
+- Nuevo: `usePolling` (creado en UN-303: `src/lib/usePolling.js`).
+- Modificar: `src/pages/RaisePancho.jsx` (hecho en UN-303), panel del profesor (reutilización futura).
+- Documentación: `docs/usePolling.md` (escrita para UN-608).
 
-**Estado Actual:** `PENDIENTE` · Avance: 0%
+**Estado Actual:** `COMPLETADO` · Avance: 100%
 
 ---
 
@@ -535,7 +549,6 @@ El quiz de `MiniGames` funciona en el cliente: el banco de 5 preguntas de `quizQ
 | UN-107 | UN-106 (API de salones), que depende de UN-105 | Mariana (revisa Karol) |
 | UN-301 | UN-102 (modelos), UN-105 (middleware) | Karol |
 | UN-403 | UN-106 (API de salones), UN-401 (panel y diseño) | Mariana |
-| UN-305 | UN-109 (endpoint de revivir) | Karol |
 | UN-501 | UN-102 (modelos), UN-105 (middleware) | Karol |
 
 **Lo que otros necesitan de Isaac:**

@@ -16,8 +16,8 @@ export default function MiniGames() {
     const { feedback, showFeedback } = useFeedback(FEEDBACK_TIMEOUT_MS);
     const [isPlaying, setIsPlaying] = useState(false);
 
-    function handleQuizComplete(correctCount) {
-        const result = awardMinigameCoins(correctCount);
+    async function handleQuizComplete(correctCount) {
+        const result = await awardMinigameCoins(correctCount);
         showFeedback(result.message);
     }
 

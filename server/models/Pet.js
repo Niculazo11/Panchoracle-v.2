@@ -5,7 +5,8 @@ const { Schema } = mongoose;
 const isFiniteNumber = (value) => Number.isFinite(value);
 
 // ADR 8.4: Pancho. Un documento por estudiante, reiniciado en cada periodo.
-// NO existen campos para revivir (ADR 5.4).
+// NO existen campos para revivir (ADR 5.4). healthAdjustment/healthRestoreLog solo perdonan
+// penalizaciones de un Pancho VIVO (UN-108, ADR Rev. 2.3); un Pancho dead nunca se restaura.
 const petSchema = new Schema(
   {
     ownerId: {
@@ -41,6 +42,37 @@ const petSchema = new Schema(
       max: 100,
       validate: { validator: isFiniteNumber, message: "hunger debe ser un número" },
     },
+    // UN-108 [Rev. 2.3]: puntos de salud que el profesor perdonó (p. ej. una excusa médica).
+    // Se SUMAN al cálculo base: health = clamp(100 - missed*100/total + healthAdjustment, 0, 100).
+    // Solo crece (restore-health) y vuelve a 0 al empezar un nuevo periodo.
+    healthAdjustment: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+      validate: { validator: isFiniteNumber, message: "healthAdjustment debe ser un número" },
+    },
+    // UN-108 [Rev. 2.3]: quién restauró cuánto y por qué (máximo 50 entradas, las más recientes).
+    healthRestoreLog: {
+      type: [
+        new Schema(
+          {
+            at: { type: Date, required: true },
+            teacherId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+            points: { type: Number, required: true, min: 0 },
+            healthBefore: { type: Number, required: true },
+            healthAfter: { type: Number, required: true },
+            reason: { type: String, required: true, maxlength: 200 },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
+    },
+    // UN-301: Pancho elegido (id derivado de la URL de dog.ceo e imagen). null hasta que
+    // el estudiante lo elige en /choosePancho; el cliente redirige mientras sea null.
+    panchoId: { type: String, trim: true, maxlength: 100, default: null },
+    imgUrl: { type: String, trim: true, maxlength: 500, default: null },
     // ADR 8.4: saldo entero. El ADR NO define las monedas iniciales (el
     // frontend usa 270), por eso es obligatorio y sin default: lo decide quien
     // cree a Pancho (join del classroom).
@@ -71,6 +103,21 @@ const petSchema = new Schema(
       face: { type: Number, default: null },
       neck: { type: Number, default: null },
       body: { type: Number, default: null },
+    },
+    // Which assignment `currentAssignmentSteps` belongs to (assignment id, or the default task id).
+    // Progress of another assignment is ignored, so unfinished steps of a missed task never carry
+    // over to the next one.
+    currentAssignmentStepsFor: { type: String, default: null, maxlength: 40 },
+    // When the student last claimed a minigame reward (cooldown, claimed atomically).
+    lastMinigameAt: { type: Date, default: null },
+    // UN-302: step progress for current assignment (1-4, true/false). Reset on submit.
+    currentAssignmentSteps: {
+      type: [Boolean],
+      default: [false, false, false, false],
+      validate: {
+        validator: (v) => v.length === 4 && v.every((val) => typeof val === "boolean"),
+        message: "currentAssignmentSteps must be array of 4 booleans",
+      },
     },
   },
   {

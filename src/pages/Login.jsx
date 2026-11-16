@@ -7,17 +7,17 @@ import { validateLoginForm, EMPTY_LOGIN_ERRORS } from "@lib/formValidators.js";
 import { hasErrors } from "@lib/validation.js";
 
 const EMPTY_FORM = { email: "", password: "" };
-const DEFAULT_TARGET = "/raise";
+const homeFor = (role) => (role === "teacher" ? "/teachersPark" : "/raise");
 
-function redirectTarget(state) {
+function redirectTarget(state, role) {
   const from = state && state.from;
-  if (!from) return DEFAULT_TARGET;
+  if (!from) return homeFor(role);
   if (typeof from === "string") return from;
-  return (from.pathname || DEFAULT_TARGET) + (from.search || "");
+  return (from.pathname || homeFor(role)) + (from.search || "");
 }
 
 export default function Login() {
-  const { status, login } = useAccess();
+  const { status, role, login } = useAccess();
   const location = useLocation();
   const navigate = useNavigate();
   const [formData, setFormData] = useState(EMPTY_FORM);
@@ -30,18 +30,14 @@ export default function Login() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const nextErrors = validateLoginForm({
-      email: formData.email,
-      password: formData.password,
-      confirmPassword: formData.password
-    });
+    const nextErrors = validateLoginForm(formData);
 
     setErrors(nextErrors);
     if (hasErrors(nextErrors)) return;
 
     try {
-      await login(formData.email.trim(), formData.password);
-      navigate(redirectTarget(location.state), { replace: true });
+      const user = await login(formData.email.trim(), formData.password);
+      navigate(redirectTarget(location.state, user.role), { replace: true });
     } catch (error) {
       setErrors({ email: error.message || "Error al iniciar sesión" });
     }
@@ -49,7 +45,7 @@ export default function Login() {
 
   // La condición va después de ejecutar todos los hooks.
   if (status === "authenticated") {
-    return <Navigate replace to="/raise" />;
+    return <Navigate replace to={homeFor(role)} />;
   }
 
   return (

@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "dev:server": "node --watch server/server.js"
+    "dev:server": "node --watch server/server.js",
+    "test": "node --test --test-concurrency=1 \"server/tests/**/*.test.js\"",
+    "seed": "node server/scripts/seed.js",
+    "db:check": "node server/scripts/check-atlas.js",
+    "db:indexes": "node server/scripts/create-indexes.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

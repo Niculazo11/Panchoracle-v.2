@@ -44,3 +44,18 @@ export const joinClassroomSchema = z.strictObject({
     .max(32, "joinCode is too long")
     .toUpperCase(),
 });
+
+// POST /api/classrooms/:id/students/:studentId/restore-health (UN-108, ADR Rev. 2.3).
+// `points` omitted = restore everything that was lost. `reason` is mandatory and is logged.
+export const restoreHealthSchema = z.strictObject({
+  points: z
+    .number({ error: "points must be a number" })
+    .positive("points must be greater than 0")
+    .max(100, "points cannot be more than 100")
+    .optional(),
+  reason: z
+    .string({ error: "reason must be a string" })
+    .trim()
+    .min(3, "reason must have at least 3 characters")
+    .max(200, "reason must have at most 200 characters"),
+});
