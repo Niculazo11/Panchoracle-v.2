@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { validateLoginForm, EMPTY_LOGIN_ERRORS } from "../../lib/formValidators.js";
 import { hasErrors } from "../../lib/validation.js";
-import { grantAccess } from "../../lib/auth.js";
+import { useAccess } from "../../lib/useAccess.js";
 import { getStoredUsername } from "../../lib/dogApi.js";
 
 const EMPTY_FORM = { name: "", email: "", password: "", confirmPassword: "" };
@@ -41,7 +41,7 @@ export function useLoginForm() {
         };
     }
 
-    function handleSubmit(event) {
+    async function handleSubmit(event) {
         const nextErrors = validateLoginForm(formData);
         setErrors(nextErrors);
 
@@ -58,7 +58,12 @@ export function useLoginForm() {
             } catch (error) {
                 console.error("Could not persist the email:", error);
             }
-        grantAccess(formData.name.trim());
+        try {
+            await login(formData.email.trim(), formData.password);
+        } catch (error) {
+            console.error("Login failed:", error.message);
+            return;
+        }
 
         // Cleared only after a fully successful submit.
         setFormData(EMPTY_FORM);

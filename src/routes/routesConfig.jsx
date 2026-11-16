@@ -9,6 +9,10 @@ import Shop from "../pages/Shop.jsx";
 import CosmeticDetail from "../pages/CosmeticDetail.jsx";
 import MiniGames from "../pages/MiniGames.jsx";
 import TeachersPark from "../pages/teacherspark/TeachersPark.jsx";
+import TeacherShell from "../pages/teacherspark/TeacherShell.jsx";
+import NewClassroom from "../pages/teacherspark/NewClassroom.jsx";
+import ClassroomSettings from "../pages/teacherspark/ClassroomSettings.jsx";
+import { PARK_PATH, NEW_CLASSROOM_PATH, SETTINGS_PATH } from "../pages/teacherspark/teacherPaths.js";
 import { withRole } from "./withRole.jsx";
 
 export const PUBLIC_ROUTES = [
@@ -24,15 +28,10 @@ export const PRIVATE_ROUTES = [
   { paths: ["/shop", "/Shop", "/Shop.html"], element: <Shop /> },
   { paths: ["/Shop/:cosmeticId"], element: <CosmeticDetail /> },
   { paths: ["/minigames", "/MiniGames", "/MiniGames.html"], element: <MiniGames /> },
-  {
-    paths: ["/teachersPark", "/teachersPark.html"],
-    element: <TeachersPark />,
-    wrapper: withRole(["teacher"])
-  },
 ];
 
 export const LEGACY_REDIRECTS = [
-  { from: ["/dogpark", "/dogPark.html"], to: "/teachersPark" },
+  { from: ["/dogpark", "/dogPark.html", "/teachersPark.html"], to: PARK_PATH },
 ];
 
 export function renderRoutes(routes, defaultWrapper) {
@@ -53,5 +52,20 @@ export function renderRoutes(routes, defaultWrapper) {
   return result;
 }
 
+const TeacherOnly = withRole(["teacher"]);
+
+// Every teacher page lives under /teachersPark and shares TeacherShell
+// (error banner, top bar and the check that the teacher has a classroom).
+export function renderTeacherRoutes() {
+  return (
+    <Route path={PARK_PATH} element={<TeacherOnly><TeacherShell /></TeacherOnly>}>
+      <Route index element={<TeachersPark />} />
+      <Route path="newClassroom" element={<NewClassroom />} />
+      <Route path="settings" element={<ClassroomSettings />} />
+    </Route>
+  );
+}
+
 export const ABOUT_PATHS = PUBLIC_ROUTES.find((r) => r.element.type === AboutUs).paths;
-export const TEACHERS_PARK_PATHS = PRIVATE_ROUTES.find((r) => r.element.type === TeachersPark).paths;
+// Pages of the teacher area: the home navbar is hidden on all of them.
+export const TEACHERS_PARK_PATHS = [PARK_PATH, "/teachersPark.html", NEW_CLASSROOM_PATH, SETTINGS_PATH];

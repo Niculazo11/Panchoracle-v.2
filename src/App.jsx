@@ -1,7 +1,13 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import HomeHeader from "./pages/home/HomeHeader.jsx";
-import { renderRoutes, PRIVATE_ROUTES, PUBLIC_ROUTES, LEGACY_REDIRECTS } from "./routes/routesConfig.jsx";
+import {
+  renderRoutes,
+  renderTeacherRoutes,
+  PRIVATE_ROUTES,
+  PUBLIC_ROUTES,
+  LEGACY_REDIRECTS,
+} from "./routes/routesConfig.jsx";
 import { useNavbarVisibility } from "./hooks/useNavbarVisibility.js";
 
 export default function App() {
@@ -13,6 +19,7 @@ export default function App() {
       <Routes>
         {renderRoutes(PUBLIC_ROUTES)}
         {renderRoutes(PRIVATE_ROUTES, ProtectedRoute)}
+        {renderTeacherRoutes()}
         {LEGACY_REDIRECTS.map(({ from, to }) =>
           from.map((path) => (
             <Route key={path} path={path} element={<Navigate replace to={to} />} />

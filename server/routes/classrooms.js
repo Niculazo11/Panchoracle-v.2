@@ -22,12 +22,13 @@ router.post("/", teacherOnly, validateBody(createClassroomSchema), async (req, r
   res.status(201).json({ classroom: service.toClassroomJson(classroom) });
 });
 
-// GET /api/classrooms -> 200 { classroom } | 404
+// GET /api/classrooms/me -> 200 { classroom } | 404 when the user has no classroom
 router.get("/me", async (req, res) => {
   const classrooms = await service.listClassrooms(req.user);
-  const items = [];
-  if (!classroom) throw new AppError(404, "NOT_FOUND", "Aún no perteneces a un classroom");
-  res.status(200).json({ classrooms: service.toClassroomJson(classroom) });
+  if (classrooms.length === 0) {
+    throw new AppError(404, "NOT_FOUND", "You do not belong to a classroom yet");
+  }
+  res.status(200).json({ classroom: service.toClassroomJson(classrooms[0]) });
 });
 
 // POST /api/classrooms/join -> 201 first time, 200 if the student was already in it

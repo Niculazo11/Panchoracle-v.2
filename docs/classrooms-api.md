@@ -9,7 +9,7 @@ Base path: `/api/classrooms`. All routes need a session cookie (ADR 5.2). Errors
 | Method | Path | Role | Success | Notes |
 |---|---|---|---|---|
 | POST | `/api/classrooms` | teacher | 201 | Body: `{ name, period: { startDate, endDate }, joinCode? }`. Code is generated if omitted. |
-| GET | `/api/classrooms` | any | 200 | Teacher: the classroom they own. Student: the one they joined. Returns `{ classrooms: [...] }` (0 or 1 items today, see below). |
+| GET | `/api/classrooms/me` | any | 200 / 404 | Teacher: the classroom they own. Student: the one they joined. Returns `{ classroom }`, or 404 if the user has none. |
 | PATCH | `/api/classrooms/:id` | teacher (owner) | 200 | Body: `{ name }`. |
 | DELETE | `/api/classrooms/:id` | teacher (owner) | 200 | Returns `{ deleted: true, classroomId, unenrolledStudents }`. See delete policy. |
 | POST | `/api/classrooms/join` | student | 201 / 200 | Body: `{ joinCode }`. 201 the first time, 200 with `alreadyJoined: true` if repeated. |

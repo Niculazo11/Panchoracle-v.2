@@ -65,7 +65,7 @@ async function httpChecksWithoutDb() {
   };
   const someId = new mongoose.Types.ObjectId().toString();
 
-  check((await call("GET", "", null)).status === 401, "no cookie -> 401");
+  check((await call("GET", "/me", null)).status === 401, "no cookie -> 401");
   const bad = await fetch(baseUrl, { headers: { Cookie: "session=garbage" } });
   check(bad.status === 401, "tampered token -> 401");
   check((await call("POST", "", student, validBody)).status === 403, "student cannot create a classroom -> 403");
@@ -96,8 +96,8 @@ async function fullChecks() {
     check(createdB.status === 201 && roomB.joinCode !== roomA.joinCode, "generated codes are unique across classrooms");
 
     // list
-    check((await call("GET", "", teacherA)).body.classrooms.length === 1, "teacher lists their classroom");
-    check((await call("GET", "", s1)).body.classrooms.length === 0, "student without classroom lists nothing");
+    check((await call("GET", "/me", teacherA)).body.classroom?.id === roomA.id, "teacher gets their classroom");
+    check((await call("GET", "/me", s1)).status === 404, "student without classroom gets 404");
 
     // join
     check((await call("POST", "/join", s1, { joinCode: "ZZZZZZ" })).status === 404, "unknown code -> 404");
@@ -108,7 +108,7 @@ async function fullChecks() {
     check((await User.countDocuments({ classroomId: roomA.id })) === 2 /* teacher + s1 */, "joining twice does not duplicate enrollment");
     check((await Pet.countDocuments({ ownerId: s1._id })) === 1, "joining twice does not duplicate the pet");
     check((await call("POST", "/join", s1, { joinCode: roomB.joinCode })).status === 409, "student already in another classroom -> 409");
-    check((await call("GET", "", s1)).body.classrooms[0]?.id === roomA.id, "student lists the classroom they joined");
+    check((await call("GET", "/me", s1)).body.classroom?.id === roomA.id, "student gets the classroom they joined");
 
     // students
     const students = await call("GET", `/${roomA.id}/students`, teacherA);

@@ -1,26 +1,16 @@
-import { asset } from "../../lib/asset.js";
-import TeachersParkNav from "./TeachersParkNav.jsx";
+import ParkBackground from "./ParkBackground.jsx";
 import ParkDog from "./ParkDog.jsx";
 import { PARK_DOGS } from "./parkDogs.js";
 
-// Teacher's view: the park where all the students' dogs wander.
-// Visual only for now: the nav tabs and the dogs are not wired to any data.
+// The park, the main teacher view. TeacherShell draws the top bar around it and
+// makes sure the teacher has a classroom. The dogs are still the fixed ones from
+// parkDogs.js until the real students replace them.
 export default function TeachersPark() {
     return (
-        <div className="min-h-screen flex flex-col bg-[#c9d8a4] dark:bg-[#1a3d1a]">
-            <TeachersParkNav />
-
-            <main
-                className="relative flex-1 min-h-[420px] overflow-hidden bg-cover bg-center bg-no-repeat"
-                // TODO(IMAGE): PARK BACKGROUND (watercolor park with trees, path, bench and
-                // dog house). Save it as public/images/teachers-park-bg.png
-                // (or change the file name here).
-                style={{ backgroundImage: `url("${asset("images/teachers-park-bg.jpeg")}")` }}
-            >
-                {PARK_DOGS.map((dog) => (
-                    <ParkDog key={dog.id} dog={dog} />
-                ))}
-            </main>
-        </div>
+        <ParkBackground>
+            {PARK_DOGS.map((dog) => (
+                <ParkDog key={dog.id} dog={dog} />
+            ))}
+        </ParkBackground>
     );
 }
