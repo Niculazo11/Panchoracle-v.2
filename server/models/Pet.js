@@ -76,6 +76,15 @@ const petSchema = new Schema(
       neck: { type: Number, default: null },
       body: { type: Number, default: null },
     },
+    // UN-302: step progress for current assignment (1-4, true/false). Reset on submit.
+    currentAssignmentSteps: {
+      type: [Boolean],
+      default: [false, false, false, false],
+      validate: {
+        validator: (v) => v.length === 4 && v.every((val) => typeof val === "boolean"),
+        message: "currentAssignmentSteps must be array of 4 booleans",
+      },
+    },
   },
   {
     collection: "pets",

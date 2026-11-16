@@ -10,7 +10,8 @@ export const SLOTS = ["head", "face", "neck", "body"];
 export const SLOT_BY_CATEGORY = { Head: "head", Face: "face", Neck: "neck", Body: "body" };
 
 // Used when the student has no classroom or the classroom has no active assignment.
-export const DEFAULT_ASSIGNMENT = { id: "assign_01", title: "Java REST Controller Task" };
+// Must be a valid ObjectId (24 hex chars) to pass validateIds middleware.
+export const DEFAULT_ASSIGNMENT = { id: "000000000000000000000001", title: "Java REST Controller Task" };
 
 // The 4 steps of the checklist (state/constants.js). Progress is tracked by UN-302.
 export const STEP_LABELS = [

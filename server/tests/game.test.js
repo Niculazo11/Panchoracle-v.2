@@ -63,7 +63,7 @@ describe("UN-301 · GET /api/me/game", () => {
       id: null, name: "Pancho", imgUrl: null, health: 100, hunger: 100, status: "ALIVE",
       equippedCosmetics: { head: null, face: null, neck: null, body: null },
     });
-    assert.equal(body.currentAssignment.id, "assign_01"); // no assignments: default task
+    assert.equal(body.currentAssignment.id, "000000000000000000000001"); // no assignments: default task
     assert.equal(body.currentAssignment.steps.length, 4);
     assert.ok(body.currentAssignment.steps.every((s) => s.completed === false));
   });

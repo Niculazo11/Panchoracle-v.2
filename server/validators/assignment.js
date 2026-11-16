@@ -33,3 +33,12 @@ export const updateAssignmentSchema = z
   .refine((value) => Object.keys(value).length > 0, {
     message: "send at least one of: title, description, dueAt",
   });
+
+// POST /api/assignments/:id/steps - complete step 1, 2 or 3
+export const completeStepSchema = z.strictObject({
+  stepId: z.number().int().min(1, "stepId must be at least 1").max(3, "stepId must be at most 3"),
+});
+
+// POST /api/assignments/:id/submit - no body needed, validation happens in service
+// Accept undefined (no body) or empty object
+export const submitAssignmentSchema = z.union([z.strictObject({}), z.undefined()]);
