@@ -8,6 +8,7 @@ import classroomsRouter from "./routes/classrooms.js";
 import assignmentsRouter from "./routes/assignments.js";
 import petsRouter from "./routes/pets.js";
 import cosmeticsRouter from "./routes/cosmetics.js";
+import minigamesRouter from "./routes/minigames.js";
 import { authenticate } from "./middleware/authenticate.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
 import { securityHeaders, sanitizeInput, hideSensitiveFields } from "./middleware/security.js";
@@ -29,6 +30,7 @@ app.use("/api/classrooms", ensureDb, authenticate, classroomsRouter);
 app.use("/api/assignments", ensureDb, authenticate, assignmentsRouter);
 app.use("/api/pets", ensureDb, authenticate, petsRouter);
 app.use("/api/cosmetics", ensureDb, authenticate, cosmeticsRouter);
+app.use("/api/minigames", ensureDb, authenticate, minigamesRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

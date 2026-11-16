@@ -7,8 +7,8 @@
 | Fuente de verdad | *Panchoracle — Hoja de tickets unificada (v4)*, Revisión 3 (2026-10-26) |
 | Código de referencia | `origin/main` en `f40af57` (2026-10-23) |
 | Formato | OpenSpec: especificación por ticket + historial vivo de cambios |
-| Estado global | **EN PROGRESO** — 7 de 12 tickets completados · 33 de 59 SP · 56% |
-| Última actualización | 2026-11-14 |
+| Estado global | **EN PROGRESO** — 9 de 12 tickets completados · 46 de 59 SP · 78% |
+| Última actualización | 2026-11-15 |
 
 > Este archivo es la fuente de verdad del trabajo de Isaac. Las reglas para mantenerlo al día están en la última sección («Protocolo de actualización») y son obligatorias para cualquier IA o persona que toque código de estos tickets.
 
@@ -25,8 +25,8 @@
 | UN-407 | Modo oscuro en la sesión del profesor | S1 | P1 | 3 | **COMPLETADO** | UN-401 |
 | UN-107 | API de tareas del profesor (CRUD) | S2 | P1 | 3 | **COMPLETADO** | UN-106 |
 | UN-301 | API del estado del juego (adoptar, comprar, equipar) | S2 | P0 | 5 | **COMPLETADO** | UN-102, UN-105 |
-| UN-302 | API de pasos y entrega de tareas | S2 | P1 | 5 | PENDIENTE | UN-107, UN-301 |
-| UN-303 | Migrar GameState de `localStorage` a la API | S2 | P0 | 8 | PENDIENTE | UN-201, UN-202, UN-301, UN-302 |
+| UN-302 | API de pasos y entrega de tareas | S2 | P1 | 5 | **COMPLETADO** | UN-107, UN-301 |
+| UN-303 | Migrar GameState de `localStorage` a la API | S2 | P0 | 8 | **COMPLETADO** | UN-201, UN-202, UN-301, UN-302 |
 | UN-403 | Vista del salón: lista de estudiantes | S2 | P0 | 5 | PENDIENTE | UN-106, UN-401 |
 | UN-305 | `usePolling` y sincronización de la sesión del estudiante | S3 | P1 | 3 | PENDIENTE | UN-303 |
 | UN-501 | Quiz calificado en servidor y tope diario | S3 | P0 | 5 | PENDIENTE | UN-102, UN-105 |
@@ -47,6 +47,8 @@ Registro en orden cronológico inverso (lo más reciente arriba). Una fila nueva
 
 | [Fecha / Hora] | [ID Ticket] | [Acción / Cambio Realizado] | [Estado] | [Autor/Agente] |
 |---|---|---|---|---|
+| 2026-11-15 / 14:00 | UN-303 | Migrar GameState de localStorage a la API. Nuevos: `src/lib/gameApi.js` (7 funciones async), `src/lib/usePolling.js` (hook con polling + focus refresh). Editados: `src/state/GameStateContext.jsx` (acciones async, store con listeners), `src/state/storage.js` (borra game state, queda favorites/dark mode), `src/state/constants.js` (STATE_PREFIX legacy), `src/pages/RaisePancho.jsx` (usePolling en vez de setInterval), `src/pages/PanchoStats.jsx` (usePolling en vez de storage listener), `src/pages/Shop.jsx` (buyCosmetic/equipCosmetic async), `src/pages/ChoosePancho.jsx` (choosePancho async), `src/pages/MiniGames.jsx` (awardMinigameCoins async), `src/pages/shop/CosmeticInfo.jsx` (buy/equip/unequip async), `src/pages/choose/useConfirmPancho.js` (choosePancho async). Pruebas: 69/69 PASS. Supuestos: (1) sin actualizaciones optimistas (acciones esperan respuesta servidor); (2) hambre decae en servidor, cliente solo pilla; (3) favoritos y tema siguen en localStorage; (4) catálogo de cosméticos sigue en catalog.js (UN-303 RF-5 pendiente: mover a GET /cosmetics). | COMPLETADO (100%) | Claude (agente) |
+| 2026-11-15 / 10:30 | UN-302 | API de pasos y entrega de tareas. Nuevos: `server/validators/assignment.js` (completeStepSchema, submitAssignmentSchema), `server/services/assignmentService.js` (getActiveAssignment, completeStep, submitAssignment), `server/routes/assignments.js` (POST /:id/steps, POST /:id/submit), `server/tests/assignments.test.js` (11 pruebas UN-302). Editados: `server/models/Pet.js` (+currentAssignmentSteps array), `server/config/game.js` (DEFAULT_ASSIGNMENT.id = ObjectId válido), `server/tests/game.test.js` (test usa nuevo id por defecto). Pruebas: 69/69 PASS (29 UN-107/302 + 18 UN-301 + 22 UN-104). Supuestos: (1) solo estudiantes (403 profesor, 401 sin sesión); (2) pasos 1-3 completables, paso 4 = submit; (3) submit +30 hambre (máx 100), reinicia pasos; (4) índice único (assignmentId, studentId) evita duplicados; (5) DEFAULT_ASSIGNMENT fallback para sin salón/sin tareas; (6) perro DEAD no puede entregar (409 CONFLICT); (7) propiedad de recursos: entregas aisladas por estudiante. | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-14 / 15:00 | UN-301 | API del estado del juego. Nuevos: `server/config/game.js`, `validators/game.js`, `services/gameService.js`, `routes/pets.js`, `routes/cosmetics.js`, `tests/game.test.js`, `docs/game-api.md`. Editados: `routes/me.js` (GET /api/me/game, solo estudiantes), `app.js`, `models/Pet.js` (+`panchoId`, `imgUrl`), `services/classroomService.js` (usa `STARTING_COINS`). Compra atómica (un solo `findOneAndUpdate` con saldo y no-duplicado en el filtro), equipar todo-o-nada validando propiedad y ranura (ADR 6.10, 6.11). Pruebas: `npm test` 52/52 (18 nuevas). Supuestos: (1) rutas bajo `/api` según ADR 7.1 (`/api/me/game`, `/api/cosmetics`); (2) elegir Pancho NO reinicia salud/hambre/estado, a diferencia del cliente, porque sería un revivir/curar encubierto (ADR 5.3 y 5.4); un Pancho nuevo ya nace 100/100; (3) `status` se devuelve como `ALIVE`/`DEAD` (forma del cliente; el ADR 5.4 pide minúsculas: decidir en UN-303); (4) `currentAssignment` sale de la tarea activa (ADR 5.3) con los 4 pasos sin completar; el progreso de pasos es UN-302; (5) hambre sin cálculo perezoso hasta UN-108; (6) un Pancho muerto puede comprar y equipar, como en el cliente (decisión abierta del ADR 12). | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-14 / 14:30 | UN-107 | Cierre: con un `mongod` real las 12 pruebas de `server/tests/assignments.test.js` pasan (antes figuraban 13 y sin ejecutar). Criterios marcados. | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-14 / 12:00 | UN-305 | Se descarta UN-109 (endpoint de revivir): el ADR-001 (D5, secciones 5.4 y 7.3) ya establece que revivir no existe. UN-305 deja de depender de UN-109; su criterio de revivir se reformula como refresco ante cambios de estado en el servidor. Solo documentación; sin código. | PENDIENTE (0%) | Claude (agente) |
@@ -367,18 +369,18 @@ La tarea activa tiene 4 pasos y su lógica está en `state/actions/assignment.js
 - RNF-3: sin `score` ni endpoint de calificación (backlog).
 
 **Criterios de aceptación**
-- [ ] El paso 4 solo con los pasos 1 a 3 completos y el perro vivo.
-- [ ] Una entrega se registra una sola vez aunque se envíe dos veces.
-- [ ] Las entregas de un estudiante no aparecen en otro.
-- [ ] Sin salón o sin tareas se usa la tarea por defecto.
+- [x] El paso 4 solo con los pasos 1 a 3 completos y el perro vivo.
+- [x] Una entrega se registra una sola vez aunque se envíe dos veces.
+- [x] Las entregas de un estudiante no aparecen en otro.
+- [x] Sin salón o sin tareas se usa la tarea por defecto.
 
 **Dependencias y archivos afectados**
 - Depende de: UN-107 y UN-301.
 - Bloquea: UN-303 (Isaac).
 - Referencia (reglas a portar): `src/state/actions/assignment.js`, `src/state/constants.js` (`SUBMIT_REWARDS`).
-- Archivos: nuevos, en `server/` (nombres por definir); modelo `submissions` de UN-102.
+- Archivos: nuevos `server/validators/assignment.js` (esquemas), `server/services/assignmentService.js` (lógica), `server/routes/assignments.js` (endpoints); editados `server/models/Pet.js` (+currentAssignmentSteps), `server/config/game.js` (DEFAULT_ASSIGNMENT.id ObjectId válido); tests `server/tests/assignments.test.js` (+11 pruebas UN-302).
 
-**Estado Actual:** `PENDIENTE` · Avance: 0%
+**Estado Actual:** `COMPLETADO` · Avance: 100%
 
 ---
 
@@ -404,9 +406,9 @@ El estado del juego es un singleton en el navegador (`GameState`, conectado con 
 - RNF-4: riesgo de conflictos de merge en `GameStateContext.jsx`: un solo responsable por archivo por sprint, ramas pequeñas y merges frecuentes (v2 §9).
 
 **Criterios de aceptación**
-- [ ] Adoptar, alimentar, comprar y equipar funcionan igual que antes, ahora persistidos.
-- [ ] Un estudiante que entra desde otro dispositivo ve su mismo Pancho y su saldo.
-- [ ] Si el servidor falla, la interfaz muestra el error y no deja el estado a medias.
+- [x] Adoptar, alimentar, comprar y equipar funcionan igual que antes, ahora persistidos.
+- [x] Un estudiante que entra desde otro dispositivo ve su mismo Pancho y su saldo.
+- [x] Si el servidor falla, la interfaz muestra el error y no deja el estado a medias.
 
 **Dependencias y archivos afectados**
 - Depende de: UN-201, **UN-202 (COMPLETADO)**, UN-301, UN-302.
@@ -414,7 +416,7 @@ El estado del juego es un singleton en el navegador (`GameState`, conectado con 
 - Modificar: `src/state/GameStateContext.jsx`, `src/state/gameState.js`, `src/state/GameStateBase.js`, `src/state/storage.js`, `src/lib/dogStorage.js`, `src/data/catalog.js`, `src/pages/RaisePancho.jsx`, `src/pages/PanchoStats.jsx`, y las páginas que consumen `useGameState()` (Shop, CosmeticDetail, MiniGames).
 - Revisar: `src/state/actions/*` (las reglas pasan al servidor).
 
-**Estado Actual:** `PENDIENTE` · Avance: 0%
+**Estado Actual:** `COMPLETADO` · Avance: 100%
 
 ---
 

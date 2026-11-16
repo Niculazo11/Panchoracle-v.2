@@ -4,8 +4,8 @@
 // UN-302: step completion and submission (student-only).
 import mongoose from "mongoose";
 import AppError from "../utils/AppError.js";
-import { Assignment, Classroom, Pet, Submission } from "../models/index.js";
-import { DEFAULT_ASSIGNMENT, STEP_LABELS } from "../config/game.js";
+import { Assignment, Classroom, Cosmetic, Pet, Submission } from "../models/index.js";
+import { DEFAULT_ASSIGNMENT, SLOTS, SLOT_BY_CATEGORY, STEP_LABELS } from "../config/game.js";
 
 function isDuplicateKey(error) {
   return error && error.code === 11000;
@@ -202,6 +202,29 @@ async function getStudentPet(user) {
   return pet;
 }
 
+// Return full game state in the same format as GET /api/me/game (for UN-303 client migration)
+async function toGameJson(user, pet) {
+  return {
+    student: {
+      id: user.username || user.name,
+      userId: user._id.toString(),
+      coins: pet.coins,
+      inventory: [...pet.inventory],
+      assignmentsCompleted: await Submission.countDocuments({ studentId: user._id }),
+    },
+    dog: {
+      id: pet.panchoId,
+      name: pet.name,
+      imgUrl: pet.imgUrl,
+      health: pet.health,
+      hunger: pet.hunger,
+      status: pet.status.toUpperCase(),
+      equippedCosmetics: Object.fromEntries(SLOTS.map((slot) => [slot, pet.equipped[slot] ?? null])),
+    },
+    currentAssignment: await getActiveAssignment(user),
+  };
+}
+
 // POST /api/assignments/:id/steps - complete step 1, 2 or 3
 export async function completeStep(user, assignmentId, stepId) {
   // Only students can complete steps
@@ -228,13 +251,12 @@ export async function completeStep(user, assignmentId, stepId) {
   stepProgress[stepId - 1] = true;
   await Pet.updateOne({ _id: pet._id }, { $set: { currentAssignmentSteps: stepProgress } });
 
-  const steps = assignment.steps.map((s) => (s.id === stepId ? { ...s, completed: true } : s));
-  const updatedAssignment = { ...assignment, steps };
-
+  // Return full game state (for UN-303 client migration)
+  const updatedPet = await Pet.findById(pet._id);
   return {
     success: true,
     step: { ...step, completed: true },
-    state: { currentAssignment: updatedAssignment },
+    state: await toGameJson(user, updatedPet),
   };
 }
 
@@ -294,14 +316,11 @@ export async function submitAssignment(user, assignmentId) {
     { $set: { hunger: newHunger, currentAssignmentSteps: [false, false, false, false] } }
   );
 
-  // Return updated state (client expects this shape)
+  // Return full game state (for UN-303 client migration)
+  const updatedPet = await Pet.findById(pet._id);
   return {
     success: true,
     rewards: { hunger: 30 },
-    state: {
-      dog: { hunger: newHunger },
-      student: { assignmentsCompleted: (await Submission.countDocuments({ studentId: user._id })) },
-      currentAssignment: { ...DEFAULT_ASSIGNMENT, steps: buildSteps() },
-    },
+    state: await toGameJson(user, updatedPet),
   };
 }

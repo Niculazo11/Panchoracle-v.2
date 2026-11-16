@@ -4,8 +4,10 @@
 // gameState.js, unchanged in value and meaning).
 
 export const CURRENT_USER_KEY = "name"; // same key used by the join form
-export const STATE_PREFIX = "panchoGameState_";
+export const STATE_PREFIX = "panchoGameState_"; // legacy: no longer used for game state (UN-303)
 export const STARTING_COINS = 270;
+export const FAVORITES_KEY = "panchoFavorites"; // user's liked dog images
+export const THEME_KEY = "theme"; // "light" | "dark"
 
 // Matches the "+5 coins" per completed minigame already documented in
 // the About page FAQ (pages/about/faqItems.jsx, "How do i obtain coins?").

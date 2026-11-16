@@ -152,3 +152,24 @@ export async function equipCosmetics(user, slots) {
   if (!updated) throw new AppError(409, "CONFLICT", "That cosmetic isn't in your inventory yet.");
   return toGameJson(user, updated);
 }
+
+// POST /api/minigames/reward - award coins for completing a minigame (UN-303 migration)
+// This is a temporary simple endpoint; UN-501 will replace with full quiz grading.
+export async function awardMinigameCoins(user, correctCount) {
+  if (!Number.isInteger(correctCount) || correctCount <= 0) {
+    throw new AppError(400, "VALIDATION_ERROR", "No coins earned this round.");
+  }
+
+  // Same logic as client: min(correctCount, 5) coins per game (MINIGAME_REWARD_COINS = 5)
+  const reward = Math.min(correctCount, 5);
+
+  const pet = await Pet.findOneAndUpdate(
+    { ownerId: user._id },
+    { $inc: { coins: reward } },
+    { returnDocument: "after" }
+  );
+
+  if (!pet) throw new AppError(404, "NOT_FOUND", "You do not have a Pancho yet: join a classroom first");
+
+  return toGameJson(user, pet);
+}

@@ -1,7 +1,9 @@
 "use strict";
 
-import { CURRENT_USER_KEY, STATE_PREFIX } from "./constants.js";
-import { defaultState, normalizeState } from "./defaults.js";
+import { CURRENT_USER_KEY, FAVORITES_KEY, THEME_KEY } from "./constants.js";
+
+// --- GameState persistence removed (UN-303): state now lives on the server ---
+// This module now only handles favorites and dark mode (theme) in localStorage.
 
 export function resolveUsername(username) {
     try {
@@ -12,44 +14,43 @@ export function resolveUsername(username) {
     }
 }
 
-export function stateKey(username) {
-    return STATE_PREFIX + username;
-}
-
-// Loads the given user's state from localStorage. Any failure (storage
-// unavailable, quota/permission errors, corrupted or half-written JSON)
-// falls back to the defaults from defaults.js instead of throwing.
-export function loadState(username) {
-
-    let raw = null;
-
+// Favorites persistence (dog.ceo images the user liked)
+export function loadFavorites() {
     try {
-        raw = localStorage.getItem(stateKey(username));
+        const raw = localStorage.getItem(FAVORITES_KEY);
+        return raw ? JSON.parse(raw) : [];
     } catch (error) {
-        console.error("localStorage is not available, using defaults:", error);
-        return defaultState(username);
-    }
-
-    if (!raw) {
-        return defaultState(username);
-    }
-
-    try {
-        return normalizeState(JSON.parse(raw), username);
-    } catch (error) {
-        console.error("GameState was corrupted, resetting:", error);
-        return defaultState(username);
+        console.error("Could not load favorites:", error);
+        return [];
     }
 }
 
-// Never lets a storage failure (private mode, quota exceeded) break the
-// game: the in-memory state keeps working, only persistence is lost.
-export function persistState(username, state) {
+export function saveFavorites(favorites) {
     try {
-        localStorage.setItem(stateKey(username), JSON.stringify(state));
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
         return true;
     } catch (error) {
-        console.error("Could not save the game state:", error);
+        console.error("Could not save favorites:", error);
+        return false;
+    }
+}
+
+// Theme persistence (dark/light mode)
+export function loadTheme() {
+    try {
+        return localStorage.getItem(THEME_KEY) || "light";
+    } catch (error) {
+        console.error("Could not load theme:", error);
+        return "light";
+    }
+}
+
+export function saveTheme(theme) {
+    try {
+        localStorage.setItem(THEME_KEY, theme);
+        return true;
+    } catch (error) {
+        console.error("Could not save theme:", error);
         return false;
     }
 }

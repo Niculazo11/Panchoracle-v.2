@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useGameState } from "../state/GameStateContext.jsx";
 import { useFeedback } from "../lib/useFeedback.js";
+import { usePolling } from "../lib/usePolling.js";
 import RaiseNav from "./raise/RaiseNav.jsx";
 import PanchoSection from "./raise/PanchoSection.jsx";
 import StatusBars from "./raise/StatusBars.jsx";
@@ -9,13 +10,16 @@ import AssignmentPanel from "./raise/AssignmentPanel.jsx";
 import DeadNotice from "./raise/DeadNotice.jsx";
 import { asset } from "../lib/asset.js";
 
-const TICK_INTERVAL_MS = 15000; // hunger drops a bit passively every 15s
 const FEEDBACK_TIMEOUT_MS = 3000;
+const POLL_INTERVAL_MS = 15000; // Poll server every 15s for hunger decay/state updates
 
 export default function RaisePancho() {
     const navigate = useNavigate();
-    const { dog, student, currentAssignment, completeStep, submitAssignment, tick } = useGameState();
+    const { dog, student, currentAssignment, completeStep, submitAssignment, init } = useGameState();
     const { feedback, showFeedback } = useFeedback(FEEDBACK_TIMEOUT_MS);
+
+    // Poll server for state updates (hunger decay, etc.)
+    const { refresh } = usePolling(init, { intervalMs: POLL_INTERVAL_MS, enabled: true });
 
     // Redirect to ChoosePancho if the student hasn't picked a Pancho yet.
     useEffect(() => {
@@ -24,23 +28,17 @@ export default function RaisePancho() {
         }
     }, [dog.imgUrl, navigate]);
 
-    // Passive hunger decay while the tab stays open. `tick` is stable (useCallback, no deps), so this only runs once per mount.
-    useEffect(() => {
-        const id = window.setInterval(() => tick(), TICK_INTERVAL_MS);
-        return () => window.clearInterval(id);
-    }, [tick]);
-
     if (!dog.imgUrl) {
         return null;
     }
 
-    function handleStepClick(stepId) {
-        const result = completeStep(stepId);
+    async function handleStepClick(stepId) {
+        const result = await completeStep(stepId);
         if (!result.success) showFeedback(result.message);
     }
 
-    function handleSubmitAssignment() {
-        const result = submitAssignment();
+    async function handleSubmitAssignment() {
+        const result = await submitAssignment();
         showFeedback(result.success
             ? `Assignment submitted! +${result.rewards.hunger} Hunger`
             : result.message);
