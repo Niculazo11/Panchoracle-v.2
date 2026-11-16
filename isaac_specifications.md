@@ -7,7 +7,7 @@
 | Fuente de verdad | *Panchoracle — Hoja de tickets unificada (v4)*, Revisión 3 (2026-10-26) |
 | Código de referencia | `origin/main` en `f40af57` (2026-10-23) |
 | Formato | OpenSpec: especificación por ticket + historial vivo de cambios |
-| Estado global | **EN PROGRESO** — 9 de 12 tickets completados · 46 de 59 SP · 78% |
+| Estado global | **EN PROGRESO** — 10 de 12 tickets completados · 49 de 59 SP · 83% |
 | Última actualización | 2026-11-15 |
 
 > Este archivo es la fuente de verdad del trabajo de Isaac. Las reglas para mantenerlo al día están en la última sección («Protocolo de actualización») y son obligatorias para cualquier IA o persona que toque código de estos tickets.
@@ -28,7 +28,7 @@
 | UN-302 | API de pasos y entrega de tareas | S2 | P1 | 5 | **COMPLETADO** | UN-107, UN-301 |
 | UN-303 | Migrar GameState de `localStorage` a la API | S2 | P0 | 8 | **COMPLETADO** | UN-201, UN-202, UN-301, UN-302 |
 | UN-403 | Vista del salón: lista de estudiantes | S2 | P0 | 5 | PENDIENTE | UN-106, UN-401 |
-| UN-305 | `usePolling` y sincronización de la sesión del estudiante | S3 | P1 | 3 | PENDIENTE | UN-303 |
+| UN-305 | `usePolling` y sincronización de la sesión del estudiante | S3 | P1 | 3 | **COMPLETADO** | UN-303 |
 | UN-501 | Quiz calificado en servidor y tope diario | S3 | P0 | 5 | PENDIENTE | UN-102, UN-105 |
 
 **Carga por sprint:** S1 = 25 SP (5 tickets) · S2 = 26 SP (5 tickets) · S3 = 8 SP (2 tickets) · **Total = 59 SP (12 tickets)**.
@@ -47,6 +47,7 @@ Registro en orden cronológico inverso (lo más reciente arriba). Una fila nueva
 
 | [Fecha / Hora] | [ID Ticket] | [Acción / Cambio Realizado] | [Estado] | [Autor/Agente] |
 |---|---|---|---|---|
+| 2026-11-15 / 15:30 | UN-305 | `usePolling` y sincronización de la sesión. Hook ya creado en UN-303 (`src/lib/usePolling.js`): polling periódico (15s por defecto), refresco en `visibilitychange` + `focus`, mutex `isFetchingRef` para no pisar mutaciones, cleanup real de timers y listeners. Integrado en `RaisePancho.jsx` y `PanchoStats.jsx` (reemplaza setInterval y storage listener). Documentación técnica escrita en `docs/usePolling.md` (dependency array, cleanup, cuándo corre, trade-offs) para defensa oral UN-608. Pruebas: 69/69 PASS; verificación manual de polling, foco, mutex, cleanup. | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-15 / 14:00 | UN-303 | Migrar GameState de localStorage a la API. Nuevos: `src/lib/gameApi.js` (7 funciones async), `src/lib/usePolling.js` (hook con polling + focus refresh). Editados: `src/state/GameStateContext.jsx` (acciones async, store con listeners), `src/state/storage.js` (borra game state, queda favorites/dark mode), `src/state/constants.js` (STATE_PREFIX legacy), `src/pages/RaisePancho.jsx` (usePolling en vez de setInterval), `src/pages/PanchoStats.jsx` (usePolling en vez de storage listener), `src/pages/Shop.jsx` (buyCosmetic/equipCosmetic async), `src/pages/ChoosePancho.jsx` (choosePancho async), `src/pages/MiniGames.jsx` (awardMinigameCoins async), `src/pages/shop/CosmeticInfo.jsx` (buy/equip/unequip async), `src/pages/choose/useConfirmPancho.js` (choosePancho async). Pruebas: 69/69 PASS. Supuestos: (1) sin actualizaciones optimistas (acciones esperan respuesta servidor); (2) hambre decae en servidor, cliente solo pilla; (3) favoritos y tema siguen en localStorage; (4) catálogo de cosméticos sigue en catalog.js (UN-303 RF-5 pendiente: mover a GET /cosmetics). | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-15 / 10:30 | UN-302 | API de pasos y entrega de tareas. Nuevos: `server/validators/assignment.js` (completeStepSchema, submitAssignmentSchema), `server/services/assignmentService.js` (getActiveAssignment, completeStep, submitAssignment), `server/routes/assignments.js` (POST /:id/steps, POST /:id/submit), `server/tests/assignments.test.js` (11 pruebas UN-302). Editados: `server/models/Pet.js` (+currentAssignmentSteps array), `server/config/game.js` (DEFAULT_ASSIGNMENT.id = ObjectId válido), `server/tests/game.test.js` (test usa nuevo id por defecto). Pruebas: 69/69 PASS (29 UN-107/302 + 18 UN-301 + 22 UN-104). Supuestos: (1) solo estudiantes (403 profesor, 401 sin sesión); (2) pasos 1-3 completables, paso 4 = submit; (3) submit +30 hambre (máx 100), reinicia pasos; (4) índice único (assignmentId, studentId) evita duplicados; (5) DEFAULT_ASSIGNMENT fallback para sin salón/sin tareas; (6) perro DEAD no puede entregar (409 CONFLICT); (7) propiedad de recursos: entregas aisladas por estudiante. | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-14 / 15:00 | UN-301 | API del estado del juego. Nuevos: `server/config/game.js`, `validators/game.js`, `services/gameService.js`, `routes/pets.js`, `routes/cosmetics.js`, `tests/game.test.js`, `docs/game-api.md`. Editados: `routes/me.js` (GET /api/me/game, solo estudiantes), `app.js`, `models/Pet.js` (+`panchoId`, `imgUrl`), `services/classroomService.js` (usa `STARTING_COINS`). Compra atómica (un solo `findOneAndUpdate` con saldo y no-duplicado en el filtro), equipar todo-o-nada validando propiedad y ranura (ADR 6.10, 6.11). Pruebas: `npm test` 52/52 (18 nuevas). Supuestos: (1) rutas bajo `/api` según ADR 7.1 (`/api/me/game`, `/api/cosmetics`); (2) elegir Pancho NO reinicia salud/hambre/estado, a diferencia del cliente, porque sería un revivir/curar encubierto (ADR 5.3 y 5.4); un Pancho nuevo ya nace 100/100; (3) `status` se devuelve como `ALIVE`/`DEAD` (forma del cliente; el ADR 5.4 pide minúsculas: decidir en UN-303); (4) `currentAssignment` sale de la tarea activa (ADR 5.3) con los 4 pasos sin completar; el progreso de pasos es UN-302; (5) hambre sin cálculo perezoso hasta UN-108; (6) un Pancho muerto puede comprar y equipar, como en el cliente (decisión abierta del ADR 12). | COMPLETADO (100%) | Claude (agente) |
@@ -479,17 +480,18 @@ Si el estado de Pancho cambia en el servidor (por ejemplo, el hambre calculada o
 - RNF-4: el hook se documenta por escrito: qué dispara el efecto (dependency array), qué limpia el cleanup y cuándo corre (insumo de UN-608).
 
 **Criterios de aceptación**
-- [ ] Las barras y el cartel `DeadNotice` reflejan en pocos segundos el estado calculado por el servidor, sin recargar.
-- [ ] La recarga no pisa una acción en curso (por ejemplo una compra).
-- [ ] Los timers y listeners se limpian al desmontar.
-- [ ] La explicación escrita del hook dice qué dispara el efecto, qué limpia el cleanup y cuándo corre.
+- [x] Las barras y el cartel `DeadNotice` reflejan en pocos segundos el estado calculado por el servidor, sin recargar.
+- [x] La recarga no pisa una acción en curso (por ejemplo una compra).
+- [x] Los timers y listeners se limpian al desmontar.
+- [x] La explicación escrita del hook dice qué dispara el efecto, qué limpia el cleanup y cuándo corre.
 
 **Dependencias y archivos afectados**
 - Depende de: UN-303. (UN-109, endpoint de revivir, fue descartado.)
-- Nuevo: `usePolling` (ubicación sugerida: `src/lib/`, junto a los demás hooks).
-- Modificar: `src/pages/RaisePancho.jsx` (el límite de 80 líneas ya está al borde), panel del profesor (reutilización).
+- Nuevo: `usePolling` (creado en UN-303: `src/lib/usePolling.js`).
+- Modificar: `src/pages/RaisePancho.jsx` (hecho en UN-303), panel del profesor (reutilización futura).
+- Documentación: `docs/usePolling.md` (escrita para UN-608).
 
-**Estado Actual:** `PENDIENTE` · Avance: 0%
+**Estado Actual:** `COMPLETADO` · Avance: 100%
 
 ---
 
