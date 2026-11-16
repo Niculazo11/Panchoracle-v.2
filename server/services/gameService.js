@@ -3,11 +3,20 @@
 // of truth. Every write is a single atomic update guarded by its own preconditions, so a
 // failed request never changes anything (ADR 6.10).
 import AppError from "../utils/AppError.js";
-import { Assignment, Classroom, Cosmetic, Pet, Submission } from "../models/index.js";
-import { DEFAULT_ASSIGNMENT, SLOTS, SLOT_BY_CATEGORY, STEP_LABELS } from "../config/game.js";
+import { Assignment, Classroom, Cosmetic, MinigamePlay, Pet, Submission } from "../models/index.js";
+import {
+  DEFAULT_ASSIGNMENT,
+  MINIGAME_MAX_COINS_PER_PLAY,
+  SLOTS,
+  SLOT_BY_CATEGORY,
+  STEP_LABELS,
+  minigameLimits,
+} from "../config/game.js";
+import { clock } from "../utils/clock.js";
+import { reconcilePet } from "./petStateService.js";
 
-function buildSteps() {
-  return STEP_LABELS.map((label, index) => ({ id: index + 1, label, completed: false }));
+function buildSteps(completed = []) {
+  return STEP_LABELS.map((label, index) => ({ id: index + 1, label, completed: completed[index] === true }));
 }
 
 // Only a student that joined a classroom has a Pancho (created on join, ADR 8.4).
@@ -19,14 +28,14 @@ async function getPet(user) {
 
 // ADR 5.3: the active assignment is the first one (by dueAt) the student has not submitted,
 // with dueAt in the future and the period already started. Falls back to the default task.
-async function getCurrentAssignment(user) {
+export async function getCurrentAssignment(user, classroom, pet) {
   let active = null;
-  const classroom = user.classroomId ? await Classroom.findById(user.classroomId) : null;
-  if (classroom && Date.now() >= classroom.period.startDate.getTime()) {
+  const now = clock.now();
+  if (classroom && now >= classroom.period.startDate.getTime()) {
     const assignments = await Assignment.find({
       classroomId: classroom._id,
       periodId: classroom.period.periodId,
-      dueAt: { $gt: new Date() },
+      dueAt: { $gt: new Date(now) },
     }).sort({ dueAt: 1 });
     const submitted = await Submission.find({
       studentId: user._id,
@@ -35,19 +44,21 @@ async function getCurrentAssignment(user) {
     const done = new Set(submitted.map((item) => item.assignmentId.toString()));
     active = assignments.find((item) => !done.has(item._id.toString())) || null;
   }
-  if (!active) return { ...DEFAULT_ASSIGNMENT, steps: buildSteps() };
-  return {
-    id: active._id.toString(),
-    title: active.title,
-    description: active.description,
-    dueAt: active.dueAt,
-    steps: buildSteps(),
-  };
+  const task = active
+    ? { id: active._id.toString(), title: active.title, description: active.description, dueAt: active.dueAt }
+    : { ...DEFAULT_ASSIGNMENT };
+  // Step progress only counts if it was made on THIS assignment.
+  const progress = pet && pet.currentAssignmentStepsFor === task.id ? pet.currentAssignmentSteps : [];
+  return { ...task, steps: buildSteps(progress) };
 }
 
 // Same shape the client keeps in useGameState() (src/state/defaults.js), so UN-303 can swap
 // localStorage for this response. The client writes status as "ALIVE" / "DEAD".
-async function toGameJson(user, pet) {
+// Health, hunger and status are reconciled with the server clock on every read AND after
+// every change (UN-108, ADR 5.3), so the response always reflects the current moment.
+export async function toGameJson(user, storedPet) {
+  const classroom = user.classroomId ? await Classroom.findById(user.classroomId) : null;
+  const pet = await reconcilePet(classroom, storedPet);
   return {
     student: {
       id: user.username || user.name,
@@ -65,8 +76,16 @@ async function toGameJson(user, pet) {
       status: pet.status.toUpperCase(),
       equippedCosmetics: Object.fromEntries(SLOTS.map((slot) => [slot, pet.equipped[slot] ?? null])),
     },
-    currentAssignment: await getCurrentAssignment(user),
+    currentAssignment: await getCurrentAssignment(user, classroom, pet),
   };
+}
+
+// Reconciled Pancho + active assignment of a student, for the step/submit endpoints (UN-302).
+export async function loadStudentContext(user) {
+  const stored = await getPet(user);
+  const classroom = user.classroomId ? await Classroom.findById(user.classroomId) : null;
+  const pet = await reconcilePet(classroom, stored);
+  return { pet, assignment: await getCurrentAssignment(user, classroom, pet) };
 }
 
 // GET /api/me/game
@@ -153,23 +172,39 @@ export async function equipCosmetics(user, slots) {
   return toGameJson(user, updated);
 }
 
-// POST /api/minigames/reward - award coins for completing a minigame (UN-303 migration)
-// This is a temporary simple endpoint; UN-501 will replace with full quiz grading.
+// POST /api/minigames/reward: coins for a finished minigame (UN-303 stop-gap; UN-501 will
+// grade the quiz on the server). The client still reports `correctCount`, so the server limits
+// what a client can claim: at most 5 coins per play, one claim per cooldown (atomic, so parallel
+// requests cannot stack) and a maximum number of plays per UTC day. Without these limits
+// anyone could call this endpoint in a loop and get unlimited coins.
 export async function awardMinigameCoins(user, correctCount) {
   if (!Number.isInteger(correctCount) || correctCount <= 0) {
     throw new AppError(400, "VALIDATION_ERROR", "No coins earned this round.");
   }
+  const reward = Math.min(correctCount, MINIGAME_MAX_COINS_PER_PLAY);
+  const { cooldownMs, maxPlaysPerDay } = minigameLimits();
+  const now = clock.now();
 
-  // Same logic as client: min(correctCount, 5) coins per game (MINIGAME_REWARD_COINS = 5)
-  const reward = Math.min(correctCount, 5);
+  await getPet(user); // 404 if the student has no Pancho yet
 
+  const dayStart = new Date(now);
+  dayStart.setUTCHours(0, 0, 0, 0);
+  const playsToday = await MinigamePlay.countDocuments({ studentId: user._id, playedAt: { $gte: dayStart } });
+  if (playsToday >= maxPlaysPerDay) {
+    throw new AppError(429, "RATE_LIMITED", "Daily minigame limit reached. Come back tomorrow.");
+  }
+
+  // The cooldown is claimed and the coins are paid in ONE update.
   const pet = await Pet.findOneAndUpdate(
-    { ownerId: user._id },
-    { $inc: { coins: reward } },
+    {
+      ownerId: user._id,
+      $or: [{ lastMinigameAt: null }, { lastMinigameAt: { $lte: new Date(now - cooldownMs) } }],
+    },
+    { $inc: { coins: reward }, $set: { lastMinigameAt: new Date(now) } },
     { returnDocument: "after" }
   );
+  if (!pet) throw new AppError(429, "RATE_LIMITED", "Wait a moment before playing again.");
 
-  if (!pet) throw new AppError(404, "NOT_FOUND", "You do not have a Pancho yet: join a classroom first");
-
+  await MinigamePlay.create({ studentId: user._id, gameId: "quiz", reward, playedAt: new Date(now) });
   return toGameJson(user, pet);
 }

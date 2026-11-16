@@ -295,7 +295,7 @@ describe("UN-302 · POST /api/assignments/:id/submit", () => {
     });
   });
 
-  it("estudiante entrega tras completar pasos 1-3: crea Submission, +30 hunger, reinicia pasos", async () => {
+  it("estudiante entrega tras completar pasos 1-3: crea Submission, hambre 100 (ADR 5.5), reinicia pasos", async () => {
     // Complete steps 1-3
     await as(student, "post", `/${assignmentId}/steps`).send({ stepId: 1 }).expect(200);
     await as(student, "post", `/${assignmentId}/steps`).send({ stepId: 2 }).expect(200);
@@ -304,8 +304,9 @@ describe("UN-302 · POST /api/assignments/:id/submit", () => {
     // Submit
     const res = await as(student, "post", `/${assignmentId}/submit`).expect(200);
     assert.equal(res.body.success, true);
-    assert.deepEqual(res.body.rewards, { hunger: 30 });
-    assert.ok(res.body.state.dog.hunger >= 30); // hunger increased
+    // Before submitting, hunger was ~95 (the task is due in 20 of 21 days): it recovers to 100.
+    assert.ok(res.body.rewards.hunger >= 0 && res.body.rewards.hunger <= 10);
+    assert.equal(res.body.state.dog.hunger, 100);
     assert.equal(res.body.state.student.assignmentsCompleted, 1);
     // Steps should be reset
     assert.ok(res.body.state.currentAssignment.steps.every((s) => s.completed === false));
@@ -399,6 +400,6 @@ describe("UN-302 · POST /api/assignments/:id/submit", () => {
     await as(outsider, "post", `/${defaultAssignmentId}/steps`).send({ stepId: 3 }).expect(200);
     const res = await as(outsider, "post", `/${defaultAssignmentId}/submit`).expect(200);
     assert.equal(res.body.success, true);
-    assert.deepEqual(res.body.rewards, { hunger: 30 });
+    assert.deepEqual(res.body.rewards, { hunger: 0 }); // hunger was already 100: nothing to recover
   });
 });

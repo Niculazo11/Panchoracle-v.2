@@ -4,12 +4,15 @@ import { Router } from "express";
 import { authorize } from "../middleware/authenticate.js";
 import { validateBody } from "../middleware/validateBody.js";
 import { validateIds } from "../middleware/validateIds.js";
+import { joinRateLimit } from "../middleware/authRateLimit.js";
 import {
   createClassroomSchema,
   renameClassroomSchema,
   joinClassroomSchema,
+  restoreHealthSchema,
 } from "../validators/classroom.js";
 import * as service from "../services/classroomService.js";
+import { restoreHealth } from "../services/healthRestoreService.js";
 import AppError from "../utils/AppError.js";
 
 const router = Router();
@@ -30,7 +33,7 @@ router.get("/me", async (req, res) => {
 });
 
 // POST /api/classrooms/join -> 201 first time, 200 if the student was already in it
-router.post("/join", studentOnly, validateBody(joinClassroomSchema), async (req, res) => {
+router.post("/join", studentOnly, joinRateLimit, validateBody(joinClassroomSchema), async (req, res) => {
   const result = await service.joinClassroom(req.user, req.body.joinCode);
   res
     .status(result.alreadyJoined ? 200 : 201)
@@ -56,6 +59,17 @@ router.get("/:id/students", teacherOnly, validateIds("id"), async (req, res) => 
 });
 
 // DELETE /api/classrooms/:id/students/:studentId -> 200
+// POST /api/classrooms/:id/students/:studentId/restore-health -> 200 (UN-108, Rev. 2.3)
+router.post(
+  "/:id/students/:studentId/restore-health",
+  teacherOnly,
+  validateIds("id", "studentId"),
+  validateBody(restoreHealthSchema),
+  async (req, res) => {
+    res.status(200).json(await restoreHealth(req.user, req.params.id, req.params.studentId, req.body));
+  }
+);
+
 router.delete("/:id/students/:studentId", teacherOnly, validateIds("id", "studentId"), async (req, res) => {
   await service.removeStudent(req.user, req.params.id, req.params.studentId);
   res.status(200).json({ removed: true, studentId: req.params.studentId });

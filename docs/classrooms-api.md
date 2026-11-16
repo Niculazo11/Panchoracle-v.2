@@ -14,6 +14,7 @@ Base path: `/api/classrooms`. All routes need a session cookie (ADR 5.2). Errors
 | DELETE | `/api/classrooms/:id` | teacher (owner) | 200 | Returns `{ deleted: true, classroomId, unenrolledStudents }`. See delete policy. |
 | POST | `/api/classrooms/join` | student | 201 / 200 | Body: `{ joinCode }`. 201 the first time, 200 with `alreadyJoined: true` if repeated. |
 | GET | `/api/classrooms/:id/students` | teacher (owner) | 200 | `{ students: [{ id, name, email, pet: { status, health, hunger } \| null }] }`. |
+| POST | `/api/classrooms/:id/students/:studentId/restore-health` | teacher (owner) | 200 | Body `{ points?, reason }`. Gives back lost health of a LIVING Pancho (UN-108, ADR Rev. 2.3). `409` if dead, if health is already 100 or if `points` is more than what was lost. Returns `{ restored, student, pet }`. |
 | DELETE | `/api/classrooms/:id/students/:studentId` | teacher (owner) | 200 | Returns `{ removed: true, studentId }`. |
 
 ## Rules
@@ -59,8 +60,9 @@ The response of the delete reports how many students were unenrolled.
 - **Join code format** is a proposal; ADR section 12 leaves it open.
 - **API messages are in English**, as requested. ADR 7.6 says validation messages are in
   Spanish, so this differs from the existing handlers.
-- `health`/`hunger` in the students list are the stored snapshot, not the value reconciled
-  at request time (ADR 5.3). That reconciliation belongs to the pet/game-state tickets.
+- A student who joins after the period started is charged for the assignments already past due (ADR Rev. 2.5).
+- `health`/`hunger`/`status` in the students list are reconciled with the server clock on every
+  call (UN-108, ADR 5.3), so they reflect the current moment.
 
 ## Open decisions
 

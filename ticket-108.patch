@@ -1,0 +1,1703 @@
+diff --git a/PROJECT_DOCUMENTATION.md b/PROJECT_DOCUMENTATION.md
+index 46fb185..b664839 100644
+--- a/PROJECT_DOCUMENTATION.md
++++ b/PROJECT_DOCUMENTATION.md
+@@ -265,6 +265,9 @@ The goal is that, by reading only this file, it is possible to know at any time
+ 
+ | Date | Author | Change | Impact | Status |
+ |---|---|---|---|---|
++| 2026-11-15 | Claude (assisted) | ADR Rev. 2.3 and 2.4 accepted by Karol and Isaac; Rev. 2.5 decided: students who join after the period started are charged for assignments already past due (documented in ADR 5.3 and covered by a test). 112 tests pass. | Rule is now explicit instead of pending. | ✅ Done |
++| 2026-11-15 | Claude (assisted) | UN-108 rebased on UN-302/303/305 plus audit fixes: dead Pancho could still complete steps (status case bug), duplicated game-state builders, step progress leaking between assignments, non-atomic step writes, submit hunger now 100 (ADR 5.5), and `/api/minigames/reward` limited (5 coins/play, 30 s cooldown, 10 plays/day) because it allowed unlimited coins. 111 tests pass. | Server state is consistent across all game endpoints. | ✅ Done |
++| 2026-11-15 | Claude (assisted) | UN-108 (scope update): teachers can restore lost health of a living Pancho (`POST /api/classrooms/:id/students/:studentId/restore-health`, stored in `pets.healthAdjustment` and added by the reconciliation); dead Pancho is never restored; ADR Rev. 2.3. UN-108: lazy hunger/health on the server following ADR 5.3 (`server/services/petStateService.js`), applied in `GET /api/me/game`, after every game change and in the teacher's student list; dead Panchos never change. Audit fix: `POST /api/classrooms/join` is rate limited per student (join codes could be brute-forced). 69 tests pass. | Hunger and health now reflect the server clock; no timers or cron. | ✅ Done |
+ | 2026-11-14 | Claude (assisted) | UN-107 and UN-301: assignments API (`GET/POST /api/assignments`, `GET/PATCH/DELETE /api/assignments/:id`) in `server/routes/assignments.js`, `server/services/assignmentService.js` and `server/validators/assignment.js`; create/edit/delete only before the period starts (`PERIOD_LOCKED` after). ADR-001 revision 2 marked as approved by the four members; UN-109 (revive endpoint) dropped, consistent with ADR D5; `docs/classrooms-api.md` now describes authentication as functional (UN-103/104/105). | Server now exposes assignment CRUD for teachers and read access for enrolled students. UN-301 adds the server-side game state (`GET /api/me/game`, `GET /api/cosmetics`, `PUT /api/pets/me/pancho`, `POST /api/pets/me/inventory`, `PUT /api/pets/me/equipped`; see `docs/game-api.md`). Audit fixes: login no longer leaks which emails exist by timing, teacher code compared in constant time, the test-only rate-limit bypass is ignored on Vercel, and Mongoose validation errors answer 400 instead of 500. 52 integration tests pass. | ✅ Done |
+ | 2026-11-02 | Nicolás (assisted) | UN-003: route table aligned with `routesConfig.jsx` (`teacher` role on `/teachersPark`, `/dogpark` as a redirect); removal of `dogParkAuth.js`, `useDogParkAccess.js` and `pages/dogpark/` (incl. `DogParkPlaceholder`) documented; authentication section and hook list updated; `useDogImages` explanation completed (dependencies, cleanup, abort and listeners). | Documentation matches `origin/main`. The session stays 🟡 until UN-104 exists. | ✅ Done |
+ | 2026-10-05 | Claude (assisted) | Style unification toward Tailwind CSS: the flat CSS injected in `AboutUs` was removed (`about/styles/*.js`, `usePageStyles.js`) and `AboutNav/Hero/Team/Project/FaqSection` were rewritten in pure Tailwind; `PanchoStatusBanner` moved its hex colors and `@keyframes` to `tailwind.config.js`. | Section 2.1.2 updated (the `usePageStyles` hook no longer exists). No visual or functional change for the user. | ✅ Done |
+diff --git a/docs/ADR-001-api-mongodb.md b/docs/ADR-001-api-mongodb.md
+index e624bfa..15822cb 100644
+--- a/docs/ADR-001-api-mongodb.md
++++ b/docs/ADR-001-api-mongodb.md
+@@ -13,6 +13,8 @@
+ | Revisión 0 (decisiones D2, D4, D5, D6, D7, D8, contrato y esquema originales) | **Aceptado** — aprobado por los cuatro integrantes (sección 13) |
+ | Revisión 1 (`users.username` opcional) | **Aceptado** — confirmado por los cuatro integrantes junto con la revisión 2 (2026-11-14) |
+ | Revisión 2 (secciones marcadas con **[Rev. 2]**) | **Aceptado** — firmada por los cuatro integrantes (2026-11-14) |
++| Revisión 2.3 (restaurar salud de un Pancho vivo) y 2.4 (apoyo de UN-302/UN-303, límites del minijuego) | **Aceptado** — Karol e Isaac (2026-11-15) |
++| Revisión 2.5 (estudiante que se une con el periodo iniciado) | **Aceptado** — decisión del equipo (2026-11-15) |
+ 
+ Todos los participantes (Karol, Isaac, Nicolás y Mariana) ya aceptaron el ADR: lo marcado como **[Rev. 2]** es una decisión cerrada y no requiere más firmas.
+ 
+@@ -24,6 +26,9 @@ Todos los participantes (Karol, Isaac, Nicolás y Mariana) ya aceptaron el ADR:
+ | 1 | 2026-11-14 (confirmada) | `users.username` opcional con índice único parcial (referenciada en `server/models/User.js`). Confirmada por los cuatro integrantes junto con la rev. 2. |
+ | 2 | 2026-11-01 | Hosting en **un único proyecto Vercel** (sección 10); política de origen en lugar de CORS (5.2); hardening de seguridad y código `429` (5.8, 7.6); `GET /api/health` pública (7.2, 7.3); cosméticos e inventario (`pets.inventory`, `pets.equipped`, colecciones `cosmetics` y `quiz_questions`, secciones 8.4, 8.7, 8.8); colección de infraestructura `rate_limits` (8.9); decisiones pendientes actualizadas (12); tabla de criterios de UN-001 (14). |
+ | 2 | 2026-11-14 (firma) | Aprobación de la revisión 2 por los cuatro integrantes; sin cambios de contenido. |
++| 2.5 | 2026-11-15 | Decisión cerrada: un estudiante que se une con el periodo ya iniciado **cuenta como incumplidas las tareas ya vencidas** (sección 5.3). Deja de ser una decisión pendiente. |
++| 2.4 | 2026-11-15 | Campos de apoyo de UN-302/UN-303 en `pets`: `currentAssignmentStepsFor` (tarea a la que pertenece el progreso de pasos) y `lastMinigameAt` (enfriamiento atómico del minijuego). Entregar una tarea pone `hunger = 100` (5.5). Límites provisionales de `POST /api/minigames/reward`: 5 coins por partida, 30 s de enfriamiento y 10 partidas por día UTC (decisión 6 abierta; los reemplaza UN-501). **Aceptada por Karol e Isaac (2026-11-15).** |
++| 2.3 | 2026-11-15 | Enmienda de UN-108 (pedida por el equipo): el profesor puede **restaurar puntos de salud perdidos de un Pancho vivo** (excusa médica, etc.). Nuevo campo `pets.healthAdjustment` que se suma a la fórmula de 5.3, `pets.healthRestoreLog` y `POST /api/classrooms/:id/students/:studentId/restore-health`. **No es revivir**: un Pancho `dead` nunca se restaura (D5 vigente). Reemplaza la frase "no existe forma de recuperarla" de 5.3 y la prohibición de "campos relacionados" de 5.4 solo para este caso. Se descarta UN-109 definitivamente. **Aceptada por Karol e Isaac (2026-11-15).** |
+ | 2.2 | 2026-11-14 | Enmienda de UN-301: `GET /api/me/game`; `PUT /api/pets/me/pancho`; `PUT /api/pets/me/equipped` acepta ranuras sueltas; `pets.panchoId` e `pets.imgUrl`; elegir Pancho no restablece `health`, `hunger` ni `status`. **Confirmar con Karol e Isaac.** |
+ | 2.1 | 2026-11-14 | Enmienda de UN-107: `PATCH` y `DELETE /api/assignments/:id` permitidos **solo antes de `startDate`** (regla 6.2 ya vigente); `PERIOD_LOCKED` después. Se retira la frase "no existen rutas de edición/borrado de tareas". Revivir sigue sin existir (UN-109 descartado). **Confirmar con Karol e Isaac.** |
+ 
+@@ -128,7 +133,7 @@ Hambre y vida son sistemas **distintos**:
+ | `hunger` al vencer una tarea sin entrega | `0` |
+ | Recompensa de minijuego | `5` coins |
+ 
+-**Vida.** Cada tarea tiene exactamente el mismo peso. Cuando `dueAt` llega y no hay entrega, `health = health − lifeLossPerTask`. Entregar a tiempo no resta vida. La vida nunca disminuye por el simple paso del tiempo y no existe forma de recuperarla dentro de un ciclo.
++**Vida.** Cada tarea tiene exactamente el mismo peso. Cuando `dueAt` llega y no hay entrega, `health = health − lifeLossPerTask`. Entregar a tiempo no resta vida. La vida nunca disminuye por el simple paso del tiempo. **[Rev. 2.3]** La única forma de recuperar vida dentro de un ciclo es que el profesor **perdone** puntos perdidos de un Pancho **vivo** (5.4): el servidor los guarda en `healthAdjustment` y nunca se supera `100`.
+ 
+ | `totalAssignments` | `lifeLossPerTask` |
+ |---|---|
+@@ -163,17 +168,20 @@ Definiciones necesarias para que el cálculo sea determinista:
+ 
+ ```
+ missed  = nº de tareas del periodo con dueAt ≤ now sin entrega del estudiante
+-health  = clamp( 100 − (missed × 100) / totalAssignments , 0 , 100 )   // 100 si totalAssignments = 0
++health  = clamp( 100 − (missed × 100) / totalAssignments + healthAdjustment , 0 , 100 )   // [Rev. 2.3] 100 si totalAssignments = 0; healthAdjustment ≥ 0 son los puntos perdonados por el profesor
+ status  = (health ≤ 0) ? "dead" : "alive"
+ ```
+ 
+ Se multiplica antes de dividir para evitar errores de redondeo en coma flotante; `health` se persiste sin redondear (el redondeo de presentación queda fuera de este ADR). El valor de `hunger` almacenado es solo un snapshot; el valor devuelto por la API se calcula en cada petición. Los cálculos se hacen con el reloj del servidor, nunca con el del cliente.
+ 
++**Estudiantes que se unen con el periodo ya iniciado [Rev. 2.5].** La fórmula no hace excepciones por la fecha de ingreso: las tareas del periodo con `dueAt ≤ now` y sin entrega **cuentan como incumplidas** también para quien se une tarde. Su Pancho nace con `100`, pero en su primera lectura ya refleja esas faltas (por ejemplo, con 5 tareas y 2 vencidas al unirse, `health = 60`; si ya hubieran vencido todas, nace `dead`). El profesor puede perdonar puntos con la restauración de 5.4 mientras Pancho siga vivo; un Pancho que nace muerto no se restaura.
++
+ ### 5.4 Muerte y ausencia de revivir — D5
+ 
+ - Cuando `health ≤ 0`, `status = dead`.
+-- **No existe revivir**: ni botón para el estudiante, ni revivir manual por el profesor, ni endpoint, ni campos en el modelo relacionados con ello.
+-- Pancho permanece `dead` durante el resto del periodo actual.
++- **No existe revivir**: ni botón para el estudiante, ni revivir manual por el profesor, ni endpoint de revivir (UN-109 descartado).
++- Pancho permanece `dead` durante el resto del periodo actual: **nada lo restaura**, tampoco `healthAdjustment`.
++- **[Rev. 2.3] Restaurar salud ≠ revivir.** El profesor puede devolver puntos perdidos (p. ej. por una excusa médica) **solo si Pancho sigue vivo** (`status = alive` y `health > 0`). Reglas: (1) se rechaza con `409` si está `dead`; (2) `health` nunca supera `100` (se pueden devolver como máximo los puntos perdidos); (3) el perdón se guarda en `healthAdjustment`, que la reconciliación suma al cálculo base, así que recalcular no lo pisa y las tareas futuras incumplidas siguen restando; (4) cada restauración queda en `healthRestoreLog` (quién, cuándo, cuántos puntos, motivo); (5) un periodo nuevo reinicia `healthAdjustment` a `0`.
+ - Al comenzar un **nuevo periodo** se inicia un nuevo ciclo: `health = 100`, `hunger = 100`, `status = alive`.
+ - Los valores de `status` van **en minúsculas**: `"alive"` y `"dead"`. El prototipo actual del frontend usa `"ALIVE"`/`"DEAD"`; el frontend debe adaptarse al contrato.
+ 
+@@ -258,6 +266,7 @@ En el cliente, las rutas se escriben sin el prefijo y la URL base es `/api` (rel
+ | GET | `/api/classrooms/me` | Classroom del usuario (reemplaza `GET /api/classrooms`, dado que hay uno por usuario) | Sí | cualquiera | Propuesta |
+ | POST | `/api/classrooms/join` | Unirse con `joinCode` (crea a Pancho) | Sí | student | Base |
+ | POST | `/api/classrooms/:id/periods` | Iniciar un nuevo periodo/ciclo | Sí | teacher (dueño) | Propuesta |
++| POST | `/api/classrooms/:id/students/:studentId/restore-health` | Perdonar puntos de salud perdidos de un Pancho **vivo** (`{ points?, reason }`; sin `points` restaura todo lo perdido). `409` si está dead, si ya tiene 100 o si `points` supera lo perdido | Sí | teacher (dueño) | UN-108 **[Rev. 2.3]** |
+ | GET | `/api/assignments` | Tareas del periodo actual del classroom | Sí | cualquiera | Base |
+ | POST | `/api/assignments` | Crear tarea (solo antes de `startDate`) | Sí | teacher | Base |
+ | GET | `/api/assignments/:id` | Detalle de una tarea | Sí | cualquiera | Propuesta |
+@@ -311,6 +320,12 @@ El login se hace **por `email`**. `username` (rev. 1) es opcional y no se usa pa
+ { "joinCode": "PROG-2026" }
+ ```
+ 
++`POST /api/classrooms/:id/students/:studentId/restore-health` **[Rev. 2.3]** — solo el profesor dueño; el estudiante debe estar inscrito en ese classroom:
++```json
++{ "points": 20, "reason": "Excusa médica" }
++```
++Respuesta `200`: `{ "restored": 20, "student": { "id", "name" }, "pet": { "status": "alive", "health": 100, "hunger": 62.5, "healthAdjustment": 20 } }`. `points` es opcional (`0 < points ≤ 100`); `reason` es obligatoria (3–200 caracteres) y se registra.
++
+ `POST /api/classrooms/:id/periods`
+ ```json
+ { "startDate": "2027-02-01T00:00:00Z", "endDate": "2027-06-04T23:59:59Z" }
+@@ -510,6 +525,8 @@ Representa a Pancho. Un documento por estudiante; al empezar un nuevo periodo se
+ | `inventory` | `[number]` | **[Rev. 2]** `cosmeticId` de los cosméticos comprados. Por defecto `[]`. Sin duplicados |
+ | `panchoId` | string \| null | **[Rev. 2.2]** Id del perro elegido (derivado de la URL de dog.ceo). `null` hasta que el estudiante lo elige |
+ | `imgUrl` | string \| null | **[Rev. 2.2]** Imagen del perro elegido (solo `https://images.dog.ceo/...`). `null` hasta que lo elige |
++| `healthAdjustment` | number | **[Rev. 2.3]** Puntos de salud perdonados por el profesor. Default `0`, rango `0–100`; solo crece; se reinicia a `0` en un periodo nuevo. Se suma a la fórmula de 5.3 |
++| `healthRestoreLog` | array | **[Rev. 2.3]** Máx. 50 entradas `{ at, teacherId, points, healthBefore, healthAfter, reason }` |
+ | `equipped` | objeto | **[Rev. 2]** `{ head, face, neck, body }`; cada valor es un `cosmeticId` (number) o `null`. Por defecto todos `null` |
+ | `status` | `"alive"` \| `"dead"` | Minúsculas |
+ | `createdAt` | Date | |
+@@ -655,7 +672,6 @@ Implicaciones: las credenciales (cadena de conexión a Atlas `MONGODB_URI`, secr
+ - Formato y longitud del `joinCode`.
+ - Duración de la sesión y formato interno del valor de la cookie (JWT firmado o id de sesión en MongoDB; siempre dentro de la cookie, ver 5.2).
+ - Si Pancho en estado `dead` puede seguir entregando tareas, jugando minijuegos, comprando o equipando cosméticos.
+-- Tratamiento de estudiantes que se unen con el periodo ya iniciado (las tareas ya vencidas contarían como incumplidas salvo que se decida lo contrario).
+ - Si `coins`, `inventory` y `equipped` se conservan al iniciar un nuevo periodo (el reinicio definido afecta solo a `health`, `hunger` y `status`).
+ - Catálogo de `gameId` válidos y validación de que una partida es legítima (incluida la forma de validar las respuestas del quiz sin exponer `correctIndex`).
+ - **[Rev. 2]** Monedas iniciales de Pancho al crearse: el prototipo usa 270, pero el ADR no las define; el modelo exige indicarlas explícitamente al unirse al classroom.
+@@ -682,6 +698,8 @@ Implicaciones: las credenciales (cadena de conexión a Atlas `MONGODB_URI`, secr
+ | Nicolás | MongoDB / Desarrollo | Aprobado | Aprobado (2026-11-14) |
+ | Mariana | UX/UI | Aprobado | Aprobado (2026-11-14) |
+ 
++**Revisiones 2.3, 2.4 y 2.5:** aceptadas por Karol e Isaac el 2026-11-15 (2.5 es una decisión del equipo).
++
+ **Estado de aprobación de la revisión 2:** completada. Los cuatro integrantes aceptaron el ADR el 2026-11-14; ya no requiere firmas.
+ 
+ ## 14. Criterios de aceptación de UN-001
+diff --git a/docs/classrooms-api.md b/docs/classrooms-api.md
+index 8c67f03..f149c0d 100644
+--- a/docs/classrooms-api.md
++++ b/docs/classrooms-api.md
+@@ -14,6 +14,7 @@ Base path: `/api/classrooms`. All routes need a session cookie (ADR 5.2). Errors
+ | DELETE | `/api/classrooms/:id` | teacher (owner) | 200 | Returns `{ deleted: true, classroomId, unenrolledStudents }`. See delete policy. |
+ | POST | `/api/classrooms/join` | student | 201 / 200 | Body: `{ joinCode }`. 201 the first time, 200 with `alreadyJoined: true` if repeated. |
+ | GET | `/api/classrooms/:id/students` | teacher (owner) | 200 | `{ students: [{ id, name, email, pet: { status, health, hunger } \| null }] }`. |
++| POST | `/api/classrooms/:id/students/:studentId/restore-health` | teacher (owner) | 200 | Body `{ points?, reason }`. Gives back lost health of a LIVING Pancho (UN-108, ADR Rev. 2.3). `409` if dead, if health is already 100 or if `points` is more than what was lost. Returns `{ restored, student, pet }`. |
+ | DELETE | `/api/classrooms/:id/students/:studentId` | teacher (owner) | 200 | Returns `{ removed: true, studentId }`. |
+ 
+ ## Rules
+@@ -59,8 +60,9 @@ The response of the delete reports how many students were unenrolled.
+ - **Join code format** is a proposal; ADR section 12 leaves it open.
+ - **API messages are in English**, as requested. ADR 7.6 says validation messages are in
+   Spanish, so this differs from the existing handlers.
+-- `health`/`hunger` in the students list are the stored snapshot, not the value reconciled
+-  at request time (ADR 5.3). That reconciliation belongs to the pet/game-state tickets.
++- A student who joins after the period started is charged for the assignments already past due (ADR Rev. 2.5).
++- `health`/`hunger`/`status` in the students list are reconciled with the server clock on every
++  call (UN-108, ADR 5.3), so they reflect the current moment.
+ 
+ ## Open decisions
+ 
+diff --git a/docs/game-api.md b/docs/game-api.md
+index 89e2f20..1257de7 100644
+--- a/docs/game-api.md
++++ b/docs/game-api.md
+@@ -35,7 +35,8 @@ Every write returns the whole game state `{ student, dog, currentAssignment }`.
+ - **`currentAssignment`** is the active assignment of the classroom (ADR 5.3): first by `dueAt`
+   that is still in the future and not submitted, once the period started. Otherwise the default
+   task `assign_01`. `steps` are the 4 checklist steps, all `completed: false` until UN-302.
+-- **`hunger` / `health`** are the stored snapshot until UN-108 (lazy calculation).
++- **`hunger` / `health` / `status`** are reconciled with the server clock on every read and after
++  every change (UN-108, `server/services/petStateService.js`); see "Hunger and health" below.
+ - A dead Pancho can still buy and equip (as in the client; ADR section 12 leaves it open).
+ 
+ ## Verifying
+@@ -43,3 +44,77 @@ Every write returns the whole game state `{ student, dog, currentAssignment }`.
+ ```
+ npm test   # server/tests/game.test.js (18 cases) runs with the rest of the suite
+ ```
++
++## Hunger and health (UN-108, ADR 5.3 and 5.4)
++
++Calculated lazily from timestamps: no `setInterval`, no cron (Vercel is serverless). It runs in
++`GET /api/me/game`, after every buy / equip / choose, and in the teacher's student list.
++
++- **Hunger** (0-100, not stored as truth): linear between the start of the active assignment's
++  window and its `dueAt`. The window starts at the previous assignment's `dueAt` (or
++  `period.startDate`). Active assignment = first by `dueAt` that is not submitted and still in the
++  future, once the period started. With no active assignment: 0 if the last assignment of the
++  period was missed, otherwise 100.
++- **Health**: `clamp(100 - missed * 100 / totalAssignments + healthAdjustment, 0, 100)`, where
++  `missed` = assignments with `dueAt <= now` and no submission, and `healthAdjustment` = points the
++  teacher forgave (default 0, see "Restoring health"). The stored `health` is only a cache: it is
++  derived on every read, so nothing the client or an old request writes can change it.
++- **Status**: health 0 -> `dead`. A dead Pancho never changes again (no revive exists, ADR D5).
++- Only health, hunger and status are written to MongoDB, with atomic guards (`status: "alive"` and
++  the `healthAdjustment` that was read, in the filter), so a read cannot revive Pancho and a stale
++  write cannot overwrite a restoration or a death.
++- **Offline cap:** not needed. Because the state comes from deadlines, being away for days gives
++  the same result as staying connected; the prototype's "-2 every 15 s" tick (which kills Pancho
++  after ~15 minutes offline) is NOT used. The "interval by environment variable" of the ticket does
++  not apply: for a demo, seed assignments with dates near now (UN-111).
++- The server clock comes from `server/utils/clock.js`; tests replace `clock.now` to simulate days.
++
++## Join code rate limit
++
++`POST /api/classrooms/join` allows 20 attempts per student every 15 minutes (counter stored in
++MongoDB, like login); the next one gets `429`. Join codes have 6 characters, so without this limit
++they could be guessed by brute force.
++
++## Students who join late (ADR Rev. 2.5)
++
++Assignments already past due when a student joins the classroom count as missed for that student
++(no exception for the join date). The new Pancho starts at 100/100 but the very first read already
++applies those misses: with 5 assignments and 2 expired, health is 60; if all had expired it is born
++`dead`. A teacher can forgive points while Pancho is alive (see below); a dead Pancho cannot be restored.
++
++## Restoring health (teacher, UN-108, ADR Rev. 2.3)
++
++`POST /api/classrooms/:id/students/:studentId/restore-health` with `{ "points": 20, "reason": "Medical excuse" }`
++(`points` optional: omitted = give back everything that was lost; `reason` required, 3-200 chars).
++
++- **It is not reviving** (D5 stays: UN-109 is discarded). It only works while Pancho is `alive`
++  with `health > 0`; a dead Pancho gets `409` and stays dead until the next period. The check runs
++  after reconciling with the clock, so a Pancho that died since the last read is not restorable.
++- Health can never go above 100: `points` greater than the lost points -> `409`; health already 100 -> `409`.
++- The points go to `pets.healthAdjustment` (added in the formula above), so the automatic
++  recalculation does not overwrite them and later missed assignments still subtract their share.
++  Example (5 assignments, 20 each): 2 missed -> 60; restore 20 -> 80; a 3rd missed -> 60.
++- Each restoration is logged in `pets.healthRestoreLog` (teacher, time, points, before/after, reason;
++  last 50). A new period resets `healthAdjustment` to 0.
++- Permissions: only the teacher who owns the classroom (`403` otherwise; student of another
++  classroom -> `404`). Two simultaneous requests cannot stack on the same state (one gets `409`).
++
++## Steps and submission (UN-302, after the UN-108 audit)
++
++- All game endpoints answer the same state (`gameService.toGameJson`), reconciled with the clock,
++  and `GET /api/me/game` now shows the completed steps too.
++- Step progress belongs to ONE assignment (`pets.currentAssignmentStepsFor`). When the active
++  assignment changes (the previous one expired or was submitted) the progress starts from zero.
++- Completing a step is one atomic update: the same step sent twice, or at the same time, is saved
++  once (`409` for the others). A dead Pancho (also one that died by time since the last request)
++  gets `409`.
++- Submitting sets hunger to 100 (ADR 5.5) and clears the steps. `rewards.hunger` is the hunger
++  actually recovered (`100 - hunger before`, rounded), not a fixed +30.
++
++## Minigame reward limits (UN-303 stop-gap)
++
++`POST /api/minigames/reward` still trusts the `correctCount` the client sends (UN-501 will grade the
++quiz on the server), so it is limited: at most 5 coins per play, one claim every 30 s (claimed
++atomically with the payment, so parallel requests do not stack) and 10 plays per UTC day. Beyond
++that: `429 RATE_LIMITED` and nothing is paid. Each play is saved in `minigame_plays`. Values can be
++changed with `MINIGAME_COOLDOWN_MS` and `MINIGAME_MAX_PLAYS_PER_DAY` (ADR decision 6 is still open).
+diff --git a/isaac_specifications.md b/isaac_specifications.md
+index ec46109..7b55f9c 100644
+--- a/isaac_specifications.md
++++ b/isaac_specifications.md
+@@ -47,9 +47,13 @@ Registro en orden cronológico inverso (lo más reciente arriba). Una fila nueva
+ 
+ | [Fecha / Hora] | [ID Ticket] | [Acción / Cambio Realizado] | [Estado] | [Autor/Agente] |
+ |---|---|---|---|---|
++| 2026-11-15 / 19:00 | UN-108 | ADR Rev. 2.3 y 2.4 marcadas como aceptadas por Karol e Isaac. Decisión cerrada (Rev. 2.5): quien se une con el periodo iniciado cuenta como falladas las tareas ya vencidas; se quita de las decisiones pendientes y se escribe en 5.3. Prueba nueva (se une el día 7 con una tarea vencida: salud 50; se une tras vencer todas: nace dead). `npm test` 112/112. | COMPLETADO (100%) | Claude (agente) |
++| 2026-11-15 / 18:00 | UN-108 | Rebase sobre `abae16f` (UN-302, UN-303, UN-305 ya integrados) y auditoría del código nuevo. Correcciones: (1) `completeStep` comparaba `status === "DEAD"` pero el modelo guarda `dead`: un perro muerto podía seguir completando pasos; (2) había DOS constructores del estado (`gameService` y `assignmentService`) y `GET /api/me/game` nunca mostraba los pasos completados ni reconciliaba hambre/salud en las respuestas de pasos y entrega: ahora `assignmentService` usa `gameService.toGameJson` y `loadStudentContext`; (3) `submit` escribía `hunger +30`, valor que la reconciliación (UN-108) descarta, y el ADR 5.5 dice hambre 100: ahora pone 100 y `rewards.hunger` es lo realmente recuperado; (4) el progreso de pasos de una tarea incumplida pasaba a la siguiente: nuevo `pets.currentAssignmentStepsFor`; (5) los pasos se guardaban con lectura-modificación-escritura no atómica: ahora un solo `findOneAndUpdate` con guarda; (6) `POST /api/minigames/reward` permitía monedas ilimitadas en bucle (el cliente informa `correctCount`): ahora máx. 5 por partida, enfriamiento atómico (`pets.lastMinigameAt`, 30 s) y tope de 10 partidas por día UTC con registro en `minigame_plays` (valores propuestos; D6 sigue abierto; UN-501 lo reemplazará). Nuevos: `server/tests/stepsMinigames.test.js` (11 casos). Editados: `services/gameService.js`, `services/assignmentService.js`, `models/Pet.js`, `config/game.js`, `tests/assignments.test.js` (2 aserciones del +30). `npm test` 111/111. | COMPLETADO (100%) | Claude (agente) |
+ | 2026-11-15 / 15:30 | UN-305 | `usePolling` y sincronización de la sesión. Hook ya creado en UN-303 (`src/lib/usePolling.js`): polling periódico (15s por defecto), refresco en `visibilitychange` + `focus`, mutex `isFetchingRef` para no pisar mutaciones, cleanup real de timers y listeners. Integrado en `RaisePancho.jsx` y `PanchoStats.jsx` (reemplaza setInterval y storage listener). Documentación técnica escrita en `docs/usePolling.md` (dependency array, cleanup, cuándo corre, trade-offs) para defensa oral UN-608. Pruebas: 69/69 PASS; verificación manual de polling, foco, mutex, cleanup. | COMPLETADO (100%) | Claude (agente) |
+ | 2026-11-15 / 14:00 | UN-303 | Migrar GameState de localStorage a la API. Nuevos: `src/lib/gameApi.js` (7 funciones async), `src/lib/usePolling.js` (hook con polling + focus refresh). Editados: `src/state/GameStateContext.jsx` (acciones async, store con listeners), `src/state/storage.js` (borra game state, queda favorites/dark mode), `src/state/constants.js` (STATE_PREFIX legacy), `src/pages/RaisePancho.jsx` (usePolling en vez de setInterval), `src/pages/PanchoStats.jsx` (usePolling en vez de storage listener), `src/pages/Shop.jsx` (buyCosmetic/equipCosmetic async), `src/pages/ChoosePancho.jsx` (choosePancho async), `src/pages/MiniGames.jsx` (awardMinigameCoins async), `src/pages/shop/CosmeticInfo.jsx` (buy/equip/unequip async), `src/pages/choose/useConfirmPancho.js` (choosePancho async). Pruebas: 69/69 PASS. Supuestos: (1) sin actualizaciones optimistas (acciones esperan respuesta servidor); (2) hambre decae en servidor, cliente solo pilla; (3) favoritos y tema siguen en localStorage; (4) catálogo de cosméticos sigue en catalog.js (UN-303 RF-5 pendiente: mover a GET /cosmetics). | COMPLETADO (100%) | Claude (agente) |
+ | 2026-11-15 / 10:30 | UN-302 | API de pasos y entrega de tareas. Nuevos: `server/validators/assignment.js` (completeStepSchema, submitAssignmentSchema), `server/services/assignmentService.js` (getActiveAssignment, completeStep, submitAssignment), `server/routes/assignments.js` (POST /:id/steps, POST /:id/submit), `server/tests/assignments.test.js` (11 pruebas UN-302). Editados: `server/models/Pet.js` (+currentAssignmentSteps array), `server/config/game.js` (DEFAULT_ASSIGNMENT.id = ObjectId válido), `server/tests/game.test.js` (test usa nuevo id por defecto). Pruebas: 69/69 PASS (29 UN-107/302 + 18 UN-301 + 22 UN-104). Supuestos: (1) solo estudiantes (403 profesor, 401 sin sesión); (2) pasos 1-3 completables, paso 4 = submit; (3) submit +30 hambre (máx 100), reinicia pasos; (4) índice único (assignmentId, studentId) evita duplicados; (5) DEFAULT_ASSIGNMENT fallback para sin salón/sin tareas; (6) perro DEAD no puede entregar (409 CONFLICT); (7) propiedad de recursos: entregas aisladas por estudiante. | COMPLETADO (100%) | Claude (agente) |
++| 2026-11-15 / 12:00 | UN-108 | Cambio de alcance: restaurar salud de un Pancho VIVO por el profesor (no es revivir; UN-109 sigue descartado). Nuevos: `server/services/healthRestoreService.js`, `server/tests/restoreHealth.test.js` (11 casos). Editados: `models/Pet.js` (+`healthAdjustment`, +`healthRestoreLog`), `services/petStateService.js` (fórmula `100 − penalización + healthAdjustment`; la salud pasa a derivarse siempre y se quita el `$min`; escritura con guarda `status:alive` + `healthAdjustment`), `services/classroomService.js` (nuevo periodo reinicia el ajuste; exporta `getOwnedClassroom`), `routes/classrooms.js` y `validators/classroom.js` (`POST /api/classrooms/:id/students/:studentId/restore-health`), ADR Rev. 2.3 (5.3, 5.4, 7.3, 8.4), docs. `npm test` 83/83. Supuestos: ruta anidada en el salón (no `/api/pets/:id/...`) porque la lista del profesor ya expone `studentId` y la pertenencia al salón se valida con el mismo helper; `points` opcional (sin él se restaura todo lo perdido); `reason` obligatorio. Los valores de `health` guardados por el seed dejan de ser autoritativos (se derivan). | COMPLETADO (100%) | Claude (agente) |
++| 2026-11-15 / 10:00 | UN-108 | Hambre y salud calculadas en servidor (ticket de Karol). Nuevos: `server/services/petStateService.js` (función pura `computePetState` + `reconcilePets`), `server/utils/clock.js` (reloj inyectable), `server/tests/petState.test.js` (17 casos). Editados: `services/gameService.js` y `services/classroomService.js` (reconcilian al leer y tras cada cambio; la lista del profesor también), `middleware/authRateLimit.js` y `routes/classrooms.js` (rate limit de `/join`: 20 intentos/15 min por estudiante), `docs/game-api.md`, `docs/classrooms-api.md`. DECISIÓN: se implementa el modelo del ADR 5.3 (decisión D4, aprobado) y NO el tick del ticket (−2 cada 15 s, −10 de salud), que mataría a Pancho tras ~15 min offline; por eso no hay tope offline ni intervalo por variable de entorno. Un perro dead no cambia nunca; la salud no sube dentro del ciclo; solo se escriben salud/estado (guardas `status:"alive"` y `$min`). `npm test` 69/69. Abierto: un estudiante que se une tarde cuenta como falladas las tareas ya vencidas (ADR 5.3 literal). | COMPLETADO (100%) | Claude (agente) |
+ | 2026-11-14 / 15:00 | UN-301 | API del estado del juego. Nuevos: `server/config/game.js`, `validators/game.js`, `services/gameService.js`, `routes/pets.js`, `routes/cosmetics.js`, `tests/game.test.js`, `docs/game-api.md`. Editados: `routes/me.js` (GET /api/me/game, solo estudiantes), `app.js`, `models/Pet.js` (+`panchoId`, `imgUrl`), `services/classroomService.js` (usa `STARTING_COINS`). Compra atómica (un solo `findOneAndUpdate` con saldo y no-duplicado en el filtro), equipar todo-o-nada validando propiedad y ranura (ADR 6.10, 6.11). Pruebas: `npm test` 52/52 (18 nuevas). Supuestos: (1) rutas bajo `/api` según ADR 7.1 (`/api/me/game`, `/api/cosmetics`); (2) elegir Pancho NO reinicia salud/hambre/estado, a diferencia del cliente, porque sería un revivir/curar encubierto (ADR 5.3 y 5.4); un Pancho nuevo ya nace 100/100; (3) `status` se devuelve como `ALIVE`/`DEAD` (forma del cliente; el ADR 5.4 pide minúsculas: decidir en UN-303); (4) `currentAssignment` sale de la tarea activa (ADR 5.3) con los 4 pasos sin completar; el progreso de pasos es UN-302; (5) hambre sin cálculo perezoso hasta UN-108; (6) un Pancho muerto puede comprar y equipar, como en el cliente (decisión abierta del ADR 12). | COMPLETADO (100%) | Claude (agente) |
+ | 2026-11-14 / 14:30 | UN-107 | Cierre: con un `mongod` real las 12 pruebas de `server/tests/assignments.test.js` pasan (antes figuraban 13 y sin ejecutar). Criterios marcados. | COMPLETADO (100%) | Claude (agente) |
+ | 2026-11-14 / 12:00 | UN-305 | Se descarta UN-109 (endpoint de revivir): el ADR-001 (D5, secciones 5.4 y 7.3) ya establece que revivir no existe. UN-305 deja de depender de UN-109; su criterio de revivir se reformula como refresco ante cambios de estado en el servidor. Solo documentación; sin código. | PENDIENTE (0%) | Claude (agente) |
+diff --git a/server/config/game.js b/server/config/game.js
+index 1fbd951..ba6f8f3 100644
+--- a/server/config/game.js
++++ b/server/config/game.js
+@@ -20,3 +20,14 @@ export const STEP_LABELS = [
+   "Study Together (Drafting Task)",
+   "Feed Pancho (Submit Assignment)",
+ ];
++
++// Minigame reward limits (UN-303 stop-gap until UN-501 grades the quiz on the server).
++// ADR section 12 leaves the cap and the cooldown open; these are proposed values, and can be
++// changed with the MINIGAME_COOLDOWN_MS and MINIGAME_MAX_PLAYS_PER_DAY environment variables.
++export const MINIGAME_MAX_COINS_PER_PLAY = 5;
++export function minigameLimits() {
++  return {
++    cooldownMs: Number(process.env.MINIGAME_COOLDOWN_MS ?? 30_000),
++    maxPlaysPerDay: Number(process.env.MINIGAME_MAX_PLAYS_PER_DAY ?? 10),
++  };
++}
+diff --git a/server/middleware/authRateLimit.js b/server/middleware/authRateLimit.js
+index 7b25da4..8912ae1 100644
+--- a/server/middleware/authRateLimit.js
++++ b/server/middleware/authRateLimit.js
+@@ -20,6 +20,8 @@ export const LOGIN_WINDOW_MS = 15 * MINUTE;
+ export const REGISTER_MAX_ATTEMPTS = 30; // por IP (una clase completa registrándose)
+ export const REGISTER_IP_MAX_ATTEMPTS = 120;
+ export const REGISTER_WINDOW_MS = 60 * MINUTE;
++export const JOIN_MAX_ATTEMPTS = 20; // por estudiante: frena adivinar códigos de salón (6 caracteres)
++export const JOIN_WINDOW_MS = 15 * MINUTE;
+ 
+ let indexesReady; // crea (una vez por instancia) el índice único y el TTL de rate_limits
+ 
+@@ -65,10 +67,16 @@ function createAuthRateLimit({ name, windowMs, rules, resetOnSuccess = false })
+     // El email se guarda como hash: la colección no acumula datos personales.
+     const emailHash = email && createHash("sha256").update(email).digest("hex").slice(0, 32);
+ 
++    const userId = req.user?._id?.toString() ?? null;
++
+     const keys = rules
+-      .filter((rule) => !rule.byEmail || emailHash)
++      .filter((rule) => (!rule.byEmail || emailHash) && (!rule.byUser || userId))
+       .map((rule) => ({
+-        key: rule.byEmail ? `${name}:ip-email:${ip}:${emailHash}` : `${name}:ip:${ip}`,
++        key: rule.byUser
++          ? `${name}:user:${userId}`
++          : rule.byEmail
++            ? `${name}:ip-email:${ip}:${emailHash}`
++            : `${name}:ip:${ip}`,
+         max: rule.max,
+         byEmail: rule.byEmail,
+       }));
+@@ -110,6 +118,14 @@ export const loginRateLimit = createAuthRateLimit({
+   ],
+ });
+ 
++// Needs an authenticated user (runs after authenticate): counts attempts per student, not per IP,
++// because a whole class shares the school's public IP.
++export const joinRateLimit = createAuthRateLimit({
++  name: "join",
++  windowMs: JOIN_WINDOW_MS,
++  rules: [{ byUser: true, max: JOIN_MAX_ATTEMPTS }],
++});
++
+ export const registerRateLimit = createAuthRateLimit({
+   name: "register",
+   windowMs: REGISTER_WINDOW_MS,
+diff --git a/server/models/Pet.js b/server/models/Pet.js
+index 5e76a56..b95b5e3 100644
+--- a/server/models/Pet.js
++++ b/server/models/Pet.js
+@@ -5,7 +5,8 @@ const { Schema } = mongoose;
+ const isFiniteNumber = (value) => Number.isFinite(value);
+ 
+ // ADR 8.4: Pancho. Un documento por estudiante, reiniciado en cada periodo.
+-// NO existen campos para revivir (ADR 5.4).
++// NO existen campos para revivir (ADR 5.4). healthAdjustment/healthRestoreLog solo perdonan
++// penalizaciones de un Pancho VIVO (UN-108, ADR Rev. 2.3); un Pancho dead nunca se restaura.
+ const petSchema = new Schema(
+   {
+     ownerId: {
+@@ -41,6 +42,33 @@ const petSchema = new Schema(
+       max: 100,
+       validate: { validator: isFiniteNumber, message: "hunger debe ser un número" },
+     },
++    // UN-108 [Rev. 2.3]: puntos de salud que el profesor perdonó (p. ej. una excusa médica).
++    // Se SUMAN al cálculo base: health = clamp(100 - missed*100/total + healthAdjustment, 0, 100).
++    // Solo crece (restore-health) y vuelve a 0 al empezar un nuevo periodo.
++    healthAdjustment: {
++      type: Number,
++      default: 0,
++      min: 0,
++      max: 100,
++      validate: { validator: isFiniteNumber, message: "healthAdjustment debe ser un número" },
++    },
++    // UN-108 [Rev. 2.3]: quién restauró cuánto y por qué (máximo 50 entradas, las más recientes).
++    healthRestoreLog: {
++      type: [
++        new Schema(
++          {
++            at: { type: Date, required: true },
++            teacherId: { type: Schema.Types.ObjectId, ref: "User", required: true },
++            points: { type: Number, required: true, min: 0 },
++            healthBefore: { type: Number, required: true },
++            healthAfter: { type: Number, required: true },
++            reason: { type: String, required: true, maxlength: 200 },
++          },
++          { _id: false }
++        ),
++      ],
++      default: [],
++    },
+     // UN-301: Pancho elegido (id derivado de la URL de dog.ceo e imagen). null hasta que
+     // el estudiante lo elige en /choosePancho; el cliente redirige mientras sea null.
+     panchoId: { type: String, trim: true, maxlength: 100, default: null },
+@@ -76,6 +104,12 @@ const petSchema = new Schema(
+       neck: { type: Number, default: null },
+       body: { type: Number, default: null },
+     },
++    // Which assignment `currentAssignmentSteps` belongs to (assignment id, or the default task id).
++    // Progress of another assignment is ignored, so unfinished steps of a missed task never carry
++    // over to the next one.
++    currentAssignmentStepsFor: { type: String, default: null, maxlength: 40 },
++    // When the student last claimed a minigame reward (cooldown, claimed atomically).
++    lastMinigameAt: { type: Date, default: null },
+     // UN-302: step progress for current assignment (1-4, true/false). Reset on submit.
+     currentAssignmentSteps: {
+       type: [Boolean],
+diff --git a/server/routes/classrooms.js b/server/routes/classrooms.js
+index bd6fc24..86e4e15 100644
+--- a/server/routes/classrooms.js
++++ b/server/routes/classrooms.js
+@@ -4,12 +4,15 @@ import { Router } from "express";
+ import { authorize } from "../middleware/authenticate.js";
+ import { validateBody } from "../middleware/validateBody.js";
+ import { validateIds } from "../middleware/validateIds.js";
++import { joinRateLimit } from "../middleware/authRateLimit.js";
+ import {
+   createClassroomSchema,
+   renameClassroomSchema,
+   joinClassroomSchema,
++  restoreHealthSchema,
+ } from "../validators/classroom.js";
+ import * as service from "../services/classroomService.js";
++import { restoreHealth } from "../services/healthRestoreService.js";
+ import AppError from "../utils/AppError.js";
+ 
+ const router = Router();
+@@ -30,7 +33,7 @@ router.get("/me", async (req, res) => {
+ });
+ 
+ // POST /api/classrooms/join -> 201 first time, 200 if the student was already in it
+-router.post("/join", studentOnly, validateBody(joinClassroomSchema), async (req, res) => {
++router.post("/join", studentOnly, joinRateLimit, validateBody(joinClassroomSchema), async (req, res) => {
+   const result = await service.joinClassroom(req.user, req.body.joinCode);
+   res
+     .status(result.alreadyJoined ? 200 : 201)
+@@ -56,6 +59,17 @@ router.get("/:id/students", teacherOnly, validateIds("id"), async (req, res) =>
+ });
+ 
+ // DELETE /api/classrooms/:id/students/:studentId -> 200
++// POST /api/classrooms/:id/students/:studentId/restore-health -> 200 (UN-108, Rev. 2.3)
++router.post(
++  "/:id/students/:studentId/restore-health",
++  teacherOnly,
++  validateIds("id", "studentId"),
++  validateBody(restoreHealthSchema),
++  async (req, res) => {
++    res.status(200).json(await restoreHealth(req.user, req.params.id, req.params.studentId, req.body));
++  }
++);
++
+ router.delete("/:id/students/:studentId", teacherOnly, validateIds("id", "studentId"), async (req, res) => {
+   await service.removeStudent(req.user, req.params.id, req.params.studentId);
+   res.status(200).json({ removed: true, studentId: req.params.studentId });
+diff --git a/server/services/assignmentService.js b/server/services/assignmentService.js
+index 4b35922..0044ce1 100644
+--- a/server/services/assignmentService.js
++++ b/server/services/assignmentService.js
+@@ -4,8 +4,8 @@
+ // UN-302: step completion and submission (student-only).
+ import mongoose from "mongoose";
+ import AppError from "../utils/AppError.js";
+-import { Assignment, Classroom, Cosmetic, Pet, Submission } from "../models/index.js";
+-import { DEFAULT_ASSIGNMENT, SLOTS, SLOT_BY_CATEGORY, STEP_LABELS } from "../config/game.js";
++import { Assignment, Classroom, Pet, Submission } from "../models/index.js";
++import { loadStudentContext, toGameJson } from "./gameService.js";
+ 
+ function isDuplicateKey(error) {
+   return error && error.code === 11000;
+@@ -149,129 +149,62 @@ export async function deleteAssignment(teacher, assignmentId) {
+ 
+ // ---------------------------------------------------------------------------
+ // UN-302: Student step completion & submission
++// The game state (steps, hunger, health) is built by gameService, the single place that
++// reconciles Pancho with the server clock (UN-108), so every endpoint answers the same shape.
+ // ---------------------------------------------------------------------------
+ 
+-// Build the 4 steps with labels (same as client's ASSIGNMENT_STEP_LABELS)
+-function buildSteps(completedArray = [false, false, false, false]) {
+-  return STEP_LABELS.map((label, index) => ({ id: index + 1, label, completed: completedArray[index] }));
+-}
+-
+-// Get the active assignment for a student with step progress (mirrors gameService.getCurrentAssignment)
+-async function getActiveAssignment(user) {
+-  const pet = await Pet.findOne({ ownerId: user._id });
+-  const classroom = user.classroomId ? await Classroom.findById(user.classroomId) : null;
+-
+-  // If period started and student has classroom, find active assignment
+-  if (classroom && Date.now() >= classroom.period.startDate.getTime()) {
+-    const assignments = await Assignment.find({
+-      classroomId: classroom._id,
+-      periodId: classroom.period.periodId,
+-      dueAt: { $gt: new Date() },
+-    }).sort({ dueAt: 1 });
+-
+-    const submitted = await Submission.find({
+-      studentId: user._id,
+-      assignmentId: { $in: assignments.map((a) => a._id) },
+-    }).select("assignmentId");
+-    const done = new Set(submitted.map((s) => s.assignmentId.toString()));
+-    const active = assignments.find((a) => !done.has(a._id.toString()));
+-
+-    if (active) {
+-      // Get step progress from pet (or default to all false)
+-      const stepProgress = pet?.currentAssignmentSteps || [false, false, false, false];
+-      return {
+-        id: active._id.toString(),
+-        title: active.title,
+-        description: active.description,
+-        dueAt: active.dueAt,
+-        steps: buildSteps(stepProgress),
+-      };
+-    }
+-  }
+-
+-  // Fallback: default assignment (no classroom, no active tasks, or period not started)
+-  // For default assignment, also check pet for step progress
+-  const stepProgress = pet?.currentAssignmentSteps || [false, false, false, false];
+-  return { ...DEFAULT_ASSIGNMENT, steps: buildSteps(stepProgress) };
+-}
+-
+-// Get the student's pet (for hunger/health/status checks)
+-async function getStudentPet(user) {
+-  const pet = await Pet.findOne({ ownerId: user._id });
+-  if (!pet) throw new AppError(404, "NOT_FOUND", "You do not have a Pancho yet: join a classroom first");
+-  return pet;
+-}
+-
+-// Return full game state in the same format as GET /api/me/game (for UN-303 client migration)
+-async function toGameJson(user, pet) {
+-  return {
+-    student: {
+-      id: user.username || user.name,
+-      userId: user._id.toString(),
+-      coins: pet.coins,
+-      inventory: [...pet.inventory],
+-      assignmentsCompleted: await Submission.countDocuments({ studentId: user._id }),
+-    },
+-    dog: {
+-      id: pet.panchoId,
+-      name: pet.name,
+-      imgUrl: pet.imgUrl,
+-      health: pet.health,
+-      hunger: pet.hunger,
+-      status: pet.status.toUpperCase(),
+-      equippedCosmetics: Object.fromEntries(SLOTS.map((slot) => [slot, pet.equipped[slot] ?? null])),
+-    },
+-    currentAssignment: await getActiveAssignment(user),
+-  };
+-}
+-
+ // POST /api/assignments/:id/steps - complete step 1, 2 or 3
+ export async function completeStep(user, assignmentId, stepId) {
+-  // Only students can complete steps
+   if (user.role !== "student") throw new AppError(403, "FORBIDDEN", "Only students can complete steps");
+ 
+-  const pet = await getStudentPet(user);
+-  if (pet.status === "DEAD") {
++  const { pet, assignment } = await loadStudentContext(user);
++  // status is stored in lowercase ("alive" | "dead"); the state is already reconciled, so a
++  // Pancho that died by time since the last request is also detected here.
++  if (pet.status === "dead") {
+     throw new AppError(409, "CONFLICT", "Pancho can't work on assignments right now.");
+   }
+-
+-  const assignment = await getActiveAssignment(user);
+-
+-  // Verify the assignment matches (or is the default)
+   if (assignment.id !== assignmentId) {
+     throw new AppError(404, "NOT_FOUND", "Assignment not found or not active");
+   }
+ 
+-  const step = assignment.steps.find((s) => s.id === stepId);
++  const step = assignment.steps.find((item) => item.id === stepId);
+   if (!step) throw new AppError(404, "NOT_FOUND", "That step doesn't exist.");
+   if (step.completed) throw new AppError(409, "CONFLICT", "This step is already completed.");
+ 
+-  // Update step progress in pet
+-  const stepProgress = [...(pet.currentAssignmentSteps || [false, false, false, false])];
+-  stepProgress[stepId - 1] = true;
+-  await Pet.updateOne({ _id: pet._id }, { $set: { currentAssignmentSteps: stepProgress } });
++  // One atomic update. Progress that belongs to another assignment is replaced, never reused.
++  const index = stepId - 1;
++  const filter = { _id: pet._id, status: "alive" };
++  let update;
++  if (pet.currentAssignmentStepsFor === assignment.id) {
++    filter[`currentAssignmentSteps.${index}`] = false; // two clicks on the same step: only one wins
++    update = { $set: { [`currentAssignmentSteps.${index}`]: true } };
++  } else {
++    filter.currentAssignmentStepsFor = { $ne: assignment.id };
++    const steps = [false, false, false, false];
++    steps[index] = true;
++    update = { $set: { currentAssignmentSteps: steps, currentAssignmentStepsFor: assignment.id } };
++  }
++  const updated = await Pet.findOneAndUpdate(filter, update, { returnDocument: "after" });
++  if (!updated) throw new AppError(409, "CONFLICT", "The step could not be saved (it changed at the same time). Try again.");
+ 
+-  // Return full game state (for UN-303 client migration)
+-  const updatedPet = await Pet.findById(pet._id);
+   return {
+     success: true,
+     step: { ...step, completed: true },
+-    state: await toGameJson(user, updatedPet),
++    state: await toGameJson(user, updated),
+   };
+ }
+ 
+ // POST /api/assignments/:id/submit - submit assignment (step 4)
+ export async function submitAssignment(user, assignmentId) {
+-  // Only students can submit
+   if (user.role !== "student") throw new AppError(403, "FORBIDDEN", "Only students can submit assignments");
+ 
+-  const pet = await getStudentPet(user);
++  const { pet, assignment } = await loadStudentContext(user);
+   if (pet.status === "dead") {
+     throw new AppError(409, "CONFLICT", "Pancho can't submit an assignment right now.");
+   }
+ 
+-  // Check for existing submission on this specific assignment FIRST
+-  // (unique index on assignmentId + studentId will enforce this, but we check early to return 409 instead of 404)
++  // Check for an existing submission on this specific assignment FIRST (409, not 404).
++  // The unique index (assignmentId, studentId) still enforces it under concurrency.
+   const existingSubmission = await Submission.findOne({
+     assignmentId: new mongoose.Types.ObjectId(assignmentId),
+     studentId: user._id,
+@@ -280,20 +213,15 @@ export async function submitAssignment(user, assignmentId) {
+     throw new AppError(409, "CONFLICT", "You have already submitted this assignment.");
+   }
+ 
+-  const assignment = await getActiveAssignment(user);
+-
+-  // Verify the assignment matches
+   if (assignment.id !== assignmentId) {
+     throw new AppError(404, "NOT_FOUND", "Assignment not found or not active");
+   }
+ 
+-  // Check steps 1-3 are completed
+-  const prepStepsDone = assignment.steps.filter((s) => s.id !== 4).every((s) => s.completed);
++  const prepStepsDone = assignment.steps.filter((item) => item.id !== 4).every((item) => item.completed);
+   if (!prepStepsDone) {
+     throw new AppError(409, "CONFLICT", "Complete steps 1-3 before submitting the assignment.");
+   }
+ 
+-  // Create submission (unique index on assignmentId + studentId prevents duplicates)
+   try {
+     await Submission.create({
+       assignmentId: new mongoose.Types.ObjectId(assignmentId),
+@@ -309,18 +237,20 @@ export async function submitAssignment(user, assignmentId) {
+     throw error;
+   }
+ 
+-  // Update pet hunger (+30, max 100) AND reset step progress
+-  const newHunger = Math.min(100, pet.hunger + 30);
+-  await Pet.updateOne(
++  // ADR 5.5: submitting on time puts hunger at 100. (The old "+30 hunger" snapshot was thrown
++  // away by the lazy calculation of UN-108, so the real hunger could look lower than promised.)
++  // Steps are reset; with the submission saved, the next reconciliation also moves the
++  // active assignment on and never counts this one as missed.
++  const hungerBefore = pet.hunger;
++  const updated = await Pet.findOneAndUpdate(
+     { _id: pet._id },
+-    { $set: { hunger: newHunger, currentAssignmentSteps: [false, false, false, false] } }
++    { $set: { hunger: 100, currentAssignmentSteps: [false, false, false, false], currentAssignmentStepsFor: null } },
++    { returnDocument: "after" }
+   );
+ 
+-  // Return full game state (for UN-303 client migration)
+-  const updatedPet = await Pet.findById(pet._id);
+   return {
+     success: true,
+-    rewards: { hunger: 30 },
+-    state: await toGameJson(user, updatedPet),
++    rewards: { hunger: Math.max(0, Math.round(100 - hungerBefore)) }, // points of hunger recovered
++    state: await toGameJson(user, updated),
+   };
+ }
+diff --git a/server/services/classroomService.js b/server/services/classroomService.js
+index 5ec3df5..0c670c3 100644
+--- a/server/services/classroomService.js
++++ b/server/services/classroomService.js
+@@ -3,6 +3,7 @@ import AppError from "../utils/AppError.js";
+ import { generateJoinCode, normalizeJoinCode } from "../utils/joinCode.js";
+ import { Classroom, User, Pet } from "../models/index.js";
+ import { STARTING_COINS } from "../config/game.js";
++import { reconcilePets } from "./petStateService.js";
+ 
+ const MAX_CODE_ATTEMPTS = 5;
+ 
+@@ -29,7 +30,7 @@ export function toClassroomJson(classroom) {
+ 
+ // Finds a classroom and checks that the teacher owns it.
+ // Missing -> 404, someone else's -> 403 (ADR 7.2).
+-async function getOwnedClassroom(classroomId, teacher) {
++export async function getOwnedClassroom(classroomId, teacher) {
+   const classroom = await Classroom.findById(classroomId);
+   if (!classroom) throw new AppError(404, "NOT_FOUND", "Classroom not found");
+   if (!classroom.teacherId.equals(teacher._id)) {
+@@ -163,12 +164,12 @@ async function ensurePet(ownerId, periodId) {
+ 
+   await Pet.updateOne(
+     { ownerId, periodId: { $ne: periodId } },
+-    { $set: { periodId, health: 100, hunger: 100, status: "alive" } }
++    { $set: { periodId, health: 100, hunger: 100, status: "alive", healthAdjustment: 0 } }
+   );
+ }
+ 
+ // Students of a classroom with a summary of their Pancho.
+-// health/hunger are the stored snapshot, not the value reconciled at request time (ADR 5.3).
++// health/hunger/status are reconciled with the server clock on every call (UN-108, ADR 5.3).
+ export async function listStudents(teacher, classroomId) {
+   const classroom = await getOwnedClassroom(classroomId, teacher);
+ 
+@@ -178,7 +179,8 @@ export async function listStudents(teacher, classroomId) {
+ 
+   const ownerIds = [];
+   for (let i = 0; i < users.length; i++) ownerIds.push(users[i]._id);
+-  const pets = await Pet.find({ ownerId: { $in: ownerIds } });
++  const storedPets = await Pet.find({ ownerId: { $in: ownerIds } });
++  const pets = await reconcilePets(classroom, storedPets);
+ 
+   const petsByOwner = {};
+   for (let i = 0; i < pets.length; i++) petsByOwner[pets[i].ownerId.toString()] = pets[i];
+diff --git a/server/services/gameService.js b/server/services/gameService.js
+index c17aa2e..e233584 100644
+--- a/server/services/gameService.js
++++ b/server/services/gameService.js
+@@ -3,11 +3,20 @@
+ // of truth. Every write is a single atomic update guarded by its own preconditions, so a
+ // failed request never changes anything (ADR 6.10).
+ import AppError from "../utils/AppError.js";
+-import { Assignment, Classroom, Cosmetic, Pet, Submission } from "../models/index.js";
+-import { DEFAULT_ASSIGNMENT, SLOTS, SLOT_BY_CATEGORY, STEP_LABELS } from "../config/game.js";
+-
+-function buildSteps() {
+-  return STEP_LABELS.map((label, index) => ({ id: index + 1, label, completed: false }));
++import { Assignment, Classroom, Cosmetic, MinigamePlay, Pet, Submission } from "../models/index.js";
++import {
++  DEFAULT_ASSIGNMENT,
++  MINIGAME_MAX_COINS_PER_PLAY,
++  SLOTS,
++  SLOT_BY_CATEGORY,
++  STEP_LABELS,
++  minigameLimits,
++} from "../config/game.js";
++import { clock } from "../utils/clock.js";
++import { reconcilePet } from "./petStateService.js";
++
++function buildSteps(completed = []) {
++  return STEP_LABELS.map((label, index) => ({ id: index + 1, label, completed: completed[index] === true }));
+ }
+ 
+ // Only a student that joined a classroom has a Pancho (created on join, ADR 8.4).
+@@ -19,14 +28,14 @@ async function getPet(user) {
+ 
+ // ADR 5.3: the active assignment is the first one (by dueAt) the student has not submitted,
+ // with dueAt in the future and the period already started. Falls back to the default task.
+-async function getCurrentAssignment(user) {
++export async function getCurrentAssignment(user, classroom, pet) {
+   let active = null;
+-  const classroom = user.classroomId ? await Classroom.findById(user.classroomId) : null;
+-  if (classroom && Date.now() >= classroom.period.startDate.getTime()) {
++  const now = clock.now();
++  if (classroom && now >= classroom.period.startDate.getTime()) {
+     const assignments = await Assignment.find({
+       classroomId: classroom._id,
+       periodId: classroom.period.periodId,
+-      dueAt: { $gt: new Date() },
++      dueAt: { $gt: new Date(now) },
+     }).sort({ dueAt: 1 });
+     const submitted = await Submission.find({
+       studentId: user._id,
+@@ -35,19 +44,21 @@ async function getCurrentAssignment(user) {
+     const done = new Set(submitted.map((item) => item.assignmentId.toString()));
+     active = assignments.find((item) => !done.has(item._id.toString())) || null;
+   }
+-  if (!active) return { ...DEFAULT_ASSIGNMENT, steps: buildSteps() };
+-  return {
+-    id: active._id.toString(),
+-    title: active.title,
+-    description: active.description,
+-    dueAt: active.dueAt,
+-    steps: buildSteps(),
+-  };
++  const task = active
++    ? { id: active._id.toString(), title: active.title, description: active.description, dueAt: active.dueAt }
++    : { ...DEFAULT_ASSIGNMENT };
++  // Step progress only counts if it was made on THIS assignment.
++  const progress = pet && pet.currentAssignmentStepsFor === task.id ? pet.currentAssignmentSteps : [];
++  return { ...task, steps: buildSteps(progress) };
+ }
+ 
+ // Same shape the client keeps in useGameState() (src/state/defaults.js), so UN-303 can swap
+ // localStorage for this response. The client writes status as "ALIVE" / "DEAD".
+-async function toGameJson(user, pet) {
++// Health, hunger and status are reconciled with the server clock on every read AND after
++// every change (UN-108, ADR 5.3), so the response always reflects the current moment.
++export async function toGameJson(user, storedPet) {
++  const classroom = user.classroomId ? await Classroom.findById(user.classroomId) : null;
++  const pet = await reconcilePet(classroom, storedPet);
+   return {
+     student: {
+       id: user.username || user.name,
+@@ -65,10 +76,18 @@ async function toGameJson(user, pet) {
+       status: pet.status.toUpperCase(),
+       equippedCosmetics: Object.fromEntries(SLOTS.map((slot) => [slot, pet.equipped[slot] ?? null])),
+     },
+-    currentAssignment: await getCurrentAssignment(user),
++    currentAssignment: await getCurrentAssignment(user, classroom, pet),
+   };
+ }
+ 
++// Reconciled Pancho + active assignment of a student, for the step/submit endpoints (UN-302).
++export async function loadStudentContext(user) {
++  const stored = await getPet(user);
++  const classroom = user.classroomId ? await Classroom.findById(user.classroomId) : null;
++  const pet = await reconcilePet(classroom, stored);
++  return { pet, assignment: await getCurrentAssignment(user, classroom, pet) };
++}
++
+ // GET /api/me/game
+ export async function getGameState(user) {
+   return toGameJson(user, await getPet(user));
+@@ -153,23 +172,39 @@ export async function equipCosmetics(user, slots) {
+   return toGameJson(user, updated);
+ }
+ 
+-// POST /api/minigames/reward - award coins for completing a minigame (UN-303 migration)
+-// This is a temporary simple endpoint; UN-501 will replace with full quiz grading.
++// POST /api/minigames/reward: coins for a finished minigame (UN-303 stop-gap; UN-501 will
++// grade the quiz on the server). The client still reports `correctCount`, so the server limits
++// what a client can claim: at most 5 coins per play, one claim per cooldown (atomic, so parallel
++// requests cannot stack) and a maximum number of plays per UTC day. Without these limits
++// anyone could call this endpoint in a loop and get unlimited coins.
+ export async function awardMinigameCoins(user, correctCount) {
+   if (!Number.isInteger(correctCount) || correctCount <= 0) {
+     throw new AppError(400, "VALIDATION_ERROR", "No coins earned this round.");
+   }
++  const reward = Math.min(correctCount, MINIGAME_MAX_COINS_PER_PLAY);
++  const { cooldownMs, maxPlaysPerDay } = minigameLimits();
++  const now = clock.now();
++
++  await getPet(user); // 404 if the student has no Pancho yet
+ 
+-  // Same logic as client: min(correctCount, 5) coins per game (MINIGAME_REWARD_COINS = 5)
+-  const reward = Math.min(correctCount, 5);
++  const dayStart = new Date(now);
++  dayStart.setUTCHours(0, 0, 0, 0);
++  const playsToday = await MinigamePlay.countDocuments({ studentId: user._id, playedAt: { $gte: dayStart } });
++  if (playsToday >= maxPlaysPerDay) {
++    throw new AppError(429, "RATE_LIMITED", "Daily minigame limit reached. Come back tomorrow.");
++  }
+ 
++  // The cooldown is claimed and the coins are paid in ONE update.
+   const pet = await Pet.findOneAndUpdate(
+-    { ownerId: user._id },
+-    { $inc: { coins: reward } },
++    {
++      ownerId: user._id,
++      $or: [{ lastMinigameAt: null }, { lastMinigameAt: { $lte: new Date(now - cooldownMs) } }],
++    },
++    { $inc: { coins: reward }, $set: { lastMinigameAt: new Date(now) } },
+     { returnDocument: "after" }
+   );
++  if (!pet) throw new AppError(429, "RATE_LIMITED", "Wait a moment before playing again.");
+ 
+-  if (!pet) throw new AppError(404, "NOT_FOUND", "You do not have a Pancho yet: join a classroom first");
+-
++  await MinigamePlay.create({ studentId: user._id, gameId: "quiz", reward, playedAt: new Date(now) });
+   return toGameJson(user, pet);
+ }
+diff --git a/server/services/healthRestoreService.js b/server/services/healthRestoreService.js
+new file mode 100644
+index 0000000..46e1f9b
+--- /dev/null
++++ b/server/services/healthRestoreService.js
+@@ -0,0 +1,69 @@
++// UN-108 [ADR Rev. 2.3] · The teacher forgives lost health of a LIVING Pancho
++// (e.g. a student was sick and missed an assignment). This is NOT reviving (D5):
++//   - a dead Pancho can never be restored: it stays dead until the next period;
++//   - health can never go above 100;
++//   - the forgiven points are stored in pet.healthAdjustment, which the automatic
++//     reconciliation ADDS to the base calculation, so it never overwrites the restoration.
++import AppError from "../utils/AppError.js";
++import { Pet, User } from "../models/index.js";
++import { clock } from "../utils/clock.js";
++import { getOwnedClassroom } from "./classroomService.js";
++import { reconcilePet } from "./petStateService.js";
++
++const EPSILON = 1e-9;
++const round = (value) => Math.round(value * 1e9) / 1e9;
++
++export async function restoreHealth(teacher, classroomId, studentId, { points, reason }) {
++  const classroom = await getOwnedClassroom(classroomId, teacher); // 404 / 403
++
++  const student = await User.findOne({ _id: studentId, classroomId: classroom._id, role: "student" }).select("name");
++  if (!student) throw new AppError(404, "NOT_FOUND", "That student is not in this classroom");
++
++  const pet = await Pet.findOne({ ownerId: student._id });
++  if (!pet) throw new AppError(404, "NOT_FOUND", "That student does not have a Pancho yet");
++  if (!pet.periodId.equals(classroom.period.periodId)) {
++    throw new AppError(409, "PERIOD_LOCKED", "That Pancho belongs to a finished period");
++  }
++
++  // Bring the Pancho up to date first: it may have died since the last read (and a dead
++  // Pancho is never restored), and the points lost must be the current ones.
++  const now = clock.now();
++  await reconcilePet(classroom, pet, now);
++  if (pet.status === "dead" || pet.health <= 0) {
++    throw new AppError(409, "CONFLICT", "A dead Pancho cannot be restored; it stays dead until the next period");
++  }
++
++  const lost = round(100 - pet.health);
++  if (lost <= EPSILON) throw new AppError(409, "CONFLICT", "Pancho has no lost health to restore");
++
++  const amount = points ?? lost; // no points = give back everything that was lost
++  if (amount > lost + EPSILON) {
++    throw new AppError(409, "CONFLICT", `Only ${lost} points can be restored (health cannot go above 100)`);
++  }
++  const restored = round(Math.min(amount, lost));
++  const healthAfter = Math.min(100, round(pet.health + restored));
++
++  // One atomic update. The filter holds the preconditions (still alive, adjustment unchanged),
++  // so two simultaneous restorations cannot both be applied on top of the same state.
++  const updated = await Pet.findOneAndUpdate(
++    { _id: pet._id, status: "alive", healthAdjustment: pet.healthAdjustment ?? 0 },
++    {
++      $inc: { healthAdjustment: restored },
++      $set: { health: healthAfter },
++      $push: {
++        healthRestoreLog: {
++          $each: [{ at: new Date(now), teacherId: teacher._id, points: restored, healthBefore: pet.health, healthAfter, reason }],
++          $slice: -50,
++        },
++      },
++    },
++    { returnDocument: "after" }
++  );
++  if (!updated) throw new AppError(409, "CONFLICT", "Pancho changed while restoring; try again");
++
++  return {
++    restored,
++    student: { id: student._id.toString(), name: student.name },
++    pet: { status: updated.status, health: healthAfter, hunger: pet.hunger, healthAdjustment: updated.healthAdjustment },
++  };
++}
+diff --git a/server/services/petStateService.js b/server/services/petStateService.js
+new file mode 100644
+index 0000000..67233dc
+--- /dev/null
++++ b/server/services/petStateService.js
+@@ -0,0 +1,131 @@
++// UN-108 · Lazy hunger and health of a Pancho, calculated on the server (ADR 5.3 and 5.4).
++//
++// There is no setInterval and no cron (Vercel is serverless). The state is DERIVED from
++// timestamps (period.startDate, assignment.dueAt, submissions) every time a Pancho is read
++// or changed, so a student who is away for days gets the same result as one who stayed
++// connected. The ADR (decision D4) replaced the prototype's "-2 hunger every 15 s" tick:
++// that rule would kill Pancho after ~15 minutes offline. This file implements the ADR rules:
++//   - hunger falls linearly while the active assignment approaches its dueAt;
++//   - health only falls when an assignment expires without a submission, and a teacher can
++//     forgive lost points of a LIVING Pancho (pet.healthAdjustment, ADR Rev. 2.3);
++//   - health 0 -> "dead", and a dead Pancho never changes again (no revive exists).
++import { Assignment, Pet, Submission } from "../models/index.js";
++import { clock } from "../utils/clock.js";
++
++const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
++
++// Pure function (no database): easy to test with a simulated clock.
++//  pet:         { health, hunger, status, healthAdjustment } as stored
++//  period:      { startDate, endDate } of the classroom
++//  assignments: [{ id, dueAt }] of the period, any order
++//  submittedIds: Set of assignment ids this student already submitted
++//  now:         milliseconds (server clock)
++export function computePetState({ pet, period, assignments, submittedIds, now }) {
++  // A dead Pancho stays exactly as it is for the rest of the period (ADR 5.4).
++  if (pet.status === "dead") {
++    return { health: pet.health, hunger: pet.hunger, status: "dead" };
++  }
++
++  const sorted = [...assignments].sort((a, b) => a.dueAt - b.dueAt);
++  const total = sorted.length;
++  const isDone = (item) => submittedIds.has(item.id);
++
++  // Health. Multiply before dividing to avoid floating point drift (ADR 5.3). The teacher's
++  // forgiven points (healthAdjustment) are ADDED to the base, so the automatic recalculation
++  // never overwrites a restoration. The result is capped at 100 and rounded to 9 decimals only
++  // to absorb floating point noise (e.g. 66.666...7 + 33.333...3 must be exactly 100).
++  const missed = sorted.filter((item) => item.dueAt.getTime() <= now && !isDone(item)).length;
++  const penalty = total === 0 ? 0 : (missed * 100) / total;
++  const raw = clamp(100 - penalty + (pet.healthAdjustment ?? 0), 0, 100);
++  const health = Math.round(raw * 1e9) / 1e9;
++  const status = health <= 0 ? "dead" : "alive";
++
++  // Hunger. Active assignment = first (by dueAt) not submitted, still in the future, and
++  // the period already started. Its window starts at the previous dueAt (or the period start).
++  let hunger = null;
++  if (now >= period.startDate.getTime()) {
++    for (let i = 0; i < total; i++) {
++      const item = sorted[i];
++      if (isDone(item) || item.dueAt.getTime() <= now) continue;
++      const windowStart = (i === 0 ? period.startDate : sorted[i - 1].dueAt).getTime();
++      const length = item.dueAt.getTime() - windowStart;
++      hunger = length <= 0 ? 100 : clamp(((item.dueAt.getTime() - now) / length) * 100, 0, 100);
++      break;
++    }
++  }
++  if (hunger === null) {
++    // No active assignment: 0 if the last assignment of the period was missed, else 100.
++    const last = sorted[total - 1];
++    hunger = last && last.dueAt.getTime() <= now && !isDone(last) ? 0 : 100;
++  }
++
++  return { health: status === "dead" ? 0 : health, hunger, status };
++}
++
++// Reconciles several pets of ONE classroom with a single read of assignments and submissions.
++// Returns the same pet documents with health, hunger and status updated in memory. Only the
++// durable facts (health, status) are written; hunger is a snapshot recalculated on every read
++// (ADR 5.3), so reading never causes a write unless health or status really changed.
++// health is derived from timestamps + healthAdjustment, so the stored value is only a cache.
++export async function reconcilePets(classroom, pets, now = clock.now()) {
++  if (!classroom || pets.length === 0) return pets;
++
++  const live = pets.filter(
++    (pet) => pet.status === "alive" && pet.periodId.equals(classroom.period.periodId)
++  );
++  if (live.length === 0) return pets;
++
++  const assignments = await Assignment.find({
++    classroomId: classroom._id,
++    periodId: classroom.period.periodId,
++  }).select("dueAt");
++  const items = assignments.map((item) => ({ id: item._id.toString(), dueAt: item.dueAt }));
++
++  const submissions =
++    items.length === 0
++      ? []
++      : await Submission.find({
++          studentId: { $in: live.map((pet) => pet.ownerId) },
++          assignmentId: { $in: assignments.map((item) => item._id) },
++        }).select("studentId assignmentId");
++  const submittedBy = new Map();
++  for (const submission of submissions) {
++    const key = submission.studentId.toString();
++    if (!submittedBy.has(key)) submittedBy.set(key, new Set());
++    submittedBy.get(key).add(submission.assignmentId.toString());
++  }
++
++  const writes = [];
++  for (const pet of live) {
++    const next = computePetState({
++      pet,
++      period: classroom.period,
++      assignments: items,
++      submittedIds: submittedBy.get(pet.ownerId.toString()) ?? new Set(),
++      now,
++    });
++    const durableChange = next.health !== pet.health || next.status !== pet.status;
++    pet.health = next.health;
++    pet.hunger = next.hunger;
++    pet.status = next.status;
++    if (durableChange) {
++      writes.push({
++        updateOne: {
++          // status "alive": a Pancho that already died is never touched again.
++          // healthAdjustment: if a teacher restored points in the meantime, this write was
++          // computed with an outdated adjustment, so it is skipped (the next read recomputes).
++          filter: { _id: pet._id, status: "alive", healthAdjustment: pet.healthAdjustment ?? 0 },
++          update: { $set: { status: next.status, hunger: next.hunger, health: next.health } },
++        },
++      });
++    }
++  }
++  if (writes.length > 0) await Pet.bulkWrite(writes, { ordered: false });
++  return pets;
++}
++
++// Same, for the student's own Pancho (used before building the game state).
++export async function reconcilePet(classroom, pet, now = clock.now()) {
++  await reconcilePets(classroom, [pet], now);
++  return pet;
++}
+diff --git a/server/tests/assignments.test.js b/server/tests/assignments.test.js
+index 4e9c8da..4884be3 100644
+--- a/server/tests/assignments.test.js
++++ b/server/tests/assignments.test.js
+@@ -295,7 +295,7 @@ describe("UN-302 · POST /api/assignments/:id/submit", () => {
+     });
+   });
+ 
+-  it("estudiante entrega tras completar pasos 1-3: crea Submission, +30 hunger, reinicia pasos", async () => {
++  it("estudiante entrega tras completar pasos 1-3: crea Submission, hambre 100 (ADR 5.5), reinicia pasos", async () => {
+     // Complete steps 1-3
+     await as(student, "post", `/${assignmentId}/steps`).send({ stepId: 1 }).expect(200);
+     await as(student, "post", `/${assignmentId}/steps`).send({ stepId: 2 }).expect(200);
+@@ -304,8 +304,9 @@ describe("UN-302 · POST /api/assignments/:id/submit", () => {
+     // Submit
+     const res = await as(student, "post", `/${assignmentId}/submit`).expect(200);
+     assert.equal(res.body.success, true);
+-    assert.deepEqual(res.body.rewards, { hunger: 30 });
+-    assert.ok(res.body.state.dog.hunger >= 30); // hunger increased
++    // Before submitting, hunger was ~95 (the task is due in 20 of 21 days): it recovers to 100.
++    assert.ok(res.body.rewards.hunger >= 0 && res.body.rewards.hunger <= 10);
++    assert.equal(res.body.state.dog.hunger, 100);
+     assert.equal(res.body.state.student.assignmentsCompleted, 1);
+     // Steps should be reset
+     assert.ok(res.body.state.currentAssignment.steps.every((s) => s.completed === false));
+@@ -399,6 +400,6 @@ describe("UN-302 · POST /api/assignments/:id/submit", () => {
+     await as(outsider, "post", `/${defaultAssignmentId}/steps`).send({ stepId: 3 }).expect(200);
+     const res = await as(outsider, "post", `/${defaultAssignmentId}/submit`).expect(200);
+     assert.equal(res.body.success, true);
+-    assert.deepEqual(res.body.rewards, { hunger: 30 });
++    assert.deepEqual(res.body.rewards, { hunger: 0 }); // hunger was already 100: nothing to recover
+   });
+ });
+diff --git a/server/tests/petState.test.js b/server/tests/petState.test.js
+new file mode 100644
+index 0000000..96618d6
+--- /dev/null
++++ b/server/tests/petState.test.js
+@@ -0,0 +1,246 @@
++// UN-108 · Hambre y salud calculadas en servidor, con reloj simulado.
++// Parte 1: función pura (sin base de datos). Parte 2: integración con MongoDB.
++// Ejecutar con: node --test server/tests/petState.test.js
++
++import { describe, it, before, after, beforeEach } from "node:test";
++import assert from "node:assert/strict";
++import request from "supertest";
++import { MongoMemoryServer } from "mongodb-memory-server";
++import mongoose from "mongoose";
++
++process.env.JWT_SECRET = "test-jwt-secret-very-long-and-secure-for-testing-only";
++process.env.NODE_ENV = "test";
++
++const { default: app } = await import("../app.js");
++const { User, Classroom, Assignment, Pet, Submission, Cosmetic } = await import("../models/index.js");
++const { signToken } = await import("../utils/jwt.js");
++const { clock } = await import("../utils/clock.js");
++const { computePetState } = await import("../services/petStateService.js");
++
++const DAY = 24 * 60 * 60 * 1000;
++const T0 = Date.parse("2026-08-01T00:00:00.000Z"); // period start
++const at = (days) => new Date(T0 + days * DAY);
++const period = { startDate: at(0), endDate: at(60) };
++const fresh = { health: 100, hunger: 100, status: "alive" };
++const tasks = (...days) => days.map((d, i) => ({ id: `a${i + 1}`, dueAt: at(d) }));
++const run = (days, { assignments, submitted = [], pet = fresh }) =>
++  computePetState({ pet, period, assignments, submittedIds: new Set(submitted), now: T0 + days * DAY });
++const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-6, `${actual} != ${expected}`);
++
++describe("UN-108 · computePetState (reloj simulado)", () => {
++  const five = tasks(5);
++
++  it("hambre baja linealmente hasta la fecha límite (ADR 5.3)", () => {
++    for (const [day, hunger] of [[0, 100], [1.25, 75], [2.5, 50], [3.75, 25], [5, 0]]) {
++      near(run(day, { assignments: five }).hunger, hunger);
++    }
++  });
++
++  it("antes de empezar el periodo todo está al máximo", () => {
++    const state = computePetState({ pet: fresh, period, assignments: five, submittedIds: new Set(), now: T0 - DAY });
++    assert.deepEqual(state, { health: 100, hunger: 100, status: "alive" });
++  });
++
++  it("la ventana de la segunda tarea empieza en el vencimiento de la primera", () => {
++    const two = tasks(5, 15);
++    near(run(10, { assignments: two, submitted: ["a1"] }).hunger, 50); // mitad de [5, 15]
++    // Entregó la primera el día 1: hasta el día 5 el hambre sigue al máximo.
++    near(run(3, { assignments: two, submitted: ["a1"] }).hunger, 100);
++  });
++
++  it("la salud solo baja al vencer una tarea sin entrega (3 tareas: 1 fallada = 66.67)", () => {
++    const three = tasks(5, 10, 15);
++    assert.equal(run(4.9, { assignments: three }).health, 100);
++    near(run(5.1, { assignments: three }).health, 200 / 3);
++    near(run(5.1, { assignments: three, submitted: ["a1"] }).health, 100);
++  });
++
++  it("5 tareas: cada una fallada resta 20", () => {
++    const list = tasks(1, 2, 3, 4, 5);
++    assert.equal(run(1.5, { assignments: list }).health, 80);
++    assert.equal(run(2.5, { assignments: list }).health, 60);
++    assert.equal(run(3.5, { assignments: list, submitted: ["a1"] }).health, 60); // a2 y a3 falladas
++  });
++
++  it("sin tarea activa: hambre 0 si la última se incumplió; 100 si se entregó", () => {
++    const list = tasks(5, 10);
++    assert.equal(run(11, { assignments: list, submitted: ["a1"] }).hunger, 0);
++    assert.equal(run(11, { assignments: list, submitted: ["a1", "a2"] }).hunger, 100);
++  });
++
++  it("sin tareas en el periodo: 100 y 100, no hay nada que incumplir", () => {
++    assert.deepEqual(run(30, { assignments: [] }), { health: 100, hunger: 100, status: "alive" });
++  });
++
++  it("todas incumplidas: salud 0 y estado dead", () => {
++    assert.deepEqual(run(20, { assignments: tasks(5, 10, 15) }), { health: 0, hunger: 0, status: "dead" });
++  });
++
++  it("ausencia larga = mismo resultado que seguir conectado (sin tope de decaimiento falso)", () => {
++    const list = tasks(5, 10, 15, 20);
++    let pet = fresh;
++    for (let d = 0; d <= 12; d += 0.5) pet = run(d, { assignments: list, pet });
++    assert.deepEqual(pet, run(12, { assignments: list }));
++    // 15 minutos o 15 días fuera: solo importan las fechas, no los ticks.
++    assert.equal(run(0.0104, { assignments: tasks(30) }).status, "alive");
++  });
++
++  it("un perro DEAD no vuelve a cambiar, ni con entregas ni con el tiempo", () => {
++    const dead = { health: 0, hunger: 0, status: "dead" };
++    const list = tasks(5, 10);
++    for (const d of [0, 7, 100]) {
++      assert.deepEqual(run(d, { assignments: list, submitted: ["a1", "a2"], pet: dead }), dead);
++    }
++  });
++
++  it("es idempotente: reconciliar el resultado otra vez no lo cambia", () => {
++    const once = run(7, { assignments: tasks(5, 10) });
++    assert.deepEqual(run(7, { assignments: tasks(5, 10), pet: { ...once } }), once);
++  });
++
++  it("healthAdjustment (UN-108 Rev. 2.3): se suma al cálculo base y la reconciliación no lo pisa", () => {
++    const list = tasks(1, 2, 3, 4, 5);
++    const forgiven = { ...fresh, healthAdjustment: 20 };
++    assert.equal(run(2.5, { assignments: list }).health, 60);
++    assert.equal(run(2.5, { assignments: list, pet: forgiven }).health, 80); // perdonó 20
++    // Después sigue perdiendo vida por las nuevas tareas falladas, conservando el perdón.
++    assert.equal(run(3.5, { assignments: list, pet: forgiven }).health, 60);
++    // Repetir la reconciliación no vuelve a sumar ni a restar.
++    const once = run(3.5, { assignments: list, pet: forgiven });
++    assert.deepEqual(run(3.5, { assignments: list, pet: { ...forgiven, ...once } }), once);
++  });
++
++  it("healthAdjustment nunca pasa de 100 ni resucita a un perro dead", () => {
++    assert.equal(run(1, { assignments: tasks(5), pet: { ...fresh, healthAdjustment: 100 } }).health, 100);
++    const dead = { health: 0, hunger: 0, status: "dead", healthAdjustment: 50 };
++    assert.deepEqual(run(7, { assignments: tasks(5), pet: dead }), { health: 0, hunger: 0, status: "dead" });
++  });
++
++  it("restaurar todo lo perdido (66.67 + 33.33) da exactamente 100", () => {
++    const three = tasks(5, 10, 15);
++    const lost = 100 - run(5.1, { assignments: three }).health;
++    const pet = { ...fresh, healthAdjustment: Math.round(lost * 1e9) / 1e9 };
++    assert.equal(run(5.1, { assignments: three, pet }).health, 100);
++  });
++});
++
++describe("UN-108 · integración (API + MongoDB, reloj simulado)", () => {
++  let mongod, server, teacher, student, classroom, a1, a2;
++  const call = (user, method, path) =>
++    request(server)[method](path).set("Cookie", [`session=${signToken({ sub: user._id.toString() })}`]);
++  const game = async (days) => {
++    clock.now = () => T0 + days * DAY;
++    return (await call(student, "get", "/api/me/game").expect(200)).body;
++  };
++
++  before(async () => {
++    mongod = await MongoMemoryServer.create({ binary: { version: "7.0.0" } });
++    process.env.MONGODB_URI = mongod.getUri();
++    await mongoose.connect(mongod.getUri());
++    server = app.listen(0);
++  });
++  after(async () => {
++    clock.now = () => Date.now();
++    await mongoose.disconnect();
++    await mongod.stop();
++    server.close();
++  });
++  beforeEach(async () => {
++    await Promise.all([User, Classroom, Assignment, Pet, Submission, Cosmetic].map((m) => m.deleteMany({})));
++    await Cosmetic.create({ cosmeticId: 1, name: "Skully bow", category: "Head", cost: 230, image: "images/x.png" });
++    teacher = await User.create({ name: "profe", email: "p@test.com", passwordHash: "x".repeat(60), role: "teacher" });
++    classroom = await Classroom.create({ name: "Salón", teacherId: teacher._id, joinCode: "ABC234", period: { startDate: at(0), endDate: at(60) } });
++    await User.updateOne({ _id: teacher._id }, { classroomId: classroom._id });
++    student = await User.create({ name: "ana", email: "a@test.com", passwordHash: "x".repeat(60), role: "student", classroomId: classroom._id });
++    await Pet.create({ ownerId: student._id, periodId: classroom.period.periodId, coins: 270 });
++    const base = { classroomId: classroom._id, periodId: classroom.period.periodId };
++    a1 = await Assignment.create({ ...base, title: "Uno", dueAt: at(5) });
++    a2 = await Assignment.create({ ...base, title: "Dos", dueAt: at(10) });
++  });
++
++  it("el hambre sale del reloj del servidor en cada lectura", async () => {
++    near((await game(0)).dog.hunger, 100);
++    near((await game(2.5)).dog.hunger, 50);
++    near((await game(4.5)).dog.hunger, 10);
++  });
++
++  it("la pérdida de salud y la muerte se guardan y no se deshacen", async () => {
++    assert.equal((await game(5.1)).dog.health, 50);
++    assert.equal((await petOf()).health, 50);
++    let body = await game(11);
++    assert.deepEqual([body.dog.health, body.dog.status], [0, "DEAD"]);
++    // Entregar después de morir o dejar pasar el tiempo no cambia nada.
++    await Submission.create({ assignmentId: a1._id, studentId: student._id, fileName: "a", fileUrl: "https://x.test/a", storageKey: "a" });
++    body = await game(500);
++    assert.deepEqual([body.dog.health, body.dog.status], [0, "DEAD"]);
++    assert.equal((await petOf()).status, "dead");
++  });
++
++  it("una entrega a tiempo evita la pérdida de salud", async () => {
++    await Submission.create({ assignmentId: a1._id, studentId: student._id, fileName: "a", fileUrl: "https://x.test/a", storageKey: "a" });
++    assert.equal((await game(6)).dog.health, 100);
++  });
++
++  it("comprar también devuelve el estado reconciliado", async () => {
++    clock.now = () => T0 + 5.1 * DAY;
++    const { body } = await call(student, "post", "/api/pets/me/inventory").send({ cosmeticId: 1 }).expect(201);
++    assert.equal(body.dog.health, 50); // tarea 1 vencida sin entrega
++    near(body.dog.hunger, 98); // activa = tarea 2, ventana [día 5, día 10]
++    assert.equal(body.student.coins, 40);
++  });
++
++  it("un estudiante que se une tarde cuenta como falladas las tareas ya vencidas (ADR Rev. 2.5)", async () => {
++    const late = await User.create({ name: "tarde", email: "t@test.com", passwordHash: "x".repeat(60), role: "student" });
++    const as = (path, method = "get") => request(server)[method](path).set("Cookie", [`session=${signToken({ sub: late._id.toString() })}`]);
++    clock.now = () => T0 + 7 * DAY; // la tarea 1 (día 5) ya venció; la 2 (día 10) no
++    await as("/api/classrooms/join", "post").send({ joinCode: "ABC234" }).expect(201);
++    assert.equal((await Pet.findOne({ ownerId: late._id })).health, 100); // nace con 100...
++    const body = (await as("/api/me/game").expect(200)).body;
++    assert.equal(body.dog.health, 50); // ...y su primera lectura ya refleja la tarea vencida
++    assert.equal(body.dog.status, "ALIVE");
++    // Si ya habían vencido todas las tareas, nace dead y no se puede restaurar.
++    const later = await User.create({ name: "muy-tarde", email: "m@test.com", passwordHash: "x".repeat(60), role: "student" });
++    const asLater = (path, method = "get") => request(server)[method](path).set("Cookie", [`session=${signToken({ sub: later._id.toString() })}`]);
++    clock.now = () => T0 + 11 * DAY;
++    await asLater("/api/classrooms/join", "post").send({ joinCode: "ABC234" }).expect(201);
++    const dead = (await asLater("/api/me/game").expect(200)).body;
++    assert.deepEqual([dead.dog.status, dead.dog.health], ["DEAD", 0]);
++  });
++
++  it("la lista de estudiantes del profesor refleja el momento actual", async () => {
++    clock.now = () => T0 + 11 * DAY;
++    const { body } = await call(teacher, "get", `/api/classrooms/${classroom._id}/students`).expect(200);
++    assert.deepEqual(body.students[0].pet, { status: "dead", health: 0, hunger: 0 });
++  });
++
++  const petOf = () => Pet.findOne({ ownerId: student._id });
++});
++
++describe("Auditoría · rate limit de unirse a un salón", () => {
++  let mongod, server;
++  before(async () => {
++    mongod = await MongoMemoryServer.create({ binary: { version: "7.0.0" } });
++    process.env.MONGODB_URI = mongod.getUri();
++    await mongoose.connect(mongod.getUri());
++    server = app.listen(0);
++  });
++  after(async () => {
++    process.env.NODE_ENV = "test";
++    await mongoose.disconnect();
++    await mongod.stop();
++    server.close();
++  });
++
++  it("tras 20 intentos, el siguiente recibe 429 y el contador es por estudiante", async () => {
++    const mk = (n) => User.create({ name: n, email: `${n}@test.com`, passwordHash: "x".repeat(60), role: "student" });
++    const [s1, s2] = [await mk("uno"), await mk("dos")];
++    const join = (u, code) =>
++      request(server).post("/api/classrooms/join").set("Cookie", [`session=${signToken({ sub: u._id.toString() })}`]).send({ joinCode: code });
++    process.env.NODE_ENV = "development"; // el límite se omite solo en NODE_ENV=test
++    for (let i = 0; i < 20; i++) assert.equal((await join(s1, "ZZZZZZ")).status, 404);
++    const blocked = await join(s1, "ZZZZZZ");
++    assert.equal(blocked.status, 429);
++    assert.ok(blocked.headers["retry-after"]);
++    assert.equal((await join(s2, "ZZZZZZ")).status, 404); // otro estudiante no se ve afectado
++  });
++});
+diff --git a/server/tests/restoreHealth.test.js b/server/tests/restoreHealth.test.js
+new file mode 100644
+index 0000000..8874443
+--- /dev/null
++++ b/server/tests/restoreHealth.test.js
+@@ -0,0 +1,166 @@
++// UN-108 [ADR Rev. 2.3] · El profesor perdona puntos de salud de un Pancho VIVO.
++// POST /api/classrooms/:id/students/:studentId/restore-health
++// Ejecutar con: node --test server/tests/restoreHealth.test.js
++
++import { describe, it, before, after, beforeEach } from "node:test";
++import assert from "node:assert/strict";
++import request from "supertest";
++import { MongoMemoryServer } from "mongodb-memory-server";
++import mongoose from "mongoose";
++
++process.env.JWT_SECRET = "test-jwt-secret-very-long-and-secure-for-testing-only";
++process.env.NODE_ENV = "test";
++
++const { default: app } = await import("../app.js");
++const { User, Classroom, Assignment, Pet, Submission } = await import("../models/index.js");
++const { signToken } = await import("../utils/jwt.js");
++const { clock } = await import("../utils/clock.js");
++
++const DAY = 24 * 60 * 60 * 1000;
++const T0 = Date.parse("2026-08-01T00:00:00.000Z");
++const at = (days) => new Date(T0 + days * DAY);
++
++let mongod, server, teacher, other, student, classroom;
++
++const call = (user, method, path) =>
++  request(server)[method](path).set("Cookie", [`session=${signToken({ sub: user._id.toString() })}`]);
++const day = (d) => (clock.now = () => T0 + d * DAY);
++const restore = (user, body, studentId = student._id, classroomId = classroom._id) =>
++  call(user, "post", `/api/classrooms/${classroomId}/students/${studentId}/restore-health`).send(body);
++const game = async () => (await call(student, "get", "/api/me/game").expect(200)).body;
++const petOf = () => Pet.findOne({ ownerId: student._id });
++const mkUser = (name, role, classroomId = null) =>
++  User.create({ name, email: `${name}@test.com`, passwordHash: "x".repeat(60), role, classroomId });
++
++before(async () => {
++  mongod = await MongoMemoryServer.create({ binary: { version: "7.0.0" } });
++  process.env.MONGODB_URI = mongod.getUri();
++  await mongoose.connect(mongod.getUri());
++  server = app.listen(0);
++});
++after(async () => {
++  clock.now = () => Date.now();
++  await mongoose.disconnect();
++  await mongod.stop();
++  server.close();
++});
++beforeEach(async () => {
++  await Promise.all([User, Classroom, Assignment, Pet, Submission].map((m) => m.deleteMany({})));
++  teacher = await mkUser("profe", "teacher");
++  other = await mkUser("profe2", "teacher");
++  classroom = await Classroom.create({ name: "Salón", teacherId: teacher._id, joinCode: "ABC234", period: { startDate: at(0), endDate: at(60) } });
++  await User.updateOne({ _id: teacher._id }, { classroomId: classroom._id });
++  student = await mkUser("ana", "student", classroom._id);
++  await Pet.create({ ownerId: student._id, periodId: classroom.period.periodId, coins: 270 });
++  const base = { classroomId: classroom._id, periodId: classroom.period.periodId };
++  for (const d of [1, 2, 3, 4, 5]) await Assignment.create({ ...base, title: `T${d}`, dueAt: at(d) }); // 20 puntos cada una
++});
++
++describe("restore-health · reglas", () => {
++  it("devuelve los 20 puntos perdidos por una tarea (80 → 100) y lo registra", async () => {
++    assert.equal((await (day(1.5), game())).dog.health, 80);
++    const res = await restore(teacher, { points: 20, reason: "Excusa médica" }).expect(200);
++    assert.equal(res.body.restored, 20);
++    assert.deepEqual([res.body.pet.status, res.body.pet.health, res.body.pet.healthAdjustment], ["alive", 100, 20]);
++    assert.equal((await game()).dog.health, 100);
++    const log = (await petOf()).healthRestoreLog;
++    assert.equal(log.length, 1);
++    assert.deepEqual([log[0].points, log[0].healthBefore, log[0].healthAfter, log[0].reason], [20, 80, 100, "Excusa médica"]);
++    assert.equal(log[0].teacherId.toString(), teacher._id.toString());
++  });
++
++  it("la reconciliación automática NO pisa la restauración, y las tareas nuevas siguen restando", async () => {
++    day(2.5);
++    assert.equal((await game()).dog.health, 60);
++    await restore(teacher, { points: 20, reason: "Enfermedad" }).expect(200);
++    for (const d of [2.5, 2.6, 2.9]) assert.equal((day(d), (await game()).dog.health), 80); // leer muchas veces no cambia nada
++    assert.equal((await (day(3.5), game())).dog.health, 60); // 3 falladas: 100 - 60 + 20 = 60
++    assert.equal((await petOf()).healthAdjustment, 20);
++  });
++
++  it("sin points restaura todo lo perdido; con points menor, solo esa parte", async () => {
++    day(3.5); // 3 falladas: salud 40
++    let res = await restore(teacher, { points: 10, reason: "Parcial" }).expect(200);
++    assert.equal(res.body.pet.health, 50);
++    res = await restore(teacher, { reason: "Todo el resto" }).expect(200);
++    assert.deepEqual([res.body.restored, res.body.pet.health], [50, 100]);
++    assert.equal((await petOf()).healthRestoreLog.length, 2);
++  });
++
++  it("nunca supera 100: pedir más de lo perdido o restaurar con salud completa da 409 y no cambia nada", async () => {
++    day(1.5); // salud 80
++    const over = await restore(teacher, { points: 30, reason: "Demasiado" }).expect(409);
++    assert.equal(over.body.error.code, "CONFLICT");
++    day(0.5); // salud 100
++    await restore(teacher, { points: 5, reason: "Nada que restaurar" }).expect(409);
++    await restore(teacher, { reason: "Nada que restaurar" }).expect(409);
++    const pet = await petOf();
++    assert.deepEqual([pet.healthAdjustment, pet.healthRestoreLog.length], [0, 0]);
++  });
++
++  it("un Pancho muerto NO se restaura ni aunque la salud ya esté guardada en 0", async () => {
++    day(6); // las 5 falladas: dead
++    const res = await restore(teacher, { points: 20, reason: "Muy tarde" }).expect(409);
++    assert.match(res.body.error.message, /dead/i);
++    day(0.5); // aunque el reloj "vuelva atrás", dead es terminal
++    await restore(teacher, { reason: "Intento" }).expect(409);
++    const body = await game();
++    assert.deepEqual([body.dog.status, body.dog.health], ["DEAD", 0]);
++    assert.equal((await petOf()).healthAdjustment, 0);
++  });
++
++  it("si murió desde la última lectura, la restauración lo detecta y se niega", async () => {
++    clock.now = () => T0 + 6 * DAY; // nadie ha leído a Pancho: en BD sigue alive con 100
++    assert.equal((await petOf()).status, "alive");
++    await restore(teacher, { reason: "Intento tardío" }).expect(409);
++    assert.equal((await petOf()).status, "dead");
++  });
++
++  it("dos restauraciones simultáneas no se acumulan sobre el mismo estado", async () => {
++    day(2.5); // salud 60, 40 perdidos
++    const results = await Promise.all([1, 2, 3].map(() => restore(teacher, { reason: "Doble clic" })));
++    assert.equal(results.filter((r) => r.status === 200).length, 1);
++    assert.equal((await petOf()).healthAdjustment, 40);
++    assert.equal((await game()).dog.health, 100);
++  });
++});
++
++describe("restore-health · permisos y validación", () => {
++  it("solo el profesor dueño: estudiante 403, profesor ajeno 403, sin sesión 401", async () => {
++    day(1.5);
++    await restore(student, { reason: "Yo mismo" }).expect(403);
++    await restore(other, { reason: "Ajeno" }).expect(403);
++    await request(server).post(`/api/classrooms/${classroom._id}/students/${student._id}/restore-health`).send({ reason: "x y z" }).expect(401);
++    assert.equal((await petOf()).healthAdjustment, 0);
++  });
++
++  it("estudiante de otro salón o inexistente: 404; salón inexistente: 404; id inválido: 400", async () => {
++    day(1.5);
++    const stranger = await mkUser("beto", "student");
++    await restore(teacher, { reason: "Ajeno" }, stranger._id).expect(404);
++    await restore(teacher, { reason: "Nadie" }, new mongoose.Types.ObjectId()).expect(404);
++    await restore(teacher, { reason: "Sin salón" }, student._id, new mongoose.Types.ObjectId()).expect(404);
++    await restore(teacher, { reason: "Id malo" }, "nope").expect(400);
++  });
++
++  it("valida el cuerpo: reason obligatoria, points positivos y ≤ 100, sin claves extra ni objetos", async () => {
++    day(1.5);
++    for (const body of [{}, { reason: "ab" }, { points: 0, reason: "Cero" }, { points: -5, reason: "Neg" },
++      { points: 101, reason: "Mucho" }, { points: "20", reason: "Texto" }, { points: { $gt: 0 }, reason: "Obj" },
++      { reason: "Ok ok", health: 100 }, { reason: { $ne: null } }]) {
++      await restore(teacher, body).expect(400);
++    }
++    assert.equal((await petOf()).healthAdjustment, 0);
++  });
++
++  it("un nuevo periodo reinicia el ajuste (ciclo nuevo)", async () => {
++    day(1.5);
++    await restore(teacher, { reason: "Excusa" }).expect(200);
++    const { joinClassroom } = await import("../services/classroomService.js");
++    const newPeriod = new mongoose.Types.ObjectId();
++    await Classroom.updateOne({ _id: classroom._id }, { "period.periodId": newPeriod });
++    await joinClassroom(student, "ABC234");
++    const pet = await petOf();
++    assert.deepEqual([pet.healthAdjustment, pet.health], [0, 100]);
++  });
++});
+diff --git a/server/tests/stepsMinigames.test.js b/server/tests/stepsMinigames.test.js
+new file mode 100644
+index 0000000..c0c0dbf
+--- /dev/null
++++ b/server/tests/stepsMinigames.test.js
+@@ -0,0 +1,155 @@
++// Auditoría (UN-302 / UN-303 sobre UN-108): defectos hallados en el código de pasos y minijuegos.
++// Ejecutar con: node --test server/tests/stepsMinigames.test.js
++
++import { describe, it, before, after, beforeEach } from "node:test";
++import assert from "node:assert/strict";
++import request from "supertest";
++import { MongoMemoryServer } from "mongodb-memory-server";
++import mongoose from "mongoose";
++
++process.env.JWT_SECRET = "test-jwt-secret-very-long-and-secure-for-testing-only";
++process.env.NODE_ENV = "test";
++
++const { default: app } = await import("../app.js");
++const { User, Classroom, Assignment, Pet, Submission, MinigamePlay } = await import("../models/index.js");
++const { signToken } = await import("../utils/jwt.js");
++const { clock } = await import("../utils/clock.js");
++
++const DAY = 24 * 60 * 60 * 1000;
++const T0 = Date.parse("2026-08-01T12:00:00.000Z");
++const at = (days) => new Date(T0 + days * DAY);
++
++let mongod, server, teacher, student, classroom, a1, a2;
++const call = (user, method, path) =>
++  request(server)[method](path).set("Cookie", [`session=${signToken({ sub: user._id.toString() })}`]);
++const day = (d) => (clock.now = () => T0 + d * DAY);
++const step = (id, task) => call(student, "post", `/api/assignments/${task._id}/steps`).send({ stepId: id });
++const game = async () => (await call(student, "get", "/api/me/game").expect(200)).body;
++const petOf = () => Pet.findOne({ ownerId: student._id });
++
++before(async () => {
++  mongod = await MongoMemoryServer.create({ binary: { version: "7.0.0" } });
++  process.env.MONGODB_URI = mongod.getUri();
++  await mongoose.connect(mongod.getUri());
++  server = app.listen(0);
++});
++after(async () => {
++  clock.now = () => Date.now();
++  delete process.env.MINIGAME_COOLDOWN_MS;
++  delete process.env.MINIGAME_MAX_PLAYS_PER_DAY;
++  await mongoose.disconnect();
++  await mongod.stop();
++  server.close();
++});
++beforeEach(async () => {
++  await Promise.all([User, Classroom, Assignment, Pet, Submission, MinigamePlay].map((m) => m.deleteMany({})));
++  delete process.env.MINIGAME_COOLDOWN_MS;
++  delete process.env.MINIGAME_MAX_PLAYS_PER_DAY;
++  teacher = await User.create({ name: "profe", email: "p@test.com", passwordHash: "x".repeat(60), role: "teacher" });
++  classroom = await Classroom.create({ name: "Salón", teacherId: teacher._id, joinCode: "ABC234", period: { startDate: at(0), endDate: at(60) } });
++  student = await User.create({ name: "ana", email: "a@test.com", passwordHash: "x".repeat(60), role: "student", classroomId: classroom._id });
++  await Pet.create({ ownerId: student._id, periodId: classroom.period.periodId, coins: 270 });
++  const base = { classroomId: classroom._id, periodId: classroom.period.periodId };
++  a1 = await Assignment.create({ ...base, title: "Uno", dueAt: at(5) });
++  a2 = await Assignment.create({ ...base, title: "Dos", dueAt: at(10) });
++  day(1);
++});
++
++describe("Pasos (UN-302)", () => {
++  it("el progreso de pasos también se ve en GET /api/me/game", async () => {
++    await step(1, a1).expect(200);
++    await step(3, a1).expect(200);
++    const body = await game();
++    assert.deepEqual(body.currentAssignment.steps.map((s) => s.completed), [true, false, true, false]);
++  });
++
++  it("un perro que murió por el tiempo ya no puede completar pasos (409)", async () => {
++    day(11); // las dos tareas vencidas sin entrega: dead, aunque nadie lo ha leído aún
++    assert.equal((await petOf()).status, "alive");
++    const res = await step(1, a1).expect(409);
++    assert.equal(res.body.error.code, "CONFLICT");
++    assert.equal((await petOf()).status, "dead");
++  });
++
++  it("los pasos de una tarea incumplida NO pasan a la siguiente tarea", async () => {
++    await step(1, a1).expect(200);
++    await step(2, a1).expect(200);
++    day(6); // a1 venció sin entrega; la activa es a2
++    const body = await game();
++    assert.equal(body.currentAssignment.id, a2._id.toString());
++    assert.ok(body.currentAssignment.steps.every((s) => !s.completed));
++    await step(3, a2).expect(200); // empieza de cero en a2
++    assert.deepEqual((await game()).currentAssignment.steps.map((s) => s.completed), [false, false, true, false]);
++  });
++
++  it("el mismo paso enviado a la vez solo se registra una vez", async () => {
++    const results = await Promise.all([1, 2, 3].map(() => step(1, a1)));
++    assert.equal(results.filter((r) => r.status === 200).length, 1);
++    assert.ok(results.every((r) => [200, 409].includes(r.status)));
++    assert.equal((await petOf()).currentAssignmentSteps[0], true);
++  });
++
++  it("pasos simultáneos distintos no se pierden entre sí (tras el primero)", async () => {
++    await step(1, a1).expect(200);
++    await Promise.all([step(2, a1), step(3, a1)]);
++    assert.deepEqual([...(await petOf()).currentAssignmentSteps], [true, true, true, false]);
++  });
++
++  it("entregar pone el hambre en 100 y la reconciliación no lo contradice", async () => {
++    for (const id of [1, 2, 3]) await step(id, a1).expect(200);
++    day(3);
++    const res = await call(student, "post", `/api/assignments/${a1._id}/submit`).expect(200);
++    assert.equal(res.body.state.dog.hunger, 100);
++    assert.equal(res.body.state.currentAssignment.id, a2._id.toString());
++    day(5.5); // a1 venció pero estaba entregada: sin pérdida de salud
++    assert.equal((await game()).dog.health, 100);
++  });
++});
++
++describe("Minijuegos (UN-303, tope hasta UN-501)", () => {
++  const reward = (count = 5) => call(student, "post", "/api/minigames/reward").send({ correctCount: count });
++
++  it("suma como máximo 5 monedas por partida", async () => {
++    const res = await reward(999).expect(200);
++    assert.equal(res.body.student.coins, 275);
++    const plays = await MinigamePlay.find({ studentId: student._id });
++    assert.deepEqual([plays.length, plays[0].reward, plays[0].gameId], [1, 5, "quiz"]);
++  });
++
++  it("no se puede repetir al instante: 429 durante el enfriamiento y no se cobra", async () => {
++    await reward(3).expect(200);
++    const res = await reward(5).expect(429);
++    assert.equal(res.body.error.code, "RATE_LIMITED");
++    assert.equal((await petOf()).coins, 273);
++    day(1 + 31 / 86400); // pasan 31 s
++    await reward(5).expect(200);
++    assert.equal((await petOf()).coins, 278);
++  });
++
++  it("peticiones simultáneas: solo una cobra", async () => {
++    const results = await Promise.all([1, 2, 3, 4, 5].map(() => reward(5)));
++    assert.equal(results.filter((r) => r.status === 200).length, 1);
++    assert.equal((await petOf()).coins, 275);
++  });
++
++  it("tope diario: la partida 11 del día recibe 429; al día siguiente vuelve a funcionar", async () => {
++    process.env.MINIGAME_COOLDOWN_MS = "0";
++    for (let i = 0; i < 10; i++) {
++      clock.now = () => T0 + i * 1000; // 10 partidas el mismo día (UTC)
++      await reward(5).expect(200);
++    }
++    clock.now = () => T0 + 11_000;
++    await reward(5).expect(429);
++    assert.equal((await petOf()).coins, 270 + 50);
++    clock.now = () => T0 + DAY;
++    await reward(5).expect(200);
++  });
++
++  it("valida el cuerpo y bloquea a profesores", async () => {
++    for (const body of [{}, { correctCount: 0 }, { correctCount: "5" }, { correctCount: { $gt: 0 } }, { correctCount: 5, coins: 99 }]) {
++      await call(student, "post", "/api/minigames/reward").send(body).expect(400);
++    }
++    await call(teacher, "post", "/api/minigames/reward").send({ correctCount: 5 }).expect(403);
++    assert.equal((await petOf()).coins, 270);
++  });
++});
+diff --git a/server/utils/clock.js b/server/utils/clock.js
+new file mode 100644
+index 0000000..dd10bc2
+--- /dev/null
++++ b/server/utils/clock.js
+@@ -0,0 +1,3 @@
++// Single source of "now" for the game rules (ADR 5.3: the server clock decides, never the
++// client). Tests replace `clock.now` to simulate days passing without waiting.
++export const clock = { now: () => Date.now() };
+diff --git a/server/validators/classroom.js b/server/validators/classroom.js
+index d34983a..aafd901 100644
+--- a/server/validators/classroom.js
++++ b/server/validators/classroom.js
+@@ -44,3 +44,18 @@ export const joinClassroomSchema = z.strictObject({
+     .max(32, "joinCode is too long")
+     .toUpperCase(),
+ });
++
++// POST /api/classrooms/:id/students/:studentId/restore-health (UN-108, ADR Rev. 2.3).
++// `points` omitted = restore everything that was lost. `reason` is mandatory and is logged.
++export const restoreHealthSchema = z.strictObject({
++  points: z
++    .number({ error: "points must be a number" })
++    .positive("points must be greater than 0")
++    .max(100, "points cannot be more than 100")
++    .optional(),
++  reason: z
++    .string({ error: "reason must be a string" })
++    .trim()
++    .min(3, "reason must have at least 3 characters")
++    .max(200, "reason must have at most 200 characters"),
++});

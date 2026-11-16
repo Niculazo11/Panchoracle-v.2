@@ -20,6 +20,8 @@ export const LOGIN_WINDOW_MS = 15 * MINUTE;
 export const REGISTER_MAX_ATTEMPTS = 30; // por IP (una clase completa registrándose)
 export const REGISTER_IP_MAX_ATTEMPTS = 120;
 export const REGISTER_WINDOW_MS = 60 * MINUTE;
+export const JOIN_MAX_ATTEMPTS = 20; // por estudiante: frena adivinar códigos de salón (6 caracteres)
+export const JOIN_WINDOW_MS = 15 * MINUTE;
 
 let indexesReady; // crea (una vez por instancia) el índice único y el TTL de rate_limits
 
@@ -65,10 +67,16 @@ function createAuthRateLimit({ name, windowMs, rules, resetOnSuccess = false }) 
     // El email se guarda como hash: la colección no acumula datos personales.
     const emailHash = email && createHash("sha256").update(email).digest("hex").slice(0, 32);
 
+    const userId = req.user?._id?.toString() ?? null;
+
     const keys = rules
-      .filter((rule) => !rule.byEmail || emailHash)
+      .filter((rule) => (!rule.byEmail || emailHash) && (!rule.byUser || userId))
       .map((rule) => ({
-        key: rule.byEmail ? `${name}:ip-email:${ip}:${emailHash}` : `${name}:ip:${ip}`,
+        key: rule.byUser
+          ? `${name}:user:${userId}`
+          : rule.byEmail
+            ? `${name}:ip-email:${ip}:${emailHash}`
+            : `${name}:ip:${ip}`,
         max: rule.max,
         byEmail: rule.byEmail,
       }));
@@ -108,6 +116,14 @@ export const loginRateLimit = createAuthRateLimit({
     { byEmail: true, max: LOGIN_MAX_ATTEMPTS },
     { byEmail: false, max: LOGIN_IP_MAX_ATTEMPTS },
   ],
+});
+
+// Needs an authenticated user (runs after authenticate): counts attempts per student, not per IP,
+// because a whole class shares the school's public IP.
+export const joinRateLimit = createAuthRateLimit({
+  name: "join",
+  windowMs: JOIN_WINDOW_MS,
+  rules: [{ byUser: true, max: JOIN_MAX_ATTEMPTS }],
 });
 
 export const registerRateLimit = createAuthRateLimit({

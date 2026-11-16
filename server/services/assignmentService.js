@@ -4,8 +4,8 @@
 // UN-302: step completion and submission (student-only).
 import mongoose from "mongoose";
 import AppError from "../utils/AppError.js";
-import { Assignment, Classroom, Cosmetic, Pet, Submission } from "../models/index.js";
-import { DEFAULT_ASSIGNMENT, SLOTS, SLOT_BY_CATEGORY, STEP_LABELS } from "../config/game.js";
+import { Assignment, Classroom, Pet, Submission } from "../models/index.js";
+import { loadStudentContext, toGameJson } from "./gameService.js";
 
 function isDuplicateKey(error) {
   return error && error.code === 11000;
@@ -149,129 +149,62 @@ export async function deleteAssignment(teacher, assignmentId) {
 
 // ---------------------------------------------------------------------------
 // UN-302: Student step completion & submission
+// The game state (steps, hunger, health) is built by gameService, the single place that
+// reconciles Pancho with the server clock (UN-108), so every endpoint answers the same shape.
 // ---------------------------------------------------------------------------
-
-// Build the 4 steps with labels (same as client's ASSIGNMENT_STEP_LABELS)
-function buildSteps(completedArray = [false, false, false, false]) {
-  return STEP_LABELS.map((label, index) => ({ id: index + 1, label, completed: completedArray[index] }));
-}
-
-// Get the active assignment for a student with step progress (mirrors gameService.getCurrentAssignment)
-async function getActiveAssignment(user) {
-  const pet = await Pet.findOne({ ownerId: user._id });
-  const classroom = user.classroomId ? await Classroom.findById(user.classroomId) : null;
-
-  // If period started and student has classroom, find active assignment
-  if (classroom && Date.now() >= classroom.period.startDate.getTime()) {
-    const assignments = await Assignment.find({
-      classroomId: classroom._id,
-      periodId: classroom.period.periodId,
-      dueAt: { $gt: new Date() },
-    }).sort({ dueAt: 1 });
-
-    const submitted = await Submission.find({
-      studentId: user._id,
-      assignmentId: { $in: assignments.map((a) => a._id) },
-    }).select("assignmentId");
-    const done = new Set(submitted.map((s) => s.assignmentId.toString()));
-    const active = assignments.find((a) => !done.has(a._id.toString()));
-
-    if (active) {
-      // Get step progress from pet (or default to all false)
-      const stepProgress = pet?.currentAssignmentSteps || [false, false, false, false];
-      return {
-        id: active._id.toString(),
-        title: active.title,
-        description: active.description,
-        dueAt: active.dueAt,
-        steps: buildSteps(stepProgress),
-      };
-    }
-  }
-
-  // Fallback: default assignment (no classroom, no active tasks, or period not started)
-  // For default assignment, also check pet for step progress
-  const stepProgress = pet?.currentAssignmentSteps || [false, false, false, false];
-  return { ...DEFAULT_ASSIGNMENT, steps: buildSteps(stepProgress) };
-}
-
-// Get the student's pet (for hunger/health/status checks)
-async function getStudentPet(user) {
-  const pet = await Pet.findOne({ ownerId: user._id });
-  if (!pet) throw new AppError(404, "NOT_FOUND", "You do not have a Pancho yet: join a classroom first");
-  return pet;
-}
-
-// Return full game state in the same format as GET /api/me/game (for UN-303 client migration)
-async function toGameJson(user, pet) {
-  return {
-    student: {
-      id: user.username || user.name,
-      userId: user._id.toString(),
-      coins: pet.coins,
-      inventory: [...pet.inventory],
-      assignmentsCompleted: await Submission.countDocuments({ studentId: user._id }),
-    },
-    dog: {
-      id: pet.panchoId,
-      name: pet.name,
-      imgUrl: pet.imgUrl,
-      health: pet.health,
-      hunger: pet.hunger,
-      status: pet.status.toUpperCase(),
-      equippedCosmetics: Object.fromEntries(SLOTS.map((slot) => [slot, pet.equipped[slot] ?? null])),
-    },
-    currentAssignment: await getActiveAssignment(user),
-  };
-}
 
 // POST /api/assignments/:id/steps - complete step 1, 2 or 3
 export async function completeStep(user, assignmentId, stepId) {
-  // Only students can complete steps
   if (user.role !== "student") throw new AppError(403, "FORBIDDEN", "Only students can complete steps");
 
-  const pet = await getStudentPet(user);
-  if (pet.status === "DEAD") {
+  const { pet, assignment } = await loadStudentContext(user);
+  // status is stored in lowercase ("alive" | "dead"); the state is already reconciled, so a
+  // Pancho that died by time since the last request is also detected here.
+  if (pet.status === "dead") {
     throw new AppError(409, "CONFLICT", "Pancho can't work on assignments right now.");
   }
-
-  const assignment = await getActiveAssignment(user);
-
-  // Verify the assignment matches (or is the default)
   if (assignment.id !== assignmentId) {
     throw new AppError(404, "NOT_FOUND", "Assignment not found or not active");
   }
 
-  const step = assignment.steps.find((s) => s.id === stepId);
+  const step = assignment.steps.find((item) => item.id === stepId);
   if (!step) throw new AppError(404, "NOT_FOUND", "That step doesn't exist.");
   if (step.completed) throw new AppError(409, "CONFLICT", "This step is already completed.");
 
-  // Update step progress in pet
-  const stepProgress = [...(pet.currentAssignmentSteps || [false, false, false, false])];
-  stepProgress[stepId - 1] = true;
-  await Pet.updateOne({ _id: pet._id }, { $set: { currentAssignmentSteps: stepProgress } });
+  // One atomic update. Progress that belongs to another assignment is replaced, never reused.
+  const index = stepId - 1;
+  const filter = { _id: pet._id, status: "alive" };
+  let update;
+  if (pet.currentAssignmentStepsFor === assignment.id) {
+    filter[`currentAssignmentSteps.${index}`] = false; // two clicks on the same step: only one wins
+    update = { $set: { [`currentAssignmentSteps.${index}`]: true } };
+  } else {
+    filter.currentAssignmentStepsFor = { $ne: assignment.id };
+    const steps = [false, false, false, false];
+    steps[index] = true;
+    update = { $set: { currentAssignmentSteps: steps, currentAssignmentStepsFor: assignment.id } };
+  }
+  const updated = await Pet.findOneAndUpdate(filter, update, { returnDocument: "after" });
+  if (!updated) throw new AppError(409, "CONFLICT", "The step could not be saved (it changed at the same time). Try again.");
 
-  // Return full game state (for UN-303 client migration)
-  const updatedPet = await Pet.findById(pet._id);
   return {
     success: true,
     step: { ...step, completed: true },
-    state: await toGameJson(user, updatedPet),
+    state: await toGameJson(user, updated),
   };
 }
 
 // POST /api/assignments/:id/submit - submit assignment (step 4)
 export async function submitAssignment(user, assignmentId) {
-  // Only students can submit
   if (user.role !== "student") throw new AppError(403, "FORBIDDEN", "Only students can submit assignments");
 
-  const pet = await getStudentPet(user);
+  const { pet, assignment } = await loadStudentContext(user);
   if (pet.status === "dead") {
     throw new AppError(409, "CONFLICT", "Pancho can't submit an assignment right now.");
   }
 
-  // Check for existing submission on this specific assignment FIRST
-  // (unique index on assignmentId + studentId will enforce this, but we check early to return 409 instead of 404)
+  // Check for an existing submission on this specific assignment FIRST (409, not 404).
+  // The unique index (assignmentId, studentId) still enforces it under concurrency.
   const existingSubmission = await Submission.findOne({
     assignmentId: new mongoose.Types.ObjectId(assignmentId),
     studentId: user._id,
@@ -280,20 +213,15 @@ export async function submitAssignment(user, assignmentId) {
     throw new AppError(409, "CONFLICT", "You have already submitted this assignment.");
   }
 
-  const assignment = await getActiveAssignment(user);
-
-  // Verify the assignment matches
   if (assignment.id !== assignmentId) {
     throw new AppError(404, "NOT_FOUND", "Assignment not found or not active");
   }
 
-  // Check steps 1-3 are completed
-  const prepStepsDone = assignment.steps.filter((s) => s.id !== 4).every((s) => s.completed);
+  const prepStepsDone = assignment.steps.filter((item) => item.id !== 4).every((item) => item.completed);
   if (!prepStepsDone) {
     throw new AppError(409, "CONFLICT", "Complete steps 1-3 before submitting the assignment.");
   }
 
-  // Create submission (unique index on assignmentId + studentId prevents duplicates)
   try {
     await Submission.create({
       assignmentId: new mongoose.Types.ObjectId(assignmentId),
@@ -309,18 +237,20 @@ export async function submitAssignment(user, assignmentId) {
     throw error;
   }
 
-  // Update pet hunger (+30, max 100) AND reset step progress
-  const newHunger = Math.min(100, pet.hunger + 30);
-  await Pet.updateOne(
+  // ADR 5.5: submitting on time puts hunger at 100. (The old "+30 hunger" snapshot was thrown
+  // away by the lazy calculation of UN-108, so the real hunger could look lower than promised.)
+  // Steps are reset; with the submission saved, the next reconciliation also moves the
+  // active assignment on and never counts this one as missed.
+  const hungerBefore = pet.hunger;
+  const updated = await Pet.findOneAndUpdate(
     { _id: pet._id },
-    { $set: { hunger: newHunger, currentAssignmentSteps: [false, false, false, false] } }
+    { $set: { hunger: 100, currentAssignmentSteps: [false, false, false, false], currentAssignmentStepsFor: null } },
+    { returnDocument: "after" }
   );
 
-  // Return full game state (for UN-303 client migration)
-  const updatedPet = await Pet.findById(pet._id);
   return {
     success: true,
-    rewards: { hunger: 30 },
-    state: await toGameJson(user, updatedPet),
+    rewards: { hunger: Math.max(0, Math.round(100 - hungerBefore)) }, // points of hunger recovered
+    state: await toGameJson(user, updated),
   };
 }

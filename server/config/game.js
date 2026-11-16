@@ -20,3 +20,14 @@ export const STEP_LABELS = [
   "Study Together (Drafting Task)",
   "Feed Pancho (Submit Assignment)",
 ];
+
+// Minigame reward limits (UN-303 stop-gap until UN-501 grades the quiz on the server).
+// ADR section 12 leaves the cap and the cooldown open; these are proposed values, and can be
+// changed with the MINIGAME_COOLDOWN_MS and MINIGAME_MAX_PLAYS_PER_DAY environment variables.
+export const MINIGAME_MAX_COINS_PER_PLAY = 5;
+export function minigameLimits() {
+  return {
+    cooldownMs: Number(process.env.MINIGAME_COOLDOWN_MS ?? 30_000),
+    maxPlaysPerDay: Number(process.env.MINIGAME_MAX_PLAYS_PER_DAY ?? 10),
+  };
+}
