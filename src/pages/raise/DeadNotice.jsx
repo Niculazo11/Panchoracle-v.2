@@ -1,4 +1,4 @@
-import { DEAD_STATUS_MESSAGE } from "../../state/gameState.js";
+import { DEAD_STATUS_MESSAGE } from "../../state/constants.js";
 
 // Same paragraph as before: always rendered, hidden with the original
 // Tailwind "hidden" class while Pancho is alive.
