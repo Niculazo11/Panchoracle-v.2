@@ -24,16 +24,20 @@
     "mongoose": "^9.11.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.26.0",
+    "react-router-dom": "^7.18.5",
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.1",
+    "@tailwindcss/vite": "^4.3.5",
+    "@vitejs/plugin-react": "^6.3.0",
     "autoprefixer": "^10.4.19",
     "mongodb-memory-server": "^11.3.0",
     "postcss": "^8.4.40",
     "supertest": "^7.3.2",
-    "tailwindcss": "^3.4.7",
-    "vite": "^5.3.4"
+    "tailwindcss": "^4.3.5",
+    "vite": "^8.3.8"
+  },
+  "allowScripts": {
+    "mongodb-memory-server@11.3.0": true
   }
 }

@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
 import FormField from "../../components/FormField.jsx";
 import JoinCodeBox from "./JoinCodeBox.jsx";
+import DeleteClassroomSection from "./DeleteClassroomSection.jsx";
 import { useClassroomSettings } from "./useClassroomSettings.js";
 import { MAX_CLASSROOM_NAME_LENGTH } from "./classroomForm.js";
 import { PARK_PATH } from "./teacherPaths.js";
 
 // Classroom settings page. Same look as the create page: green background, white labels
-// over light-gray inputs and a purple-blue button. Delete is added in a later burst.
+// over light-gray inputs and a purple-blue button. The delete section sits at the bottom.
 const INPUT_CLASS = "w-full rounded px-3 py-2 bg-[#dddddd]";
 const BUTTON_CLASS = "mt-2 px-10 py-3 bg-[#5a57d9] text-white underline uppercase tracking-wide cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed";
 
@@ -35,6 +36,8 @@ export default function ClassroomSettings() {
                 </form>
 
                 <JoinCodeBox code={classroom.joinCode} onCopyError={showError} />
+
+                <DeleteClassroomSection />
             </div>
         </main>
     );
