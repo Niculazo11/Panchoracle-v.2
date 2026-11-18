@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { saveSelectedDog, dogIdFromUrl } from "../../lib/dogApi.js";
 import { hasErrors } from "../../lib/validation.js";
 import { wait } from "../../lib/wait.js";
+import { ApiError } from "../../lib/api.js";
 
 const CONFIRM_DELAY_MS = 700;
 const REDIRECT_DELAY_MS = 1000;
@@ -36,7 +37,17 @@ export function useConfirmPancho({ form, selectedImage, status, choosePancho }) 
         }
 
         // Initialize game state and choose Pancho via async API
-        await choosePancho(dogIdFromUrl(selectedImage), selectedImage);
+        try {
+            await choosePancho(dogIdFromUrl(selectedImage), selectedImage);
+        } catch (error) {
+            // Clear loading state and show user-friendly error
+            status.clearStatus();
+            const message = error instanceof ApiError
+                ? error.message
+                : "Failed to choose Pancho. Please try again.";
+            status.showError(message);
+            return;
+        }
 
         status.showSuccess();
         form.resetAfterSuccess();
