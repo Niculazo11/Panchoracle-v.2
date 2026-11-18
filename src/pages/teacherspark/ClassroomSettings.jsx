@@ -4,7 +4,7 @@ import JoinCodeBox from "./JoinCodeBox.jsx";
 import DeleteClassroomSection from "./DeleteClassroomSection.jsx";
 import { useClassroomSettings } from "./useClassroomSettings.js";
 import { MAX_CLASSROOM_NAME_LENGTH } from "./classroomForm.js";
-import { PARK_PATH } from "./teacherPaths.js";
+import { CLASSROOM_PATH } from "./teacherPaths.js";
 
 // Classroom settings page. Same look as the create page: green background, white labels
 // over light-gray inputs and a purple-blue button. The delete section sits at the bottom.
@@ -21,7 +21,7 @@ export default function ClassroomSettings() {
     return (
         <main className="flex-1 bg-[rgb(44,182,78)] dark:bg-[#17652e] w-full py-12 px-5 box-border">
             <div className="max-w-2xl mx-auto">
-                <Link to={PARK_PATH} className="text-white underline">Back to the park</Link>
+                <Link to={CLASSROOM_PATH} className="text-white underline">Back to the park</Link>
 
                 <h2 className="font-display italic uppercase text-4xl sm:text-5xl text-white text-center my-6">Classroom settings</h2>
 

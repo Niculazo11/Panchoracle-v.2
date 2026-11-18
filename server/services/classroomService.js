@@ -4,6 +4,8 @@ import { generateJoinCode, normalizeJoinCode } from "../utils/joinCode.js";
 import { Classroom, User, Pet } from "../models/index.js";
 import { STARTING_COINS } from "../config/game.js";
 import { reconcilePets } from "./petStateService.js";
+import { isStudentListPetMetadataEnabled } from "../config/features.js";
+import { toPetMetadata } from "./petMetadata.js";
 
 const MAX_CODE_ATTEMPTS = 5;
 
@@ -170,6 +172,9 @@ async function ensurePet(ownerId, periodId) {
 
 // Students of a classroom with a summary of their Pancho.
 // health/hunger/status are reconciled with the server clock on every call (UN-108, ADR 5.3).
+// With the flag enable_student_list_pet_metadata ON (SRV_STU_PET_META) each pet also carries
+// dogId, breed, imgUrl and cosmetics. The three original keys never change, so old clients
+// keep working; with the flag OFF the response is exactly the one it always was.
 export async function listStudents(teacher, classroomId) {
   const classroom = await getOwnedClassroom(classroomId, teacher);
 
@@ -185,14 +190,20 @@ export async function listStudents(teacher, classroomId) {
   const petsByOwner = {};
   for (let i = 0; i < pets.length; i++) petsByOwner[pets[i].ownerId.toString()] = pets[i];
 
+  const withMetadata = isStudentListPetMetadataEnabled();
   const students = [];
   for (let i = 0; i < users.length; i++) {
     const pet = petsByOwner[users[i]._id.toString()];
+    let petJson = null;
+    if (pet) {
+      petJson = { status: pet.status, health: pet.health, hunger: pet.hunger };
+      if (withMetadata) Object.assign(petJson, toPetMetadata(pet));
+    }
     students.push({
       id: users[i]._id.toString(),
       name: users[i].name,
       email: users[i].email,
-      pet: pet ? { status: pet.status, health: pet.health, hunger: pet.hunger } : null,
+      pet: petJson,
     });
   }
   return students;

@@ -151,7 +151,7 @@ Full guide: [`classrooms-api.md`](./classrooms-api.md). A teacher owns at most o
 | `POST /api/classrooms/join` | Student (rate limited: 20 per 15 min) | `{ "joinCode": "SEED42" }` (case-insensitive) | `201` first time, `200` if already joined: `{ "classroom": { ... }, "alreadyJoined": false }` |
 | `PATCH /api/classrooms/:id` | Teacher (owner) | `{ "name": "New name" }` | `200 { "classroom": { ... } }` |
 | `DELETE /api/classrooms/:id` | Teacher (owner) | — | `200 { "deleted": true, "classroomId": "...", "unenrolledStudents": 3 }` |
-| `GET /api/classrooms/:id/students` | Teacher (owner) | — | `200 { "students": [ { "id", "name", "email", "pet": { "status", "health", "hunger" } or null } ] }` |
+| `GET /api/classrooms/:id/students` | Teacher (owner) | — | `200 { "students": [ { "id", "name", "email", "pet": { "status", "health", "hunger" } or null } ] }`. With `ENABLE_STUDENT_LIST_PET_METADATA=true` (flag `enable_student_list_pet_metadata`, off by default) `pet` also has `dogId`, `breed`, `imgUrl` and `cosmetics: { head, face, neck, body }` (all `null` when unset). See `classrooms-api.md`. |
 | `POST /api/classrooms/:id/students/:studentId/restore-health` | Teacher (owner) | `{ "points"?: 20, "reason": "Medical excuse" }` (`points` 0–100, `reason` 3–200 chars) | `200 { "restored": 20, "student": { "id", "name" }, "pet": { "status", "health", "hunger", "healthAdjustment" } }` |
 | `DELETE /api/classrooms/:id/students/:studentId` | Teacher (owner) | — | `200 { "removed": true, "studentId": "..." }` |
 

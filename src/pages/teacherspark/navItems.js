@@ -1,31 +1,30 @@
 // Top-bar options of the Teachers Park. Each icon is a file you still have
 // to drop into public/images/ (the names below are suggestions).
 //
-// `to` is "#" on purpose: those tabs are not built yet. When each page
-// exists, replace "#" with its real route (and register it in App.jsx).
+// Each tab points to a real route under /teachersPark (UN-401). The pages are
+// "coming soon" placeholders until their own tickets replace them.
+import { HOMEWORK_PATH, SEARCH_PATH, MINIGAMES_PATH } from "./teacherPaths.js";
+
 export const NAV_ITEMS = [
     {
         id: "homework",
         label: ["Manage", "Homework"],
         // TODO(IMAGE): "Manage Homework" icon (yellow dog-food bag).
         icon: "images/teacher-homework-bag.png",
-        // TODO(ROUTE): replace "#" with the Manage Homework page, e.g. "/teachers/homework".
-        to: "#"
+        to: HOMEWORK_PATH
     },
     {
         id: "search",
         label: ["Search for", "a Dog"],
         // TODO(IMAGE): "Search for a Dog" icon (magnifying glass).
         icon: "images/teacher-search-lens.png",
-        // TODO(ROUTE): replace "#" with the Search for a Dog page, e.g. "/teachers/search".
-        to: "#"
+        to: SEARCH_PATH
     },
     {
         id: "minigames",
         label: ["Manage", "Minigames"],
         // TODO(IMAGE): "Manage Minigames" icon (tennis ball).
         icon: "images/teacher-tennis-ball.png",
-        // TODO(ROUTE): replace "#" with the Manage Minigames page, e.g. "/teachers/minigames".
-        to: "#"
+        to: MINIGAMES_PATH
     }
 ];

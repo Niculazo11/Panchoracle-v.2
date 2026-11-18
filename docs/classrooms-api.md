@@ -13,9 +13,26 @@ Base path: `/api/classrooms`. All routes need a session cookie (ADR 5.2). Errors
 | PATCH | `/api/classrooms/:id` | teacher (owner) | 200 | Body: `{ name }`. |
 | DELETE | `/api/classrooms/:id` | teacher (owner) | 200 | Returns `{ deleted: true, classroomId, unenrolledStudents }`. See delete policy. |
 | POST | `/api/classrooms/join` | student | 201 / 200 | Body: `{ joinCode }`. 201 the first time, 200 with `alreadyJoined: true` if repeated. |
-| GET | `/api/classrooms/:id/students` | teacher (owner) | 200 | `{ students: [{ id, name, email, pet: { status, health, hunger } \| null }] }`. |
+| GET | `/api/classrooms/:id/students` | teacher (owner) | 200 | `{ students: [{ id, name, email, pet: { status, health, hunger } \| null }] }`. With the flag `enable_student_list_pet_metadata` ON, `pet` also has `dogId`, `breed`, `imgUrl` and `cosmetics` (see below). |
 | POST | `/api/classrooms/:id/students/:studentId/restore-health` | teacher (owner) | 200 | Body `{ points?, reason }`. Gives back lost health of a LIVING Pancho (UN-108, ADR Rev. 2.3). `409` if dead, if health is already 100 or if `points` is more than what was lost. Returns `{ restored, student, pet }`. |
 | DELETE | `/api/classrooms/:id/students/:studentId` | teacher (owner) | 200 | Returns `{ removed: true, studentId }`. |
+
+## Student list: pet metadata (SRV_STU_PET_META)
+
+Flag `enable_student_list_pet_metadata`, environment variable `ENABLE_STUDENT_LIST_PET_METADATA`
+(`true`, `1`, `on` or `yes`; **off by default**). When it is on, every non-null `pet` of
+`GET /api/classrooms/:id/students` keeps `status`, `health` and `hunger` and adds:
+
+| Field | Type | Source |
+|---|---|---|
+| `dogId` | string \| null | `pets.panchoId`: the dog the student picked in `/choose` (option 1 or 2) |
+| `breed` | string \| null | derived from `imgUrl` (`https://images.dog.ceo/breeds/<breed>/...`); `null` if it does not match |
+| `imgUrl` | string \| null | `pets.imgUrl`: the picture of the chosen dog |
+| `cosmetics` | `{ head, face, neck, body }` | `pets.equipped`: cosmetic id or `null` per slot |
+
+A student with no chosen dog gets `null` in the three dog fields and `null` in every slot; a
+student with no pet is still `pet: null`. The change is additive: with the flag off the response
+is identical to before, and with it on no existing key changes, so current consumers keep working.
 
 ## Rules
 

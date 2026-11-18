@@ -58,7 +58,6 @@ router.get("/:id/students", teacherOnly, validateIds("id"), async (req, res) => 
   res.status(200).json({ students });
 });
 
-// DELETE /api/classrooms/:id/students/:studentId -> 200
 // POST /api/classrooms/:id/students/:studentId/restore-health -> 200 (UN-108, Rev. 2.3)
 router.post(
   "/:id/students/:studentId/restore-health",
@@ -70,6 +69,7 @@ router.post(
   }
 );
 
+// DELETE /api/classrooms/:id/students/:studentId -> 200
 router.delete("/:id/students/:studentId", teacherOnly, validateIds("id", "studentId"), async (req, res) => {
   await service.removeStudent(req.user, req.params.id, req.params.studentId);
   res.status(200).json({ removed: true, studentId: req.params.studentId });

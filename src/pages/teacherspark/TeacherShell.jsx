@@ -13,10 +13,12 @@ export default function TeacherShell() {
     const { status, classroom, error, setClassroom, reload } = useMyClassroom();
     const [pageError, setPageError] = useState("");
     const onCreatePage = useMatch(NEW_CLASSROOM_PATH) !== null;
+    const onPanel = useMatch({ path: PARK_PATH, end: true }) !== null;
 
-    // Once we know, send the teacher to the right place.
-    if (status === "ready" && !classroom && !onCreatePage) {
-        return <Navigate to={NEW_CLASSROOM_PATH} replace />;
+    // Once we know, send the teacher to the right place. Without a classroom the panel
+    // shows its empty state ("Aún no tienes salones") with a button to create one.
+    if (status === "ready" && !classroom && !onCreatePage && !onPanel) {
+        return <Navigate to={PARK_PATH} replace />;
     }
     if (status === "ready" && classroom && onCreatePage) {
         return <Navigate to={PARK_PATH} replace />;
