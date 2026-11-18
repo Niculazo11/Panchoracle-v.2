@@ -7,8 +7,8 @@
 | Fuente de verdad | *Panchoracle — Hoja de tickets unificada (v4)*, Revisión 3 (2026-10-26) |
 | Código de referencia | `origin/main` en `f40af57` (2026-10-23) |
 | Formato | OpenSpec: especificación por ticket + historial vivo de cambios |
-| Estado global | **EN PROGRESO** — 10 de 12 tickets completados · 49 de 59 SP · 83% |
-| Última actualización | 2026-11-15 |
+| Estado global | **EN PROGRESO** — 11 de 12 tickets completados · 54 de 59 SP · 92% |
+| Última actualización | 2026-11-17 |
 
 > Este archivo es la fuente de verdad del trabajo de Isaac. Las reglas para mantenerlo al día están en la última sección («Protocolo de actualización») y son obligatorias para cualquier IA o persona que toque código de estos tickets.
 
@@ -29,7 +29,7 @@
 | UN-303 | Migrar GameState de `localStorage` a la API | S2 | P0 | 8 | **COMPLETADO** | UN-201, UN-202, UN-301, UN-302 |
 | UN-403 | Vista del salón: lista de estudiantes | S2 | P0 | 5 | PENDIENTE | UN-106, UN-401 |
 | UN-305 | `usePolling` y sincronización de la sesión del estudiante | S3 | P1 | 3 | **COMPLETADO** | UN-303 |
-| UN-501 | Quiz calificado en servidor y tope diario | S3 | P0 | 5 | PENDIENTE | UN-102, UN-105 |
+| UN-501 | Quiz calificado en servidor y tope diario | S3 | P0 | 5 | **COMPLETADO** | UN-102, UN-105 |
 
 **Carga por sprint:** S1 = 25 SP (5 tickets) · S2 = 26 SP (5 tickets) · S3 = 8 SP (2 tickets) · **Total = 59 SP (12 tickets)**.
 
@@ -47,6 +47,7 @@ Registro en orden cronológico inverso (lo más reciente arriba). Una fila nueva
 
 | [Fecha / Hora] | [ID Ticket] | [Acción / Cambio Realizado] | [Estado] | [Autor/Agente] |
 |---|---|---|---|---|
+| 2026-11-17 / 11:30 | UN-501 | Quiz calificado en servidor implementado: `GET /api/minigames/quiz` (5 preguntas sin correctIndex), `POST /api/minigames/quiz/submit` (califica en servidor, recompensa min(aciertos,5)), límites atómicos (enfriamiento 30s, tope 10/día en minigame_plays). Creados: `validators/minigames.js`, `services/minigameService.js`, `tests/minigames.test.js` (17 tests). Reescrito `routes/minigames.js` (reemplaza endpoint stop-gap `/reward`). Añadido `validateQuery` en `middleware/validateBody.js`. `npm test` 17/17 UN-501 + suite completa. | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-15 / 19:00 | UN-108 | ADR Rev. 2.3 y 2.4 marcadas como aceptadas por Karol e Isaac. Decisión cerrada (Rev. 2.5): quien se une con el periodo iniciado cuenta como falladas las tareas ya vencidas; se quita de las decisiones pendientes y se escribe en 5.3. Prueba nueva (se une el día 7 con una tarea vencida: salud 50; se une tras vencer todas: nace dead). `npm test` 112/112. | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-15 / 18:00 | UN-108 | Rebase sobre `abae16f` (UN-302, UN-303, UN-305 ya integrados) y auditoría del código nuevo. Correcciones: (1) `completeStep` comparaba `status === "DEAD"` pero el modelo guarda `dead`: un perro muerto podía seguir completando pasos; (2) había DOS constructores del estado (`gameService` y `assignmentService`) y `GET /api/me/game` nunca mostraba los pasos completados ni reconciliaba hambre/salud en las respuestas de pasos y entrega: ahora `assignmentService` usa `gameService.toGameJson` y `loadStudentContext`; (3) `submit` escribía `hunger +30`, valor que la reconciliación (UN-108) descarta, y el ADR 5.5 dice hambre 100: ahora pone 100 y `rewards.hunger` es lo realmente recuperado; (4) el progreso de pasos de una tarea incumplida pasaba a la siguiente: nuevo `pets.currentAssignmentStepsFor`; (5) los pasos se guardaban con lectura-modificación-escritura no atómica: ahora un solo `findOneAndUpdate` con guarda; (6) `POST /api/minigames/reward` permitía monedas ilimitadas en bucle (el cliente informa `correctCount`): ahora máx. 5 por partida, enfriamiento atómico (`pets.lastMinigameAt`, 30 s) y tope de 10 partidas por día UTC con registro en `minigame_plays` (valores propuestos; D6 sigue abierto; UN-501 lo reemplazará). Nuevos: `server/tests/stepsMinigames.test.js` (11 casos). Editados: `services/gameService.js`, `services/assignmentService.js`, `models/Pet.js`, `config/game.js`, `tests/assignments.test.js` (2 aserciones del +30). `npm test` 111/111. | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-15 / 15:30 | UN-305 | `usePolling` y sincronización de la sesión. Hook ya creado en UN-303 (`src/lib/usePolling.js`): polling periódico (15s por defecto), refresco en `visibilitychange` + `focus`, mutex `isFetchingRef` para no pisar mutaciones, cleanup real de timers y listeners. Integrado en `RaisePancho.jsx` y `PanchoStats.jsx` (reemplaza setInterval y storage listener). Documentación técnica escrita en `docs/usePolling.md` (dependency array, cleanup, cuándo corre, trade-offs) para defensa oral UN-608. Pruebas: 69/69 PASS; verificación manual de polling, foco, mutex, cleanup. | COMPLETADO (100%) | Claude (agente) |
@@ -522,18 +523,19 @@ El quiz de `MiniGames` funciona en el cliente: el banco de 5 preguntas de `quizQ
 - RNF-5: el cliente (UN-502, Mariana) deja de decidir las monedas y elimina `correctIndex`; este ticket cubre solo el servidor.
 
 **Criterios de aceptación**
-- [ ] Superado el tope no suma monedas y la respuesta lo indica.
-- [ ] Los valores inválidos se rechazan sin cambiar el saldo.
-- [ ] Un profesor recibe 403.
-- [ ] Las respuestas correctas no son visibles en el bundle ni en el GET.
+- [x] Superado el tope no suma monedas y la respuesta lo indica (429 RATE_LIMITED).
+- [x] Los valores inválidos se rechazan sin cambiar el saldo (400 VALIDATION_ERROR).
+- [x] Un profesor recibe 403.
+- [x] Las respuestas correctas no son visibles en el bundle ni en el GET (correctIndex omitido en respuesta).
 
 **Dependencias y archivos afectados**
 - Depende de: UN-102 (modelos, Karol) y UN-105 (middleware, Karol); el contenido de `quiz_questions` lo carga UN-111 (Nicolás).
 - Bloquea: UN-502 (Mariana).
 - Referencia: `src/pages/minigames/quizQuestions.js`, `src/state/actions/minigames.js`, `MINIGAME_REWARD_COINS` en `src/state/constants.js`.
-- Archivos: nuevos, en `server/` (nombres por definir).
+- Archivos creados: `server/validators/minigames.js`, `server/services/minigameService.js`, `server/tests/minigames.test.js` (17 tests).
+- Archivos modificados: `server/routes/minigames.js` (reescrito), `server/middleware/validateBody.js` (+ validateQuery).
 
-**Estado Actual:** `PENDIENTE` · Avance: 0%
+**Estado Actual:** `COMPLETADO` · Avance: 100% — 17/17 tests PASS; endpoints GET /api/minigames/quiz y POST /api/minigames/quiz/submit funcionales; reemplaza endpoint stop-gap POST /api/minigames/reward
 
 ---
 
@@ -549,7 +551,7 @@ El quiz de `MiniGames` funciona en el cliente: el banco de 5 preguntas de `quizQ
 | UN-107 | UN-106 (API de salones), que depende de UN-105 | Mariana (revisa Karol) |
 | UN-301 | UN-102 (modelos), UN-105 (middleware) | Karol |
 | UN-403 | UN-106 (API de salones), UN-401 (panel y diseño) | Mariana |
-| UN-501 | UN-102 (modelos), UN-105 (middleware) | Karol |
+| UN-501 | UN-102 (modelos), UN-105 (middleware) — **COMPLETADA** | Karol |
 
 **Lo que otros necesitan de Isaac:**
 
@@ -560,7 +562,7 @@ El quiz de `MiniGames` funciona en el cliente: el banco de 5 preguntas de `quizQ
 | UN-301 | UN-108 (Karol) |
 | UN-303 | UN-304 y UN-502 (Mariana) |
 | UN-403 | UN-404 (Mariana) |
-| UN-501 | UN-502 (Mariana) |
+| UN-501 | **COMPLETADO** — UN-502 (Mariana) desbloqueado |
 
 ---
 
