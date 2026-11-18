@@ -13,7 +13,7 @@ export default function ContactSection() {
                     Learn More
                 </a>
 
-                <Link to="/aboutus.html" target="_blank" className="underline text-black dark:text-white">About Us</Link>
+                <Link to="/aboutus.html" target="_blank" rel="noopener noreferrer" className="underline text-black dark:text-white">About Us</Link>
             </div>
         </section>
     );

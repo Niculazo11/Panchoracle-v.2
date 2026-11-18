@@ -1,4 +1,3 @@
-
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import LoginForm from "./login/LoginForm.jsx";
 import { useAccess } from "@lib/useAccess.js";
@@ -49,7 +48,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-[rgb(149,248,165)] dark:bg-[#18351f] flex flex-col justify-center items-center px-5 py-16">
+    <main className="min-h-screen bg-[rgb(149,248,165)] dark:bg-[#18351f] flex flex-col justify-center items-center px-5 py-16">
       <section className="bg-[rgb(44,182,78)] dark:bg-[#17652e] text-center w-full max-w-lg py-10 px-5 sm:px-10 box-border rounded-2xl shadow-xl">
         <h1 className="font-display text-2xl sm:text-3xl text-white mb-2">
           Log in to Raise a Pancho
@@ -68,6 +67,6 @@ export default function Login() {
       <Link to="/" className="mt-6 underline text-black dark:text-white">
         Back to Home
       </Link>
-    </div>
+    </main>
   );
 }

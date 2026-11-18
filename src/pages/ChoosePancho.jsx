@@ -46,7 +46,7 @@ export default function ChoosePancho() {
     const showRetry = !loading && Boolean(error || offline);
 
     return (
-        <div className="min-h-screen bg-[#8B8170] flex flex-col items-center">
+        <main className="min-h-screen bg-[#8B8170] flex flex-col items-center">
             <PanchoStatusBanner status={status.status} />
 
             <h1 className="text-4xl font-bold tracking-widest text-white mt-8 mb-12">Choose  to pancho</h1>
@@ -70,6 +70,6 @@ export default function ChoosePancho() {
                     </a>
                 </div>
             </section>
-        </div>
+        </main>
     );
 }

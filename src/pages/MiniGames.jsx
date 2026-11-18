@@ -22,7 +22,7 @@ export default function MiniGames() {
     }
 
     return (
-        <div className="relative min-h-screen w-full overflow-hidden bg-[#a3a960]">
+        <main className="relative min-h-screen w-full overflow-hidden bg-[#a3a960]">
             <img
                 src={asset("images/fondo-minigame.jpeg")}
                 alt="Minigames background"
@@ -56,6 +56,6 @@ export default function MiniGames() {
                     </p>
                 )}
             </div>
-        </div>
+        </main>
     );
 }
