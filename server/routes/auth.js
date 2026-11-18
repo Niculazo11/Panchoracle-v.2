@@ -16,12 +16,6 @@ const TOKEN_EXPIRY = 3600; // 1 hora
 // Valid bcrypt hash of a random string. Compared when the email does not exist so a login for
 // an unknown email costs the same as one for a known email (no user enumeration by timing).
 const DUMMY_HASH = bcrypt.hashSync("panchoracle-dummy-password", 10);
-const COOKIE_OPTS = {
-  httpOnly: true,
-  secure: Boolean(process.env.VERCEL) || process.env.NODE_ENV === "production",
-  sameSite: "lax",
-  path: "/",
-};
 
 // Constant-time comparison so the teacher code cannot be guessed character by character.
 function isTeacherCode(received, expected) {
@@ -31,9 +25,18 @@ function isTeacherCode(received, expected) {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+function getCookieOpts() {
+  return {
+    httpOnly: true,
+    secure: Boolean(process.env.VERCEL) || process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  };
+}
+
 function startSession(res, user) {
   const token = signToken({ sub: user._id.toString() }, TOKEN_EXPIRY);
-  res.cookie(SESSION_COOKIE, token, { ...COOKIE_OPTS, maxAge: TOKEN_EXPIRY * 1000 });
+  res.cookie(SESSION_COOKIE, token, { ...getCookieOpts(), maxAge: TOKEN_EXPIRY * 1000 });
 }
 
 // POST /api/auth/register
@@ -80,7 +83,7 @@ router.post("/login", loginRateLimit, validateBody(loginSchema), async (req, res
 
 // POST /api/auth/logout
 router.post("/logout", (_req, res) => {
-  res.clearCookie(SESSION_COOKIE, COOKIE_OPTS);
+  res.clearCookie(SESSION_COOKIE, getCookieOpts());
   res.status(204).send();
 });
 
