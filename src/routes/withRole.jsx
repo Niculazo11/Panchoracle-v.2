@@ -1,7 +1,8 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAccess } from "../lib/useAccess.js";
+import AccessDenied from "./AccessDenied.jsx";
 
-export function withRole(allowedRoles) {
+export function withRole(allowedRoles, deniedMessage = "You do not have access to this option.") {
   return function WithRoleWrapper({ children }) {
     const { status, role } = useAccess();
     const location = useLocation();
@@ -10,7 +11,7 @@ export function withRole(allowedRoles) {
       return null;
     }
 
-    if (status !== "authenticated" || !allowedRoles.includes(role)) {
+    if (status !== "authenticated") {
       return (
         <Navigate
           replace
@@ -18,6 +19,11 @@ export function withRole(allowedRoles) {
           state={{ from: location }}
         />
       );
+    }
+
+    // Logged in with the wrong role: say so instead of bouncing through /login -> /raise.
+    if (!allowedRoles.includes(role)) {
+      return <AccessDenied message={deniedMessage} />;
     }
 
     return children;
