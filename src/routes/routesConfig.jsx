@@ -57,7 +57,7 @@ export function renderRoutes(routes, defaultWrapper) {
   return result;
 }
 
-const TeacherOnly = withRole(["teacher"]);
+const TeacherOnly = withRole(["teacher"], "Only teachers can access this option.");
 
 // Every teacher page lives under /teachersPark and shares TeacherShell
 // (error banner, top bar and the check that the teacher has a classroom).
