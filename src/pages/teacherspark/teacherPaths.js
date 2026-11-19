@@ -14,6 +14,7 @@ export function studentPath(studentId) {
     return STUDENTS_PATH + "/" + studentId;
 }
 // Rows of Manage Homework open the submitted homework of one assignment (UN-405).
+export const ADD_HOMEWORK_PATH = "/teachersPark/homework/new";
 export function submissionsPath(assignmentId) {
     return HOMEWORK_PATH + "/" + assignmentId + "/submissions";
 }

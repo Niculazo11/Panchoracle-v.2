@@ -7,7 +7,7 @@ import { submissionsPath } from "./teacherPaths.js";
 const BAG = "images/teacher-homework-bag.png";
 
 function formatDue(dueAt) {
-    return new Date(dueAt).toLocaleDateString(undefined, { dateStyle: "medium" });
+    return new Date(dueAt).toLocaleDateString(undefined, { dateStyle: "medium", timeZone: "UTC" });
 }
 
 // One assignment: title pill, description and pen on the left, and the bag that

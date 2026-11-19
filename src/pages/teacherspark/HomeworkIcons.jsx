@@ -18,6 +18,15 @@ export function LongArrowIcon() {
     );
 }
 
+export function PlusIcon() {
+    return (
+        <svg viewBox="0 0 32 32" width="40" height="40" aria-hidden="true">
+            <circle cx="16" cy="16" r="14" fill="#333" />
+            <path d="M16 9v14M9 16h14" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+        </svg>
+    );
+}
+
 export function BackIcon() {
     return (
         <svg viewBox="0 0 32 32" width="34" height="34" stroke="#d6e63a" strokeWidth="3.5" {...BASE}>
