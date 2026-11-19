@@ -18,10 +18,17 @@ const TOKEN_EXPIRY = 3600; // 1 hora
 const DUMMY_HASH = bcrypt.hashSync("panchoracle-dummy-password", 10);
 
 // Constant-time comparison so the teacher code cannot be guessed character by character.
+// A value copied into Vercel/.env often carries stray spaces or surrounding quotes, so both the
+// typed code and TEACHER_CODE are cleaned the same way before they are compared.
+function cleanCode(value) {
+  if (typeof value !== "string") return "";
+  return value.trim().replace(/^(["'])(.*)\1$/, "$2").trim();
+}
+
 function isTeacherCode(received, expected) {
-  if (!expected || typeof received !== "string") return false;
-  const a = Buffer.from(received);
-  const b = Buffer.from(expected);
+  const a = Buffer.from(cleanCode(received));
+  const b = Buffer.from(cleanCode(expected));
+  if (b.length === 0) return false;
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
@@ -48,8 +55,14 @@ router.post("/register", registerRateLimit, validateBody(registerSchema), async 
       // OPEN_TEACHER_SIGNUP=true lets anyone become a teacher just by saying so in the join
       // form (no code). Leave it unset in production: then TEACHER_CODE is required again.
       const openSignup = process.env.OPEN_TEACHER_SIGNUP === "true";
-      if (!openSignup && !isTeacherCode(teacherCode, process.env.TEACHER_CODE)) {
-        throw new AppError(403, "FORBIDDEN", "Código de profesor inválido");
+      if (!openSignup) {
+        // Tells apart "the server never received TEACHER_CODE" from "the typed code is wrong".
+        if (!cleanCode(process.env.TEACHER_CODE)) {
+          throw new AppError(403, "FORBIDDEN", "El registro de profesores no está configurado (falta TEACHER_CODE en el servidor)");
+        }
+        if (!isTeacherCode(teacherCode, process.env.TEACHER_CODE)) {
+          throw new AppError(403, "FORBIDDEN", "Código de profesor inválido");
+        }
       }
     }
 
