@@ -8,3 +8,12 @@ export const SETTINGS_PATH = "/teachersPark/settings";
 export const HOMEWORK_PATH = "/teachersPark/homework";
 export const SEARCH_PATH = "/teachersPark/search";
 export const MINIGAMES_PATH = "/teachersPark/minigames";
+// Student list of the classroom (UN-403) and the detail page of one student (UN-404).
+export const STUDENTS_PATH = "/teachersPark/students";
+export function studentPath(studentId) {
+    return STUDENTS_PATH + "/" + studentId;
+}
+// Rows of Manage Homework open the submitted homework of one assignment (UN-405).
+export function submissionsPath(assignmentId) {
+    return HOMEWORK_PATH + "/" + assignmentId + "/submissions";
+}

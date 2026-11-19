@@ -41,3 +41,7 @@ export async function getStudents(id, signal) {
   const data = await api.get("/classrooms/" + id + "/students", { signal });
   return data.students;
 }
+// Unenrolls one student. Their Pancho, coins and cosmetics are kept (see classrooms-api.md).
+export function removeStudent(classroomId, studentId) {
+  return api.delete("/classrooms/" + classroomId + "/students/" + studentId);
+}

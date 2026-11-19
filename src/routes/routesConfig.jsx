@@ -14,9 +14,11 @@ import NewClassroom from "../pages/teacherspark/NewClassroom.jsx";
 import ClassroomSettings from "../pages/teacherspark/ClassroomSettings.jsx";
 import ClassroomsPanel from "../pages/teacherspark/ClassroomsPanel.jsx";
 import TeacherSection from "../pages/teacherspark/TeacherSection.jsx";
+import ManageHomework from "../pages/teacherspark/ManageHomework.jsx";
+import StudentsPage from "../pages/teacherspark/StudentsPage.jsx";
 import {
   PARK_PATH, CLASSROOM_PATH, NEW_CLASSROOM_PATH, SETTINGS_PATH,
-  HOMEWORK_PATH, SEARCH_PATH, MINIGAMES_PATH,
+  HOMEWORK_PATH, SEARCH_PATH, MINIGAMES_PATH, STUDENTS_PATH,
 } from "../pages/teacherspark/teacherPaths.js";
 import { withRole } from "./withRole.jsx";
 
@@ -68,7 +70,8 @@ export function renderTeacherRoutes() {
       <Route path="classroom" element={<TeachersPark />} />
       <Route path="newClassroom" element={<NewClassroom />} />
       <Route path="settings" element={<ClassroomSettings />} />
-      <Route path="homework" element={<TeacherSection title="Manage Homework" />} />
+      <Route path="homework" element={<ManageHomework />} />
+      <Route path="students" element={<StudentsPage />} />
       <Route path="search" element={<TeacherSection title="Search for a Dog" />} />
       <Route path="minigames" element={<TeacherSection title="Manage Minigames" />} />
     </Route>
@@ -79,5 +82,5 @@ export const ABOUT_PATHS = PUBLIC_ROUTES.find((r) => r.element.type === AboutUs)
 // Pages of the teacher area: the home navbar is hidden on all of them.
 export const TEACHERS_PARK_PATHS = [
   PARK_PATH, "/teachersPark.html", CLASSROOM_PATH, NEW_CLASSROOM_PATH, SETTINGS_PATH,
-  HOMEWORK_PATH, SEARCH_PATH, MINIGAMES_PATH,
+  HOMEWORK_PATH, SEARCH_PATH, MINIGAMES_PATH, STUDENTS_PATH,
 ];
