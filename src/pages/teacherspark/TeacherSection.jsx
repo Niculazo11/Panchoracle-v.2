@@ -10,7 +10,7 @@ export default function TeacherSection({ title }) {
             <div className="relative z-10 max-w-xl mx-auto mt-12 p-6 text-center rounded-lg bg-white/95 text-black dark:bg-[#14200f]/95 dark:text-white shadow-lg">
                 <h2 className="m-0 mb-2 text-3xl font-bold">{title}</h2>
                 <p className="m-0 mb-4">This section will be available soon.</p>
-                <Link to={PARK_PATH} className="text-[#5a57d9] dark:text-[#c4b5fd] underline">Volver a mis salones</Link>
+                <Link to={PARK_PATH} className="text-[#5a57d9] dark:text-[#c4b5fd] underline">Back to my classrooms</Link>
             </div>
         </ParkBackground>
     );
