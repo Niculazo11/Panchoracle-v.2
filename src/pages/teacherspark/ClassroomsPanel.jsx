@@ -4,7 +4,7 @@ import ClassroomCard from "./ClassroomCard.jsx";
 import { NEW_CLASSROOM_PATH } from "./teacherPaths.js";
 
 // ADR 5.6: a teacher administers a single classroom (unique teacherId), so a second
-// "Crear salón" would answer 409. The button stays visible but disabled at the limit.
+// "Create classroom" would answer 409. The button stays visible but disabled at the limit.
 const MAX_CLASSROOMS = 1;
 const BUTTON_CLASS = "min-h-11 inline-flex items-center px-6 py-2 bg-[#5a57d9] text-white underline uppercase tracking-wide rounded no-underline";
 

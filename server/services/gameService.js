@@ -88,6 +88,28 @@ export async function loadStudentContext(user) {
   return { pet, assignment: await getCurrentAssignment(user, classroom, pet) };
 }
 
+// Reconciled Pancho of a student plus their classroom (the hand-in route needs both: the Pancho to
+// know if it is alive, the classroom for the period rules).
+export async function loadReconciledPet(user) {
+  const stored = await getPet(user);
+  const classroom = user.classroomId ? await Classroom.findById(user.classroomId) : null;
+  const pet = await reconcilePet(classroom, stored);
+  return { pet, classroom };
+}
+
+// ADR 5.5: handing in the ACTIVE assignment on time puts hunger at 100 and clears the step
+// checklist. Shared by POST /api/assignments/:id/submit (4-step flow) and by the hand-in route
+// (docs/submissions-api.md, rule 5), so both reward a submission the same way. With the submission
+// saved, the next reconciliation also moves the active assignment on and never counts it as missed.
+// Returns the updated Pancho (the hunger it had before is in `pet`).
+export async function rewardActiveSubmission(pet) {
+  return Pet.findOneAndUpdate(
+    { _id: pet._id },
+    { $set: { hunger: 100, currentAssignmentSteps: [false, false, false, false], currentAssignmentStepsFor: null } },
+    { returnDocument: "after" }
+  );
+}
+
 // GET /api/me/game
 export async function getGameState(user) {
   return toGameJson(user, await getPet(user));

@@ -15,15 +15,15 @@ function readCookie(req, name) {
   return null;
 }
 
-// El rol siempre sale de la BD, nunca del cliente (ADR 5.2).
+// The role always comes from the database, never from the client (ADR 5.2).
 export async function authenticate(req, res, next) {
   const token = readCookie(req, SESSION_COOKIE);
   const payload = token ? verifyToken(token) : null;
   if (!payload || !OBJECT_ID_REGEX.test(String(payload.sub))) {
-    throw new AppError(401, "UNAUTHORIZED", "No autenticado");
+    throw new AppError(401, "UNAUTHORIZED", "Not authenticated");
   }
   const user = await User.findById(payload.sub);
-  if (!user) throw new AppError(401, "UNAUTHORIZED", "No autenticado");
+  if (!user) throw new AppError(401, "UNAUTHORIZED", "Not authenticated");
   req.user = user;
   next();
 }
@@ -31,7 +31,7 @@ export async function authenticate(req, res, next) {
 export function authorize(...roles) {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
-      throw new AppError(403, "FORBIDDEN", "No tienes permiso para esta acción");
+      throw new AppError(403, "FORBIDDEN", "You do not have permission for this action");
     }
     next();
   };
