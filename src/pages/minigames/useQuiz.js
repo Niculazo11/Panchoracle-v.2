@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { fetchQuizQuestions, submitQuiz } from "../../lib/gameApi.js";
 import { useFeedback } from "../../lib/useFeedback.js";
 
@@ -28,10 +28,10 @@ export function useQuiz({ onComplete }) {
         }
     }
 
-    // Initialize on first render
-    if (questions.length === 0 && !loading) {
+    // Initialize on mount
+    useEffect(() => {
         loadQuestions();
-    }
+    }, []);
 
     const current = questions[index];
     const isLastQuestion = index === questions.length - 1;
