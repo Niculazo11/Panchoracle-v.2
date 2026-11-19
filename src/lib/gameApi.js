@@ -43,3 +43,11 @@ export async function submitQuiz(answers) {
     const res = await api.post("/minigames/quiz/submit", { answers });
     return res;
 }
+
+// UN-303 RF-5: Fetch cosmetics catalog from server (replaces local catalog.js)
+export async function fetchCosmetics() {
+    const res = await api.get("/cosmetics");
+    // Server returns: { cosmetics: [{ cosmeticId, name, category, cost, image }] }
+    // image is relative path (e.g., "images/skully-bow.png") - caller resolves via asset()
+    return res.cosmetics;
+}

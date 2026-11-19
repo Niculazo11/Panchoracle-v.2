@@ -3,7 +3,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { useGameState } from "../state/GameStateContext.jsx";
 import { useFeedback } from "../lib/useFeedback.js";
 import { useFavorites } from "../lib/useFavorites.js";
-import catalog from "../data/catalog.js";
+import { useCosmetics } from "../lib/useCosmetics.js";
 import CosmeticInfo from "./shop/CosmeticInfo.jsx";
 import CosmeticPreview from "./shop/CosmeticPreview.jsx";
 import CosmeticNotFound from "./shop/CosmeticNotFound.jsx";
@@ -21,6 +21,7 @@ export default function CosmeticDetail() {
     const { dog, student } = useGameState();
     const { feedback, showFeedback } = useFeedback(FEEDBACK_TIMEOUT_MS);
     const { isFavorite, toggleFavorite } = useFavorites(student.id);
+    const { cosmetics, loading, error } = useCosmetics();
 
     // No point looking at cosmetics before a Pancho has been chosen.
     useEffect(() => {
@@ -33,7 +34,23 @@ export default function CosmeticDetail() {
         return null;
     }
 
-    const item = catalog.find((cosmetic) => String(cosmetic.id) === cosmeticId);
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#c69f85] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#6B5A8E] border-t-transparent" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-[#c69f85] flex items-center justify-center">
+                <p className="text-red-600 font-semibold">{error}</p>
+            </div>
+        );
+    }
+
+    const item = cosmetics.find((cosmetic) => String(cosmetic.id) === cosmeticId);
 
     // Unknown/stale id in the URL -> back to the full shop instead of
     // rendering an empty page.

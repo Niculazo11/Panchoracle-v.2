@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useGameState } from "../state/GameStateContext.jsx";
 import { useFeedback } from "../lib/useFeedback.js";
 import { useFavorites } from "../lib/useFavorites.js";
-import catalog from "../data/catalog.js";
+import { useCosmetics } from "../lib/useCosmetics.js";
 import ShopHeader from "./shop/ShopHeader.jsx";
 import ShopPreview from "./shop/ShopPreview.jsx";
 import CosmeticCard from "./shop/CosmeticCard.jsx";
@@ -15,6 +15,7 @@ export default function Shop() {
     const { dog, student, buyCosmetic, equipCosmetic } = useGameState();
     const { feedback, showFeedback } = useFeedback(FEEDBACK_TIMEOUT_MS);
     const { isFavorite, toggleFavorite } = useFavorites(student.id);
+    const { cosmetics, loading, error } = useCosmetics();
 
     // No point shopping for cosmetics before a Pancho has been chosen.
     useEffect(() => {
@@ -25,6 +26,22 @@ export default function Shop() {
 
     if (!dog.imgUrl) {
         return null;
+    }
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#c69f85] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#6B5A8E] border-t-transparent" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-[#c69f85] flex items-center justify-center">
+                <p className="text-red-600 font-semibold">{error}</p>
+            </div>
+        );
     }
 
     async function handleBuy(item) {
@@ -55,7 +72,7 @@ export default function Shop() {
                 {/* ====== Cosmetics catalog ====== */}
                 <section className="flex-1">
                     <div id="cosmeticsGrid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                        {catalog.map((item) => (
+                        {cosmetics.map((item) => (
                             <CosmeticCard
                                 key={item.id}
                                 item={item}
