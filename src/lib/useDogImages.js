@@ -6,7 +6,7 @@ import { asset } from "./asset.js";
 
 const MIN_LOADING_MS = 600;
 const ERROR_MESSAGE = "Something got wrong with Pancho";
-const TEAM_DOG_IMAGE = asset("images/Pancho-2edition.jpeg");
+const TEAM_DOG_IMAGE = asset("images/Pancho-2edition.png");
 
 export function useDogImages() {
   const [images, setImages] = useState([STATIC_DOG_IMAGE, TEAM_DOG_IMAGE]);
