@@ -9,6 +9,17 @@ import mongoose from "mongoose";
 process.env.JWT_SECRET = "test-jwt-secret-very-long-and-secure-for-testing-only";
 process.env.NODE_ENV = "test";
 
+let mongod;
+before(async () => {
+  mongod = await MongoMemoryServer.create();
+  process.env.MONGODB_URI = mongod.getUri();
+  await mongoose.connect(process.env.MONGODB_URI);
+});
+after(async () => {
+  await mongoose.disconnect();
+  await mongod.stop();
+});
+
 const { default: app } = await import("../app.js");
 const { User, Classroom, Pet } = await import("../models/index.js");
 const { signToken } = await import("../utils/jwt.js");
@@ -19,21 +30,17 @@ const DAY = 24 * 60 * 60 * 1000;
 const IMG = "https://images.dog.ceo/breeds/dachshund/n02085620_10074.jpg";
 const FLAG = "ENABLE_STUDENT_LIST_PET_METADATA";
 
-let mongod, server, teacher, classroom;
+let server, teacher, classroom;
 const cookieOf = (user) => [`session=${signToken({ sub: user._id.toString() })}`];
 const list = () => request(server).get(`/api/classrooms/${classroom._id}/students`).set("Cookie", cookieOf(teacher)).expect(200);
 const makeUser = (name, role) => User.create({ name, email: `${name}@test.com`, passwordHash: "x".repeat(60), role });
 const byName = (students, name) => students.find((s) => s.name === name);
 
 before(async () => {
-  mongod = await MongoMemoryServer.create();
-  await mongoose.connect(mongod.getUri());
   server = app.listen(0);
 });
 after(async () => {
   server.close();
-  await mongoose.disconnect();
-  await mongod.stop();
 });
 
 beforeEach(async () => {
