@@ -11,6 +11,7 @@ All errors use `{ "error": { "code", "message" } }` (ADR 7.6). Needs a session c
 | GET | `/api/assignments` | teacher, student | Already exists (UN-107). The student sees the whole list of the current period, ordered by `dueAt`. |
 | GET | `/api/me/submissions` | student | `{ submissions: [{ id, assignmentId, kind, fileName, fileUrl, submittedAt }] }` |
 | POST | `/api/assignments/:id/submissions` | student | Hand in one assignment. `201 { submission }` (same shape as above). |
+| GET | `/api/assignments/:id/submissions` | teacher (owner) | `{ submissions: [{ id, assignmentId, student: { id, name }, kind, fileName, fileUrl, submittedAt }] }`, oldest first. Empty list when nobody handed in. |
 | GET | `/api/submissions/:id/file` | owner student, teacher of the classroom | Returns the stored file with its `Content-Type` and `Content-Disposition: inline`. |
 
 ## POST body (one of)

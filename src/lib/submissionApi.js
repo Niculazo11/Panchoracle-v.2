@@ -13,3 +13,10 @@ export async function submitHomework(assignmentId, payload) {
   const data = await api.post("/assignments/" + assignmentId + "/submissions", payload);
   return data.submission || data;
 }
+
+// Teacher: everything handed in for one assignment, with the student who sent it:
+// [{ id, assignmentId, student: { id, name }, kind, fileName, fileUrl, submittedAt }].
+export async function getAssignmentSubmissions(assignmentId, signal) {
+  const data = await api.get("/assignments/" + assignmentId + "/submissions", { signal });
+  return Array.isArray(data) ? data : data.submissions || [];
+}

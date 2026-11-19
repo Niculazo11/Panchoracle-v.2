@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { getAssignment, updateAssignment } from "../../lib/assignmentApi.js";
 import { hasErrors } from "../../lib/validation.js";
-import { EMPTY_HOMEWORK_FORM, EMPTY_HOMEWORK_ERRORS, validateHomeworkForm, fromApiHomework, toApiChanges } from "./homeworkForm.js";
+import { EMPTY_HOMEWORK_FORM, EMPTY_HOMEWORK_ERRORS, validateHomeworkForm, fromApiHomework, toApiChanges, isDue } from "./homeworkForm.js";
 import { HOMEWORK_PATH } from "./teacherPaths.js";
 
 // State and submit logic of the edit-homework page. showError comes from TeacherShell.
@@ -47,7 +47,7 @@ export function useEditHomework() {
         event.preventDefault();
         showError("");
 
-        const nextErrors = validateHomeworkForm(formData);
+        const nextErrors = validateHomeworkForm(formData, original);
         setErrors(nextErrors);
 
         if (hasErrors(nextErrors)) {
@@ -72,5 +72,7 @@ export function useEditHomework() {
         }
     }
 
-    return { status, formData, errors, submitting, handleChange, handleSubmit };
+    const dateLocked = original !== null && isDue(original);
+
+    return { status, dateLocked, formData, errors, submitting, handleChange, handleSubmit };
 }
