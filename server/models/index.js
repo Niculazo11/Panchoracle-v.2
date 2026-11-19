@@ -7,5 +7,6 @@ import Submission from "./Submission.js";
 import MinigamePlay from "./MinigamePlay.js";
 import Cosmetic from "./Cosmetic.js";
 import QuizQuestion from "./QuizQuestion.js";
+import MinigameAssignment from "./MinigameAssignment.js";
 
-export { User, Classroom, Assignment, Pet, Submission, MinigamePlay, Cosmetic, QuizQuestion };
+export { User, Classroom, Assignment, Pet, Submission, MinigamePlay, Cosmetic, QuizQuestion, MinigameAssignment };

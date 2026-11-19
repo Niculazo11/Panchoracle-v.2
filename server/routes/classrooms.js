@@ -11,7 +11,17 @@ import {
   joinClassroomSchema,
   restoreHealthSchema,
 } from "../validators/classroom.js";
+import {
+  assignMinigameSchema,
+  minigameAssignmentParamsSchema,
+} from "../validators/minigames.js";
 import * as service from "../services/classroomService.js";
+import {
+  assignMinigame,
+  listAssignedMinigames,
+  removeMinigameAssignment,
+  getClassroomMinigamePlays,
+} from "../services/minigameService.js";
 import { restoreHealth } from "../services/healthRestoreService.js";
 import AppError from "../utils/AppError.js";
 
@@ -74,5 +84,50 @@ router.delete("/:id/students/:studentId", teacherOnly, validateIds("id", "studen
   await service.removeStudent(req.user, req.params.id, req.params.studentId);
   res.status(200).json({ removed: true, studentId: req.params.studentId });
 });
+
+// POST /api/classrooms/:id/minigames/assign -> 201 (teacher assigns minigame to classroom)
+router.post(
+  "/:id/minigames/assign",
+  teacherOnly,
+  validateIds("id"),
+  validateBody(assignMinigameSchema),
+  async (req, res) => {
+    const assignment = await assignMinigame(req.user, req.params.id, req.body.minigameId);
+    res.status(201).json({ assignment });
+  }
+);
+
+// GET /api/classrooms/:id/minigames -> 200 (teacher lists assigned minigames)
+router.get(
+  "/:id/minigames",
+  teacherOnly,
+  validateIds("id"),
+  async (req, res) => {
+    const assignments = await listAssignedMinigames(req.user, req.params.id);
+    res.status(200).json({ assignments });
+  }
+);
+
+// DELETE /api/classrooms/:id/minigames/:assignmentId -> 200 (teacher removes assignment)
+router.delete(
+  "/:id/minigames/:assignmentId",
+  teacherOnly,
+  validateIds("id", "assignmentId"),
+  async (req, res) => {
+    await removeMinigameAssignment(req.user, req.params.id, req.params.assignmentId);
+    res.status(200).json({ removed: true });
+  }
+);
+
+// GET /api/classrooms/:id/minigames/plays -> 200 (teacher views student minigame completions)
+router.get(
+  "/:id/minigames/plays",
+  teacherOnly,
+  validateIds("id"),
+  async (req, res) => {
+    const plays = await getClassroomMinigamePlays(req.user, req.params.id);
+    res.status(200).json({ plays });
+  }
+);
 
 export default router;

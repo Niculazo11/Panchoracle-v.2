@@ -26,3 +26,22 @@ export const submitQuizSchema = z.strictObject({
 
 // Query params for future filtering (not used yet, but schema ready)
 export const quizQuerySchema = z.strictObject({});
+
+// POST /api/classrooms/:id/minigames/assign
+// Body: { minigameId: "quiz" }
+const minigameIdSchema = z
+  .string({ error: "minigameId must be a string" })
+  .trim()
+  .min(1, "minigameId is required")
+  .max(50, "minigameId is too long")
+  .describe("Minigame identifier (e.g., 'quiz')");
+
+export const assignMinigameSchema = z.strictObject({
+  minigameId: minigameIdSchema,
+});
+
+// Path params for assignment removal
+export const minigameAssignmentParamsSchema = z.strictObject({
+  id: z.string().min(1),      // classroomId
+  assignmentId: z.string().min(1), // minigameAssignment._id
+});

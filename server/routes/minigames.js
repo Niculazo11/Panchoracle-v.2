@@ -4,7 +4,7 @@ import { Router } from "express";
 import { authorize } from "../middleware/authenticate.js";
 import { validateBody, validateQuery } from "../middleware/validateBody.js";
 import { submitQuizSchema, quizQuerySchema } from "../validators/minigames.js";
-import { getQuizQuestions, submitQuiz } from "../services/minigameService.js";
+import { getQuizQuestions, submitQuiz, getStudentAssignedMinigames } from "../services/minigameService.js";
 
 const router = Router();
 router.use(authorize("student"));
@@ -20,6 +20,13 @@ router.get("/quiz", validateQuery(quizQuerySchema), async (req, res) => {
 router.post("/quiz/submit", validateBody(submitQuizSchema), async (req, res) => {
   const result = await submitQuiz(req.user, req.body.answers);
   res.status(200).json(result);
+});
+
+// GET /api/minigames/assigned -> 200 { assignments: [...] }
+// Lista los minijuegos asignados al estudiante por su profesor.
+router.get("/assigned", async (req, res) => {
+  const assignments = await getStudentAssignedMinigames(req.user);
+  res.status(200).json({ assignments });
 });
 
 export default router;

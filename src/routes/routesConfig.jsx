@@ -17,6 +17,7 @@ import TeacherSection from "../pages/teacherspark/TeacherSection.jsx";
 import ManageHomework from "../pages/teacherspark/ManageHomework.jsx";
 import AddHomework from "../pages/teacherspark/AddHomework.jsx";
 import StudentsPage from "../pages/teacherspark/StudentsPage.jsx";
+import ManageMinigames from "../pages/teacherspark/ManageMinigames.jsx";
 import {
   PARK_PATH, CLASSROOM_PATH, NEW_CLASSROOM_PATH, SETTINGS_PATH,
   HOMEWORK_PATH, SEARCH_PATH, MINIGAMES_PATH, STUDENTS_PATH,
@@ -76,7 +77,7 @@ export function renderTeacherRoutes() {
       <Route path="homework/new" element={<AddHomework />} />
       <Route path="students" element={<StudentsPage />} />
       <Route path="search" element={<TeacherSection title="Search for a Dog" />} />
-      <Route path="minigames" element={<TeacherSection title="Manage Minigames" />} />
+      <Route path="minigames" element={<ManageMinigames />} />
     </Route>
   );
 }

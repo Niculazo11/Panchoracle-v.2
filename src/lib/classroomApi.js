@@ -45,3 +45,24 @@ export async function getStudents(id, signal) {
 export function removeStudent(classroomId, studentId) {
   return api.delete("/classrooms/" + classroomId + "/students/" + studentId);
 }
+
+// Minigame assignments (UN-XXX) - Teacher only
+export async function assignMinigame(classroomId, minigameId) {
+  const data = await api.post("/classrooms/" + classroomId + "/minigames/assign", { minigameId });
+  return data.assignment;
+}
+
+export async function getAssignedMinigames(classroomId, signal) {
+  const data = await api.get("/classrooms/" + classroomId + "/minigames", { signal });
+  return data.assignments;
+}
+
+export async function removeMinigameAssignment(classroomId, assignmentId) {
+  return api.delete("/classrooms/" + classroomId + "/minigames/" + assignmentId);
+}
+
+// Minigame plays/completions for teacher view
+export async function getClassroomMinigamePlays(classroomId, signal) {
+  const data = await api.get("/classrooms/" + classroomId + "/minigames/plays", { signal });
+  return data.plays;
+}

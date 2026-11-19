@@ -51,3 +51,10 @@ export async function fetchCosmetics() {
     // image is relative path (e.g., "images/skully-bow.png") - caller resolves via asset()
     return res.cosmetics;
 }
+
+// UN-XXX: Fetch minigames assigned to the student by their teacher
+export async function fetchAssignedMinigames() {
+    const res = await api.get("/minigames/assigned");
+    // Server returns: { assignments: [{ _id, minigameId, name, description, assignedAt }] }
+    return res.assignments;
+}

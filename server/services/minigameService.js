@@ -2,13 +2,32 @@
 // - GET /api/minigames/quiz: devuelve las 5 preguntas SIN correctIndex.
 // - POST /api/minigames/quiz/submit: califica en el servidor, aplica recompensa y límites.
 // Reemplaza el endpoint stop-gap POST /api/minigames/reward de UN-303.
+//
+// UN-XXX · Minigame assignments (teacher assigns, student views).
 import AppError from "../utils/AppError.js";
-import { MinigamePlay, Pet, QuizQuestion } from "../models/index.js";
+import { MinigamePlay, Pet, QuizQuestion, MinigameAssignment, Classroom } from "../models/index.js";
 import { MINIGAME_MAX_COINS_PER_PLAY, minigameLimits } from "../config/game.js";
 import { clock } from "../utils/clock.js";
 import * as gameService from "./gameService.js";
 
 const EPSILON = 1e-9;
+
+/**
+ * Lista de minigames disponibles para asignar.
+ * En el futuro esto podría venir de una colección o config.
+ * Por ahora solo existe "quiz".
+ */
+export const AVAILABLE_MINIGAMES = [
+  { id: "quiz", name: "Quick Quiz", description: "5 preguntas rápidas de cultura general" },
+  // Futuro: { id: "memory", name: "Memory Match", description: "Encuentra las parejas" },
+];
+
+/**
+ * Valida que un minigameId existe en el catálogo disponible.
+ */
+export function validateMinigameId(minigameId) {
+  return AVAILABLE_MINIGAMES.some((m) => m.id === minigameId);
+}
 
 /**
  * Obtiene las 5 preguntas del quiz sin el correctIndex.
@@ -100,4 +119,162 @@ export async function submitQuiz(user, answers) {
     playsToday: playsToday + 1,
     maxPlaysPerDay,
   };
+}
+
+/**
+ * Asigna un minijuego a un salón (solo profesores).
+ * @param {Object} teacher - Usuario profesor autenticado
+ * @param {string} classroomId - ID del salón
+ * @param {string} minigameId - ID del minijuego (ej: "quiz")
+ * @returns {Promise<Object>} La asignación creada
+ */
+export async function assignMinigame(teacher, classroomId, minigameId) {
+  // 1. Validar minigameId
+  if (!validateMinigameId(minigameId)) {
+    throw new AppError(400, "BAD_REQUEST", `Minigame '${minigameId}' no está disponible`);
+  }
+
+  // 2. Verificar que el salón pertenece al profesor
+  const classroom = await Classroom.findOne({ _id: classroomId, teacherId: teacher._id });
+  if (!classroom) {
+    throw new AppError(404, "NOT_FOUND", "Classroom not found or access denied");
+  }
+
+  // 3. Crear o actualizar la asignación (upsert por índice único)
+  const assignment = await MinigameAssignment.findOneAndUpdate(
+    { classroomId, minigameId },
+    {
+      $setOnInsert: {
+        classroomId,
+        minigameId,
+        assignedBy: teacher._id,
+        assignedAt: new Date(),
+      },
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  return assignment.toObject();
+}
+
+/**
+ * Lista los minijuegos asignados a un salón (solo profesores).
+ * @param {Object} teacher - Usuario profesor autenticado
+ * @param {string} classroomId - ID del salón
+ * @returns {Promise<Array>} Lista de asignaciones con info del minijuego
+ */
+export async function listAssignedMinigames(teacher, classroomId) {
+  // Verificar que el salón pertenece al profesor
+  const classroom = await Classroom.findOne({ _id: classroomId, teacherId: teacher._id });
+  if (!classroom) {
+    throw new AppError(404, "NOT_FOUND", "Classroom not found or access denied");
+  }
+
+  const assignments = await MinigameAssignment.find({ classroomId })
+    .sort({ assignedAt: 1 })
+    .lean();
+
+  // Enriquecer con info del catálogo
+  return assignments.map((a) => {
+    const info = AVAILABLE_MINIGAMES.find((m) => m.id === a.minigameId);
+    return {
+      _id: a._id,
+      minigameId: a.minigameId,
+      name: info?.name ?? a.minigameId,
+      description: info?.description ?? "",
+      assignedAt: a.assignedAt,
+    };
+  });
+}
+
+/**
+ * Elimina una asignación de minijuego (solo profesores).
+ * @param {Object} teacher - Usuario profesor autenticado
+ * @param {string} classroomId - ID del salón
+ * @param {string} assignmentId - ID de la asignación (MinigameAssignment._id)
+ */
+export async function removeMinigameAssignment(teacher, classroomId, assignmentId) {
+  // Verificar que el salón pertenece al profesor
+  const classroom = await Classroom.findOne({ _id: classroomId, teacherId: teacher._id });
+  if (!classroom) {
+    throw new AppError(404, "NOT_FOUND", "Classroom not found or access denied");
+  }
+
+  const result = await MinigameAssignment.findOneAndDelete({
+    _id: assignmentId,
+    classroomId,
+  });
+
+  if (!result) {
+    throw new AppError(404, "NOT_FOUND", "Assignment not found");
+  }
+}
+
+/**
+ * Obtiene los minijuegos asignados al estudiante (para su salón actual).
+ * @param {Object} student - Usuario estudiante autenticado
+ * @returns {Promise<Array>} Lista de minijuegos asignados con info del catálogo
+ */
+export async function getStudentAssignedMinigames(student) {
+  // 1. Obtener el classroomId del estudiante
+  if (!student.classroomId) {
+    return []; // Estudiante sin salón -> no hay minijuegos asignados
+  }
+
+  // 2. Buscar asignaciones para ese salón
+  const assignments = await MinigameAssignment.find({ classroomId: student.classroomId })
+    .sort({ assignedAt: 1 })
+    .lean();
+
+  // 3. Enriquecer con info del catálogo
+  return assignments.map((a) => {
+    const info = AVAILABLE_MINIGAMES.find((m) => m.id === a.minigameId);
+    return {
+      _id: a._id,
+      minigameId: a.minigameId,
+      name: info?.name ?? a.minigameId,
+      description: info?.description ?? "",
+      assignedAt: a.assignedAt,
+    };
+  });
+}
+
+/**
+ * Obtiene las partidas de minijuegos de un salón (para profesores).
+ * Muestra qué estudiantes han completado qué minijuegos.
+ * @param {Object} teacher - Usuario profesor autenticado
+ * @param {string} classroomId - ID del salón
+ * @returns {Promise<Array>} Lista de partidas con info del estudiante y minijuego
+ */
+export async function getClassroomMinigamePlays(teacher, classroomId) {
+  // Verificar que el salón pertenece al profesor
+  const classroom = await Classroom.findOne({ _id: classroomId, teacherId: teacher._id });
+  if (!classroom) {
+    throw new AppError(404, "NOT_FOUND", "Classroom not found or access denied");
+  }
+
+  // Obtener estudiantes del salón
+  const User = (await import("../models/index.js")).User;
+  const students = await User.find({ classroomId, role: "student" }).select("name").lean();
+  const studentMap = new Map(students.map((s) => [s._id.toString(), s.name]));
+
+  // Obtener partidas de minijuegos de esos estudiantes
+  const studentIds = students.map((s) => s._id);
+  const plays = await MinigamePlay.find({ studentId: { $in: studentIds } })
+    .sort({ playedAt: -1 })
+    .lean();
+
+  // Enriquecer con info del estudiante y catálogo
+  return plays.map((play) => {
+    const info = AVAILABLE_MINIGAMES.find((m) => m.id === play.gameId);
+    return {
+      _id: play._id,
+      studentId: play.studentId,
+      studentName: studentMap.get(play.studentId.toString()) || "Unknown",
+      minigameId: play.gameId,
+      minigameName: info?.name ?? play.gameId,
+      reward: play.reward,
+      playedAt: play.playedAt,
+    };
+  });
 }
