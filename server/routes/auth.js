@@ -45,7 +45,10 @@ router.post("/register", registerRateLimit, validateBody(registerSchema), async 
     const { name, email, password, role, teacherCode } = req.body;
 
     if (role === "teacher") {
-      if (!isTeacherCode(teacherCode, process.env.TEACHER_CODE)) {
+      // OPEN_TEACHER_SIGNUP=true lets anyone become a teacher just by saying so in the join
+      // form (no code). Leave it unset in production: then TEACHER_CODE is required again.
+      const openSignup = process.env.OPEN_TEACHER_SIGNUP === "true";
+      if (!openSignup && !isTeacherCode(teacherCode, process.env.TEACHER_CODE)) {
         throw new AppError(403, "FORBIDDEN", "Código de profesor inválido");
       }
     }

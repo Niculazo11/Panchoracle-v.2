@@ -1,8 +1,11 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { validateJoinForm, EMPTY_JOIN_ERRORS } from "../../lib/formValidators.js";
 import { hasErrors } from "../../lib/validation.js";
 import { useAccess } from "../../lib/useAccess.js";
+import { roleFromAnswer } from "../../lib/joinRole.js";
+import { PARK_PATH } from "../teacherspark/teacherPaths.js";
 
 const EMPTY_FORM = { name: "", email: "", password: "", message: "" };
 
@@ -11,6 +14,7 @@ export function useJoinForm() {
     const [errors, setErrors] = useState(EMPTY_JOIN_ERRORS);
     const [formSuccessText, setFormSuccessText] = useState("Thanks for raising a Pancho!");
     const { register } = useAccess();
+    const navigate = useNavigate();
 
     function handleChange(field) {
         return (event) => {
@@ -32,16 +36,22 @@ export function useJoinForm() {
         event.preventDefault();
 
         try {
-            await register({
+            // The "student or teacher?" answer decides the role. Anything that does not say
+            // "teacher" stays a student, exactly like before.
+            const user = await register({
                 name: formData.name.trim(),
                 email: formData.email.trim(),
                 password: formData.password,
-                role: "student",
+                role: roleFromAnswer(formData.message),
             });
 
             setFormSuccessText("Welcome to Raise a Pancho!");
             setFormData(EMPTY_FORM);
             setErrors(EMPTY_JOIN_ERRORS);
+
+            // A new teacher goes to the teacher park; TeacherShell sends them on to the
+            // create-classroom page when they do not have a classroom yet.
+            if (user.role === "teacher") navigate(PARK_PATH);
         } catch (error) {
             setFormSuccessText("");
             setErrors({ email: error.message || "Error al registrarse" });
