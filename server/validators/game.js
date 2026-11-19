@@ -28,5 +28,8 @@ export const choosePanchoSchema = z.strictObject({
     .string({ error: "imgUrl must be a string" })
     .trim()
     .max(500, "imgUrl must have at most 500 characters")
-    .regex(/^https:\/\/images\.dog\.ceo\/[A-Za-z0-9/_.-]+$/, "imgUrl must be an https://images.dog.ceo/ image"),
+    .regex(
+      /^(https:\/\/images\.dog\.ceo\/[A-Za-z0-9/_.-]+|\/?images\/[A-Za-z0-9/_.-]+\.(png|jpg|jpeg|webp|svg))$/,
+      "imgUrl must be a dog.ceo image or a local /images/ asset",
+    ),
 });

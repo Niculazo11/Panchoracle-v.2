@@ -31,10 +31,10 @@ export function useCosmetics() {
                 // Resolve image paths via asset() for Vite base
                 // Map cosmeticId -> id for frontend compatibility
                 const resolved = serverCosmetics.map((c) => ({
-                    ...c,
-                    id: c.cosmeticId,
-                    image: c.image ? asset(c.image) : null,
-                }));
+                        ...c,
+                        id: c.id ?? c.cosmeticId,
+                        image: c.image ? asset(c.image) : null,
+                    }));
                 if (mounted) {
                     cosmeticsCache = resolved;
                     setCosmetics(resolved);
@@ -59,10 +59,10 @@ export function useCosmetics() {
         try {
             const serverCosmetics = await fetchCosmetics();
             const resolved = serverCosmetics.map((c) => ({
-                ...c,
-                id: c.cosmeticId,
-                image: c.image ? asset(c.image) : null,
-            }));
+                    ...c,
+                    id: c.id ?? c.cosmeticId,
+                    image: c.image ? asset(c.image) : null,
+                }));
             cosmeticsCache = resolved;
             setCosmetics(resolved);
             notify();

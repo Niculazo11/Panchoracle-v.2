@@ -86,15 +86,23 @@ export function GameStateProvider({ children, initialState }) {
     }, [state]);
 
     const doBuyCosmetic = useCallback(async (cosmetic) => {
-        const result = await buyCosmetic(cosmetic.id);
-        store.setState(result);
-        return result;
+        try {
+            const result = await buyCosmetic(cosmetic.id);
+            store.setState(result);
+            return { success: true, message: `You bought "${cosmetic.name}"!` };
+        } catch (err) {
+            return { success: false, message: err.message || "Could not buy item." };
+        }
     }, []);
 
     const doEquipCosmetic = useCallback(async (cosmeticId, slot) => {
-        const result = await equipCosmetic(cosmeticId, slot);
-        store.setState(result);
-        return result;
+        try {
+            const result = await equipCosmetic(cosmeticId, slot);
+            store.setState(result);
+            return { success: true, message: "Equipped!" };
+        } catch (err) {
+            return { success: false, message: err.message || "Could not equip item." };
+        }
     }, []);
 
     // Note: tick() is removed - hunger decay is now handled by server polling (usePolling)

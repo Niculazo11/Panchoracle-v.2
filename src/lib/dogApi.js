@@ -8,6 +8,7 @@ export {
 } from "./dogStorage.js";
 
 export const STATIC_DOG_IMAGE = import.meta.env.BASE_URL + "images/pancho-choice1.png";
+export const TEAM_DOG_IMAGE = import.meta.env.BASE_URL + "images/Pancho-2edition.png";
 
 const DOG_LIST_URL = "https://dog.ceo/api/breed/dachshund/images";
 import { readCache, writeCache } from "./dogCache.js";
