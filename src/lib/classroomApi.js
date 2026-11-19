@@ -21,6 +21,12 @@ export async function createClassroom(name, startDate, endDate) {
   return data.classroom;
 }
 
+// Student joins a classroom with a join code. Creates their Pancho on first join.
+export async function joinClassroom(joinCode) {
+  const data = await api.post("/classrooms/join", { joinCode });
+  return data; // { classroom, alreadyJoined }
+}
+
 export async function renameClassroom(id, name) {
   const data = await api.patch("/classrooms/" + id, { name });
   return data.classroom;
