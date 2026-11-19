@@ -17,6 +17,7 @@ import TeacherSection from "../pages/teacherspark/TeacherSection.jsx";
 import ManageHomework from "../pages/teacherspark/ManageHomework.jsx";
 import AddHomework from "../pages/teacherspark/AddHomework.jsx";
 import EditHomework from "../pages/teacherspark/EditHomework.jsx";
+import StudentHomework from "../pages/homework/StudentHomework.jsx";
 import StudentsPage from "../pages/teacherspark/StudentsPage.jsx";
 import {
   PARK_PATH, CLASSROOM_PATH, NEW_CLASSROOM_PATH, SETTINGS_PATH,
@@ -32,12 +33,15 @@ export const PUBLIC_ROUTES = [
   { paths: ["/choose", "/choosePancho", "/choosePancho.html"], element: <ChoosePancho /> },
 ];
 
+const StudentOnly = withRole(["student"], "Only students can see this page.");
+
 export const PRIVATE_ROUTES = [
   { paths: ["/raise", "/raisePancho", "/raisePancho.html"], element: <RaisePancho /> },
   { paths: ["/stats/:username", "/stats", "/panchoStats", "/panchoStats.html"], element: <PanchoStats /> },
   { paths: ["/shop", "/Shop", "/Shop.html"], element: <Shop /> },
   { paths: ["/Shop/:cosmeticId"], element: <CosmeticDetail /> },
   { paths: ["/minigames", "/MiniGames", "/MiniGames.html"], element: <MiniGames /> },
+  { paths: ["/homework"], element: <StudentHomework />, wrapper: StudentOnly },
 ];
 
 export const LEGACY_REDIRECTS = [

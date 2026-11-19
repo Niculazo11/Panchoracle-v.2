@@ -18,6 +18,11 @@ export default function RaiseNav({ username }) {
                 <span>MiniGames</span>
             </Link>
 
+            <Link to="/homework" className="absolute right-52 top-1 flex flex-col items-center gap-1 text-black font-serif text-base">
+                <span aria-hidden="true" className="flex items-center justify-center w-16 h-16 text-5xl">📝</span>
+                <span>Homework</span>
+            </Link>
+
             <Link to={statsPath} className="absolute right-28 top-1 flex flex-col items-center gap-1 text-black font-serif text-base">
                 <img src={asset("images/PlayingCards.png")} alt="Stats" className="w-16 h-16 object-contain" />
                 <span>Stats</span>
