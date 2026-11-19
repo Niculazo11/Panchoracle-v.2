@@ -7,14 +7,24 @@
 
 Raise a Pancho: a gamified classroom app. Students adopt a virtual dachshund that reacts to their homework; teachers manage classrooms, assignments and their students' progress.
 
+### Problem Statement
+
+Although advances in technology have impacted a large part of the modern world, the various learning processes in educational establishments are still mainly static, passive, and separate from how today’s students are used to functioning in the digital world. Data provided by the OECD (2024) indicate that a decline in motivation, passive content consumption, and long feedback loops are detrimental for young learners in their academic engagement. Reports by UNESCO (2023) show that proper incorporation of engaging feedback methods, outside of standardized teaching procedures, helps learners retain more information and become more involved in their learning.
+In conventional educational situations (for instance, while teaching introductory programming courses), the lack of engagement becomes evident even in two phases: students stall with multi-step tasks that do not offer any progress visibility and teachers are unable to identify students who are falling behind before their dropping grades. Traditional LMS systems (like Moodle and Google Classroom) can be described as passive systems offering delayed feedback. The use of Excel is not advisable either due to the absence of any interactive features.
+
+Panchoracle has developed a full-stack web application which achieves its objectives within the context of a play, care and simulation archetype. Panchoracle is available around the clock and can be used by students both on desktop computers and mobile devices. Students are also given one companion at a time: a simulated dachshund, named Pancho, who demonstrates the health of the student and his educational performance. When the student accomplishes assignments on time, Pancho receives nutrition and maintains good health, but if the student misses deadlines, Pancho faces vitality decline. In the meantime, the students do short quizzes to earn coins and customize their pet. Teachers get a separate dashboard for monitoring students’ performance and health.
+
 ### Links
 
 | What | URL |
 |---|---|
-| Site (Vercel) | `https://<your-project>.vercel.app` |
-| API health check | `https://<your-project>.vercel.app/api/health` |
+| Site (Vercel) | `https://panchoracle-git-main-panchoracle.vercel.app/` |
+| API health check | `https://panchoracle-git-main-panchoracle.vercel.app/api/health` |
+| Figma Wireframe | `https://www.figma.com/site/JAjaHKcbfHas1ohly8W6hW/Wireframe?node-id=8-34&t=qdpzMr7CtS7LLqa0-1` |
+| Figma Concept | `https://www.figma.com/site/gJXYreTLyKluucYUJVEeHQ/Modern-Product-Launch--Community-?node-id=0-1&t=gHpGlN8Ju5WI11cz-1` |
 
-Front end and API are one Vercel project on one domain (the session cookie is `SameSite=Lax`, so they cannot live on different domains). Replace `<your-project>` with the real delivery URL.
+
+
 
 ## Local setup
 
@@ -74,3 +84,6 @@ The script prints the target `host/db`, refuses to run without `--yes`, in produ
 - [`PROJECT_DOCUMENTATION.md`](./PROJECT_DOCUMENTATION.md): architecture, status and maintenance log.
 - [`docs/api.md`](./docs/api.md): API reference (index of every real endpoint).
 - [`docs/classrooms-api.md`](./docs/classrooms-api.md), [`docs/game-api.md`](./docs/game-api.md), [`docs/usePolling.md`](./docs/usePolling.md), [`docs/ADR-001-api-mongodb.md`](./docs/ADR-001-api-mongodb.md).
+- [`UserStories.md`](./docs/UserStories.md): Aceptance Criteria.
+- [`tickets.md`](./docs/tickets.md): Each goal of the team.
+- [`IntegrationContract.md`](./docs/IntegrationContract.md): The contract in which the API will work according to.
