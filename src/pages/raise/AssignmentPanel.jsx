@@ -9,7 +9,9 @@ export default function AssignmentPanel({ dog, assignment, feedback, onStepClick
     return (
         <div>
             <h2 className="text-lg font-bold mb-1">Assignment Tasks</h2>
-            <p id="assignmentTitle" className="text-sm text-gray-600 mb-3">{assignment.title}</p>
+            <p id="assignmentTitle" className="text-sm text-gray-600 mb-1">{assignment.title}</p>
+            {assignment.description && <p className="text-sm text-gray-600 mb-1 break-words">{assignment.description}</p>}
+            {assignment.dueAt && <p className="text-xs text-gray-500 mb-3">Due {new Date(assignment.dueAt).toLocaleDateString(undefined, { dateStyle: "medium", timeZone: "UTC" })}</p>}
 
             <ul id="stepsList" className="flex flex-col gap-2 mb-3">
                 {prepSteps.map((step) => (

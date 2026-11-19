@@ -14,3 +14,16 @@ export async function createAssignment({ title, description, dueAt }) {
   const data = await api.post("/assignments", { title, description, dueAt });
   return data.assignment || data;
 }
+
+// One assignment, to fill the edit form.
+export async function getAssignment(id, signal) {
+  const data = await api.get("/assignments/" + id, { signal });
+  return data.assignment || data;
+}
+
+// Sends only the fields that changed. Which fields the server accepts, and until when,
+// is decided by the server (ADR 6.2: it answers 409 PERIOD_LOCKED when it does not).
+export async function updateAssignment(id, changes) {
+  const data = await api.patch("/assignments/" + id, changes);
+  return data.assignment || data;
+}

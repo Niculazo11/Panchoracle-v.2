@@ -16,6 +16,9 @@ import ClassroomsPanel from "../pages/teacherspark/ClassroomsPanel.jsx";
 import TeacherSection from "../pages/teacherspark/TeacherSection.jsx";
 import ManageHomework from "../pages/teacherspark/ManageHomework.jsx";
 import AddHomework from "../pages/teacherspark/AddHomework.jsx";
+import HomeworkSubmissions from "../pages/teacherspark/HomeworkSubmissions.jsx";
+import EditHomework from "../pages/teacherspark/EditHomework.jsx";
+import StudentHomework from "../pages/homework/StudentHomework.jsx";
 import StudentsPage from "../pages/teacherspark/StudentsPage.jsx";
 import ManageMinigames from "../pages/teacherspark/ManageMinigames.jsx";
 import {
@@ -32,12 +35,15 @@ export const PUBLIC_ROUTES = [
   { paths: ["/choose", "/choosePancho", "/choosePancho.html"], element: <ChoosePancho /> },
 ];
 
+const StudentOnly = withRole(["student"], "Only students can see this page.");
+
 export const PRIVATE_ROUTES = [
   { paths: ["/raise", "/raisePancho", "/raisePancho.html"], element: <RaisePancho /> },
   { paths: ["/stats/:username", "/stats", "/panchoStats", "/panchoStats.html"], element: <PanchoStats /> },
   { paths: ["/shop", "/Shop", "/Shop.html"], element: <Shop /> },
   { paths: ["/Shop/:cosmeticId"], element: <CosmeticDetail /> },
   { paths: ["/minigames", "/MiniGames", "/MiniGames.html"], element: <MiniGames /> },
+  { paths: ["/homework"], element: <StudentHomework />, wrapper: StudentOnly },
 ];
 
 export const LEGACY_REDIRECTS = [
@@ -75,6 +81,8 @@ export function renderTeacherRoutes() {
       <Route path="settings" element={<ClassroomSettings />} />
       <Route path="homework" element={<ManageHomework />} />
       <Route path="homework/new" element={<AddHomework />} />
+      <Route path="homework/:assignmentId/edit" element={<EditHomework />} />
+      <Route path="homework/:assignmentId/submissions" element={<HomeworkSubmissions />} />
       <Route path="students" element={<StudentsPage />} />
       <Route path="search" element={<TeacherSection title="Search for a Dog" />} />
       <Route path="minigames" element={<ManageMinigames />} />

@@ -1,6 +1,9 @@
 // Business logic for assignments (UN-107 + UN-302). Plain functions, no Express objects.
-// Rules come from ADR section 6: tasks can only be added, changed or removed BEFORE the
-// period starts (6.2), and every dueAt must be unique and inside the period (6.4).
+// Rules come from ADR section 6. AMENDMENT (team decision, 2026-11-19): the teacher can add,
+// edit and remove assignments at any time, not only before the period starts (6.2). What stays:
+// every dueAt is unique and inside the period (6.4), and an assignment that is already due is
+// history: its date cannot change and it cannot be removed, and no assignment can be given a
+// due date in the past, so nobody is charged for a task that is created already missed.
 // UN-302: step completion and submission (student-only).
 import mongoose from "mongoose";
 import AppError from "../utils/AppError.js";
@@ -31,10 +34,17 @@ async function getClassroomOf(user) {
   return Classroom.findById(user.classroomId);
 }
 
-// ADR 6.2 (PERIOD_LOCKED): once the period has started nothing can be added, edited or removed.
-function assertPeriodOpen(classroom) {
-  if (Date.now() >= classroom.period.startDate.getTime()) {
-    throw new AppError(409, "PERIOD_LOCKED", "The period already started; assignments can no longer change");
+// A due date must still be ahead: a new or moved due date in the past would count as missed at once.
+function assertDueAtInFuture(dueAt) {
+  if (dueAt.getTime() <= Date.now()) {
+    throw new AppError(400, "VALIDATION_ERROR", "dueAt must be in the future");
+  }
+}
+
+// An assignment that is already due is history (its penalty may already be charged).
+function assertNotDue(assignment, message) {
+  if (assignment.dueAt.getTime() <= Date.now()) {
+    throw new AppError(409, "ASSIGNMENT_EXPIRED", message);
   }
 }
 
@@ -88,10 +98,10 @@ export async function getAssignment(user, assignmentId) {
 export async function createAssignment(teacher, input) {
   const classroom = await getClassroomOf(teacher);
   if (!classroom) throw new AppError(404, "NOT_FOUND", "Create a classroom before adding assignments");
-  assertPeriodOpen(classroom);
 
   const dueAt = new Date(input.dueAt);
   assertDueAtInPeriod(classroom, dueAt);
+  assertDueAtInFuture(dueAt);
 
   let assignment;
   try {
@@ -115,14 +125,18 @@ export async function createAssignment(teacher, input) {
 // PATCH /api/assignments/:id: only title, description and dueAt can change.
 export async function updateAssignment(teacher, assignmentId, input) {
   const { assignment, classroom } = await getOwnedAssignment(assignmentId, teacher);
-  assertPeriodOpen(classroom);
 
+  // Title and description can always change. The date only moves while the task is not due yet.
   if (input.title !== undefined) assignment.title = input.title;
   if (input.description !== undefined) assignment.description = input.description;
   if (input.dueAt !== undefined) {
     const dueAt = new Date(input.dueAt);
-    assertDueAtInPeriod(classroom, dueAt);
-    assignment.dueAt = dueAt;
+    if (dueAt.getTime() !== assignment.dueAt.getTime()) {
+      assertNotDue(assignment, "This assignment is already due; its date can no longer change");
+      assertDueAtInPeriod(classroom, dueAt);
+      assertDueAtInFuture(dueAt);
+      assignment.dueAt = dueAt;
+    }
   }
 
   try {
@@ -134,12 +148,13 @@ export async function updateAssignment(teacher, assignmentId, input) {
   return assignment;
 }
 
-// DELETE /api/assignments/:id. Before the period starts there are no submissions yet
-// (they need an active task and a started period, ADR 6.5), so nothing is left orphaned.
+// DELETE /api/assignments/:id. Only while the task is not due yet: before that, a student may
+// already have handed it in, so its submissions are removed with it (none is left orphaned).
 export async function deleteAssignment(teacher, assignmentId) {
   const { assignment, classroom } = await getOwnedAssignment(assignmentId, teacher);
-  assertPeriodOpen(classroom);
+  assertNotDue(assignment, "This assignment is already due and can no longer be removed");
 
+  await Submission.deleteMany({ assignmentId: assignment._id });
   const result = await Assignment.deleteOne({ _id: assignment._id });
   if (result.deletedCount === 1) {
     await Classroom.updateOne({ _id: classroom._id }, { $inc: { "period.totalAssignments": -1 } });
