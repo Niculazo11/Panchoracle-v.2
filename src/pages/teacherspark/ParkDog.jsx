@@ -50,7 +50,7 @@ export default function ParkDog({ dog }) {
             <div className="relative">
                 <div className={"relative w-32 h-32 sm:w-44 sm:h-44 lg:w-56 lg:h-56 rounded-lg overflow-hidden border-4 " + (isDead ? "grayscale opacity-70 border-gray-500" : "border-white")}>
                     {/* Only the picture is mirrored, never the name above it. */}
-                    <div className={"relative w-full h-full " + (facingLeft ? "-scale-x-100" : "")}>
+                    <div className="relative w-full h-full" style={{ transform: facingLeft ? "scaleX(-1)" : "none" }}>
                         <PanchoLayers dog={picture} />
                     </div>
                 </div>
