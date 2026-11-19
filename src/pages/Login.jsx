@@ -1,6 +1,7 @@
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import LoginForm from "./login/LoginForm.jsx";
 import { useAccess } from "@lib/useAccess.js";
+import { useGameState } from "../state/GameStateContext.jsx";
 import { useState, useCallback } from "react";
 import { validateLoginForm, EMPTY_LOGIN_ERRORS } from "@lib/formValidators.js";
 import { hasErrors } from "@lib/validation.js";
@@ -17,6 +18,7 @@ function redirectTarget(state, role) {
 
 export default function Login() {
   const { status, role, login } = useAccess();
+  const { init } = useGameState();
   const location = useLocation();
   const navigate = useNavigate();
   const [formData, setFormData] = useState(EMPTY_FORM);
@@ -36,6 +38,10 @@ export default function Login() {
 
     try {
       const user = await login(formData.email.trim(), formData.password);
+      // The game state was fetched once when the app opened (before this login, so it holds the
+      // guest defaults). Reload it so a student who already has a Pancho lands on /raise instead of
+      // being sent back to choose one. A 404 just means "no Pancho yet": the app handles that.
+      if (user.role === "student") await init().catch(() => {});
       navigate(redirectTarget(location.state, user.role), { replace: true });
     } catch (error) {
       setErrors({ email: error.message || "Error al iniciar sesión" });

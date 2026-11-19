@@ -3,7 +3,7 @@ import { getStoredUsername } from "../../lib/dogApi.js";
 import { useJoinForm } from "./useJoinForm.js";
 
 export default function JoinSection() {
-    const { formData, errors, formSuccessText, handleChange, handleSubmit } = useJoinForm();
+    const { formData, errors, formSuccessText, submitting, handleChange, handleSubmit, handleJoin } = useJoinForm();
 
     const savedName = getStoredUsername();
     const welcomeMessage = savedName ? `Welcome back, ${savedName}!` : "Join Raise a Pancho";
@@ -21,11 +21,12 @@ export default function JoinSection() {
                 <FormField id="password" label="Password:" type="password" value={formData.password} onChange={handleChange("password")} error={errors.password} />
 
                 <div className="w-full">
-                    <label htmlFor="message" className="block text-white mb-1">Are you a student or a teacher?</label>
-                    <textarea id="message" name="message" placeholder="student or teacher" className="w-full rounded px-3 py-2 dark:text-black" value={formData.message} onChange={handleChange("message")}></textarea>
+                    <p className="text-white mb-2">Join as:</p>
+                    <div className="flex gap-4">
+                        <button type="button" disabled={submitting} onClick={() => handleJoin("teacher")} className="flex-1 px-5 py-2 bg-[rgb(21,116,62)] dark:bg-[#5d7467] text-white rounded disabled:opacity-50 disabled:cursor-not-allowed">Teacher</button>
+                        <button type="button" disabled={submitting} onClick={() => handleJoin("student")} className="flex-1 px-5 py-2 bg-[rgb(21,116,62)] dark:bg-[#5d7467] text-white rounded disabled:opacity-50 disabled:cursor-not-allowed">Student</button>
+                    </div>
                 </div>
-
-                <button type="submit" className="inline-block px-5 py-2 bg-[rgb(21,116,62)] dark:bg-[#5d7467] text-white rounded">Join us</button>
 
                 {/* Kept hidden exactly like the original #formSuccess paragraph. */}
                 <p id="formSuccess" className="hidden text-white font-semibold">{formSuccessText}</p>
