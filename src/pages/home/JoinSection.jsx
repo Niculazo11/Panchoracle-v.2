@@ -1,12 +1,10 @@
 import FormField from "../../components/FormField.jsx";
 import { getStoredUsername } from "../../lib/dogApi.js";
 import { useJoinForm } from "./useJoinForm.js";
-import { roleFromAnswer } from "../../lib/joinRole.js";
 
 export default function JoinSection() {
     const { formData, errors, formSuccessText, handleChange, handleSubmit } = useJoinForm();
 
-    const isTeacher = roleFromAnswer(formData.message) === "teacher";
     const savedName = getStoredUsername();
     const welcomeMessage = savedName ? `Welcome back, ${savedName}!` : "Join Raise a Pancho";
 
@@ -26,11 +24,6 @@ export default function JoinSection() {
                     <label htmlFor="message" className="block text-white mb-1">Are you a student or a teacher?</label>
                     <textarea id="message" name="message" placeholder="student or teacher" className="w-full rounded px-3 py-2 dark:text-black" value={formData.message} onChange={handleChange("message")}></textarea>
                 </div>
-
-                {/* Only shown when the answer above says "teacher". */}
-                {isTeacher && (
-                    <FormField id="teacherCode" label="Teacher code:" type="password" value={formData.teacherCode} onChange={handleChange("teacherCode")} error={errors.teacherCode} />
-                )}
 
                 <button type="submit" className="inline-block px-5 py-2 bg-[rgb(21,116,62)] dark:bg-[#5d7467] text-white rounded">Join us</button>
 

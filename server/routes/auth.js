@@ -1,6 +1,5 @@
 // UN-104 · API de autenticación (ADR 5.2, 7.4)
 import { Router } from "express";
-import { timingSafeEqual } from "node:crypto";
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import { signToken } from "../utils/jwt.js";
@@ -16,21 +15,6 @@ const TOKEN_EXPIRY = 3600; // 1 hora
 // Valid bcrypt hash of a random string. Compared when the email does not exist so a login for
 // an unknown email costs the same as one for a known email (no user enumeration by timing).
 const DUMMY_HASH = bcrypt.hashSync("panchoracle-dummy-password", 10);
-
-// Constant-time comparison so the teacher code cannot be guessed character by character.
-// A value copied into Vercel/.env often carries stray spaces or surrounding quotes, so both the
-// typed code and TEACHER_CODE are cleaned the same way before they are compared.
-function cleanCode(value) {
-  if (typeof value !== "string") return "";
-  return value.trim().replace(/^(["'])(.*)\1$/, "$2").trim();
-}
-
-function isTeacherCode(received, expected) {
-  const a = Buffer.from(cleanCode(received));
-  const b = Buffer.from(cleanCode(expected));
-  if (b.length === 0) return false;
-  return a.length === b.length && timingSafeEqual(a, b);
-}
 
 function getCookieOpts() {
   return {
@@ -49,22 +33,8 @@ function startSession(res, user) {
 // POST /api/auth/register
 router.post("/register", registerRateLimit, validateBody(registerSchema), async (req, res, next) => {
   try {
-    const { name, email, password, role, teacherCode } = req.body;
-
-    if (role === "teacher") {
-      // OPEN_TEACHER_SIGNUP=true lets anyone become a teacher just by saying so in the join
-      // form (no code). Leave it unset in production: then TEACHER_CODE is required again.
-      const openSignup = process.env.OPEN_TEACHER_SIGNUP === "true";
-      if (!openSignup) {
-        // Tells apart "the server never received TEACHER_CODE" from "the typed code is wrong".
-        if (!cleanCode(process.env.TEACHER_CODE)) {
-          throw new AppError(403, "FORBIDDEN", "El registro de profesores no está configurado (falta TEACHER_CODE en el servidor)");
-        }
-        if (!isTeacherCode(teacherCode, process.env.TEACHER_CODE)) {
-          throw new AppError(403, "FORBIDDEN", "Código de profesor inválido");
-        }
-      }
-    }
+    // Anyone can register as a teacher just by choosing the role: there is no teacher code.
+    const { name, email, password, role } = req.body;
 
     const passwordHash = await bcrypt.hash(password, 10);
     let user;
