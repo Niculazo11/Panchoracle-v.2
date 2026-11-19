@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-// Small button that copies a join code. Shows "¡Copiado!" for two seconds; the cleanup
+// Small button that copies a join code. Shows "Copied!" for two seconds; the cleanup
 // cancels the timer if the page closes first. onCopyError receives a message if the
 // browser does not allow copying.
 export default function CopyCodeButton({ code, onCopyError }) {
@@ -19,7 +19,7 @@ export default function CopyCodeButton({ code, onCopyError }) {
             await navigator.clipboard.writeText(code);
             setCopied(true);
         } catch {
-            onCopyError("No se pudo copiar el código. Selecciónalo y cópialo a mano.");
+            onCopyError("Could not copy code. Select and copy manually.");
         }
     }
 
@@ -29,7 +29,7 @@ export default function CopyCodeButton({ code, onCopyError }) {
             onClick={handleCopy}
             className="min-h-11 px-4 py-2 bg-[#5a57d9] text-white underline cursor-pointer rounded"
         >
-            {copied ? "¡Copiado!" : "Copiar código"}
+            {copied ? "Copied!" : "Copy code"}
         </button>
     );
 }

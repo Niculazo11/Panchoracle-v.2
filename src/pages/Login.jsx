@@ -44,7 +44,7 @@ export default function Login() {
       if (user.role === "student") await init().catch(() => {});
       navigate(redirectTarget(location.state, user.role), { replace: true });
     } catch (error) {
-      setErrors({ email: error.message || "Error al iniciar sesión" });
+      setErrors({ email: error.message || "Error signing in" });
     }
   };
 

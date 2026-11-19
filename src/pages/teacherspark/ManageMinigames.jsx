@@ -8,8 +8,8 @@ const FEEDBACK_TIMEOUT_MS = 3000;
 
 // Available minigames catalog (matches server's AVAILABLE_MINIGAMES)
 const AVAILABLE_MINIGAMES = [
-  { id: "quiz", name: "Quick Quiz", description: "5 preguntas rápidas de cultura general" },
-  // Future: { id: "memory", name: "Memory Match", description: "Encuentra las parejas" },
+  { id: "quiz", name: "Quick Quiz", description: "5 quick general knowledge questions" },
+  // Future: { id: "memory", name: "Memory Match", description: "Find the pairs" },
 ];
 
 /**
