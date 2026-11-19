@@ -181,8 +181,14 @@ Assignments belong to the current period of a classroom. Create/edit/delete only
 | `DELETE /api/assignments/:id` | Teacher (owner) | — | `200 { "deleted": true, "assignmentId": "..." }` |
 | `POST /api/assignments/:id/steps` | Student | `{ "stepId": 1 }` (1–3) | `200 { "success": true, "step": { "id": 1, "completed": true }, "state": { ... } }` |
 | `POST /api/assignments/:id/submit` | Student | none or `{}` | `200 { "success": true, "rewards": { "hunger": 70 }, "state": { ... } }`; hunger returns to 100 |
+| `POST /api/assignments/:id/submissions` | Student | `{ "kind": "link", "url": "https://..." }` or `{ "kind": "file", "fileName", "mimeType", "dataBase64" }` (file ≤ 3 MB) | `201 { "submission": { "id", "assignmentId", "kind", "fileName", "fileUrl", "submittedAt" } }` |
+| `GET /api/assignments/:id/submissions` | Teacher (owner) | — | `200 { "submissions": [ { ..., "student": { "id", "name" } } ] }` oldest first |
+| `GET /api/me/submissions` | Student | — | `200 { "submissions": [ ... ] }` |
+| `GET /api/submissions/:id/file` | Student (owner), Teacher (of the classroom) | — | `200` the stored file, `Content-Disposition: inline` |
 
 `dueAt` must be inside the period and unique per classroom. A title such as `<script>` is stored and returned as plain text; the client escapes it when rendering.
+
+Hand-in rules and errors (`ASSIGNMENT_EXPIRED`, duplicates, dead Pancho) are in [submissions-api.md](submissions-api.md).
 
 Errors: `400` invalid body, date or id, or a `stepId` outside 1–3; `403` wrong role or another classroom's assignment; `404` unknown assignment; `409` duplicate `dueAt`, `PERIOD_LOCKED`, step already completed, a dead Pancho, submit without steps 1–3, or submitted twice.
 

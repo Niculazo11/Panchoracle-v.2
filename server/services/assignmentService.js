@@ -7,8 +7,8 @@
 // UN-302: step completion and submission (student-only).
 import mongoose from "mongoose";
 import AppError from "../utils/AppError.js";
-import { Assignment, Classroom, Pet, Submission } from "../models/index.js";
-import { loadStudentContext, toGameJson } from "./gameService.js";
+import { Assignment, Classroom, Pet, Submission, SubmissionFile } from "../models/index.js";
+import { loadStudentContext, rewardActiveSubmission, toGameJson } from "./gameService.js";
 
 function isDuplicateKey(error) {
   return error && error.code === 11000;
@@ -154,6 +154,9 @@ export async function deleteAssignment(teacher, assignmentId) {
   const { assignment, classroom } = await getOwnedAssignment(assignmentId, teacher);
   assertNotDue(assignment, "This assignment is already due and can no longer be removed");
 
+  // The stored bytes of handed-in files go too (collection submission_files).
+  const handedIn = await Submission.find({ assignmentId: assignment._id }).select("_id");
+  await SubmissionFile.deleteMany({ submissionId: { $in: handedIn.map((item) => item._id) } });
   await Submission.deleteMany({ assignmentId: assignment._id });
   const result = await Assignment.deleteOne({ _id: assignment._id });
   if (result.deletedCount === 1) {
@@ -257,11 +260,7 @@ export async function submitAssignment(user, assignmentId) {
   // Steps are reset; with the submission saved, the next reconciliation also moves the
   // active assignment on and never counts this one as missed.
   const hungerBefore = pet.hunger;
-  const updated = await Pet.findOneAndUpdate(
-    { _id: pet._id },
-    { $set: { hunger: 100, currentAssignmentSteps: [false, false, false, false], currentAssignmentStepsFor: null } },
-    { returnDocument: "after" }
-  );
+  const updated = await rewardActiveSubmission(pet);
 
   return {
     success: true,

@@ -1,13 +1,22 @@
 // Assignment routes (UN-107 + UN-302), mounted in app.js under /api/assignments.
 // Teachers create, edit and delete; students and teachers of the classroom can read.
-// Students complete steps and submit assignments.
+// Students complete steps and submit assignments (4-step flow) or hand in a link or a file
+// (docs/submissions-api.md). Teachers read what was handed in.
 // Express 5 forwards errors thrown in async handlers to the error handler.
-import { Router } from "express";
+import express, { Router } from "express";
 import { authorize } from "../middleware/authenticate.js";
 import { validateBody } from "../middleware/validateBody.js";
 import { validateIds } from "../middleware/validateIds.js";
-import { createAssignmentSchema, updateAssignmentSchema, completeStepSchema, submitAssignmentSchema } from "../validators/assignment.js";
+import {
+  createAssignmentSchema,
+  updateAssignmentSchema,
+  completeStepSchema,
+  submitAssignmentSchema,
+  createSubmissionSchema,
+} from "../validators/assignment.js";
+import { SUBMISSION_BODY_LIMIT } from "../config/submissions.js";
 import * as service from "../services/assignmentService.js";
+import * as submissions from "../services/submissionService.js";
 
 const router = Router();
 const teacherOnly = authorize("teacher");
@@ -52,5 +61,26 @@ router.post("/:id/steps", studentOnly, validateIds("id"), validateBody(completeS
 router.post("/:id/submit", studentOnly, validateIds("id"), validateBody(submitAssignmentSchema), async (req, res) => {
   res.status(200).json(await service.submitAssignment(req.user, req.params.id));
 });
+
+// GET /api/assignments/:id/submissions -> 200 { submissions } oldest first (teacher who owns the classroom)
+router.get("/:id/submissions", teacherOnly, validateIds("id"), async (req, res) => {
+  res.status(200).json({ submissions: await submissions.listAssignmentSubmissions(req.user, req.params.id) });
+});
+
+// POST /api/assignments/:id/submissions -> 201 { submission } (student hand-in of a link or a file)
+// app.js leaves this route out of the small global JSON parser, so the bigger limit is applied
+// here, AFTER authentication and the role check: nobody without a student session can make the
+// server read a 4 MB body.
+router.post(
+  "/:id/submissions",
+  studentOnly,
+  validateIds("id"),
+  express.json({ limit: SUBMISSION_BODY_LIMIT }),
+  validateBody(createSubmissionSchema),
+  async (req, res) => {
+    const submission = await submissions.handInAssignment(req.user, req.params.id, req.body);
+    res.status(201).json({ submission: submissions.toSubmissionJson(submission) });
+  }
+);
 
 export default router;

@@ -1,6 +1,8 @@
-# Submissions API (proposal)
+# Submissions API
 
-Status: the client is written (`src/lib/submissionApi.js`, `src/pages/homework/`); the server side is NOT written yet.
+Status: implemented. Client: `src/lib/submissionApi.js`, `src/pages/homework/`. Server: `server/routes/assignments.js`,
+`server/routes/me.js`, `server/routes/submissions.js`, `server/services/submissionService.js`,
+`server/validators/assignment.js` and the models `Submission` and `SubmissionFile`. Tests: `server/tests/submissions.test.js`.
 Decisions taken with the team: students may hand in **any** open assignment in **any order**; a missed
 assignment still costs health (ADR 5.3 is unchanged); files are small and kept in MongoDB.
 
@@ -42,3 +44,17 @@ All errors use `{ "error": { "code", "message" } }` (ADR 7.6). Needs a session c
 New collection `submission_files` (`submissionId`, `mimeType`, `size`, `data` Buffer, `createdAt`), so the
 `submissions` documents stay small. `submissions.fileUrl` is the link itself (kind `link`) or
 `/api/submissions/:id/file` (kind `file`). `kind` is a new field of `submissions` (`"link"` or `"file"`).
+
+## Errors
+
+| Status | `code` | When |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | Bad body, link, file name, base64, file type that does not match the real bytes, file over 3 MB, or an invalid id. |
+| 401 | `UNAUTHORIZED` | No session. |
+| 403 | `FORBIDDEN` | Wrong role, assignment of another classroom, or a file/list that is not yours. |
+| 404 | `NOT_FOUND` | Unknown assignment, submission or file; assignment of a finished period; student without a Pancho. |
+| 409 | `CONFLICT` | Dead Pancho, period not started yet, or the assignment was already handed in. |
+| 409 | `ASSIGNMENT_EXPIRED` | `now >= dueAt`. |
+
+The body limit of `POST /api/assignments/:id/submissions` is read after authentication, so only a logged-in
+student can make the server read a body of about 4 MB. Every other route keeps the 10 kb limit.
