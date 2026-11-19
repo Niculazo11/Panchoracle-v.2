@@ -3,6 +3,7 @@ import {
     validateEmail,
     validatePassword
 } from "./validation.js";
+import { roleFromAnswer } from "./joinRole.js";
 
 // Whole-form validators: they always return an errors object with the
 // same shape as formData, so handleSubmit can check it in one go.
@@ -10,7 +11,11 @@ export function validateJoinForm(formData) {
     return {
         name: validateName(formData.name),
         email: validateEmail(formData.email),
-        password: validatePassword(formData.password)
+        password: validatePassword(formData.password),
+        // The teacher code is only asked (and required) when the person says they are a teacher.
+        teacherCode: roleFromAnswer(formData.message) === "teacher" && !(formData.teacherCode || "").trim()
+            ? "Teacher code is required."
+            : ""
     };
 }
 
@@ -32,6 +37,6 @@ export function validateLoginForm(formData) {
     };
 }
 
-export const EMPTY_JOIN_ERRORS = { name: "", email: "", password: "" };
+export const EMPTY_JOIN_ERRORS = { name: "", email: "", password: "", teacherCode: "" };
 export const EMPTY_CHOOSE_ERRORS = { name: "", password: "", email: "" };
 export const EMPTY_LOGIN_ERRORS = { email: "", password: "" };

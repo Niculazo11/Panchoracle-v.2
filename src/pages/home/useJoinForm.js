@@ -7,7 +7,7 @@ import { useAccess } from "../../lib/useAccess.js";
 import { roleFromAnswer } from "../../lib/joinRole.js";
 import { PARK_PATH } from "../teacherspark/teacherPaths.js";
 
-const EMPTY_FORM = { name: "", email: "", password: "", message: "" };
+const EMPTY_FORM = { name: "", email: "", password: "", message: "", teacherCode: "" };
 
 export function useJoinForm() {
     const [formData, setFormData] = useState(EMPTY_FORM);
@@ -38,11 +38,14 @@ export function useJoinForm() {
         try {
             // The "student or teacher?" answer decides the role. Anything that does not say
             // "teacher" stays a student, exactly like before.
+            const role = roleFromAnswer(formData.message);
             const user = await register({
                 name: formData.name.trim(),
                 email: formData.email.trim(),
                 password: formData.password,
-                role: roleFromAnswer(formData.message),
+                role,
+                // Only teachers send the code; the server checks it against TEACHER_CODE.
+                teacherCode: role === "teacher" ? formData.teacherCode.trim() : undefined,
             });
 
             setFormSuccessText("Welcome to Raise a Pancho!");
@@ -54,7 +57,12 @@ export function useJoinForm() {
             if (user.role === "teacher") navigate(PARK_PATH);
         } catch (error) {
             setFormSuccessText("");
-            setErrors({ email: error.message || "Error al registrarse" });
+            // 403 = wrong teacher code: show it under the code field, not under the email.
+            if (error.status === 403) {
+                setErrors({ ...EMPTY_JOIN_ERRORS, teacherCode: error.message || "Invalid teacher code" });
+            } else {
+                setErrors({ ...EMPTY_JOIN_ERRORS, email: error.message || "Error al registrarse" });
+            }
         }
     }
 
