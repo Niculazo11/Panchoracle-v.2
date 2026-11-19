@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { asset } from "../lib/asset.js";
-import { useGameState } from "../state/GameStateContext.jsx";
 import { useFeedback } from "../lib/useFeedback.js";
 import Quiz from "./minigames/Quiz.jsx";
 
@@ -12,13 +11,17 @@ const FEEDBACK_TIMEOUT_MS = 3000;
 // more minigames can be added here later as sibling components under
 // pages/minigames/, each reporting its score the same way.
 export default function MiniGames() {
-    const { awardMinigameCoins } = useGameState();
     const { feedback, showFeedback } = useFeedback(FEEDBACK_TIMEOUT_MS);
     const [isPlaying, setIsPlaying] = useState(false);
 
-    async function handleQuizComplete(correctCount) {
-        const result = await awardMinigameCoins(correctCount);
-        showFeedback(result.message);
+    // Server already awards coins via POST /minigames/quiz/submit (UN-501).
+    // Just show feedback with the score.
+    function handleQuizComplete(correctCount) {
+        if (correctCount > 0) {
+            showFeedback(`Quiz complete! You earned ${correctCount} coin${correctCount > 1 ? 's' : ''}.`);
+        } else {
+            showFeedback("Quiz complete! Better luck next time.");
+        }
     }
 
     return (

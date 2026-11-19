@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { QUIZ_QUESTIONS } from "./quizQuestions.js";
 import { useQuiz } from "./useQuiz.js";
 import QuizQuestion from "./QuizQuestion.jsx";
 import QuizResult from "./QuizResult.jsx";
@@ -8,17 +6,14 @@ import QuizResult from "./QuizResult.jsx";
 // and reports the final score up to MiniGames.jsx, which owns the
 // GameState coin award — this component only knows about quiz state.
 export default function Quiz({ onComplete }) {
-    const quiz = useQuiz(QUIZ_QUESTIONS);
-    const [claimed, setClaimed] = useState(false);
+    const quiz = useQuiz({ onComplete });
 
-    function handleClaim() {
-        onComplete(quiz.correctCount);
-        setClaimed(true);
-    }
-
-    function handlePlayAgain() {
-        quiz.playAgain();
-        setClaimed(false);
+    if (quiz.loading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#6B5A8E] border-t-transparent" />
+            </div>
+        );
     }
 
     if (quiz.finished) {
@@ -26,9 +21,7 @@ export default function Quiz({ onComplete }) {
             <QuizResult
                 correctCount={quiz.correctCount}
                 totalQuestions={quiz.totalQuestions}
-                onClaim={handleClaim}
-                onPlayAgain={handlePlayAgain}
-                claimed={claimed}
+                onPlayAgain={quiz.playAgain}
             />
         );
     }

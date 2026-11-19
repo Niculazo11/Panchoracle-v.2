@@ -1,5 +1,5 @@
 import { createContext, useContext, useSyncExternalStore, useCallback, useMemo, useState, useEffect } from "react";
-import { fetchGameState, choosePancho, completeStep, submitAssignment, buyCosmetic, equipCosmetic, awardMinigameCoins } from "../lib/gameApi.js";
+import { fetchGameState, choosePancho, completeStep, submitAssignment, buyCosmetic, equipCosmetic } from "../lib/gameApi.js";
 import { defaultState } from "./defaults.js";
 
 // Bridges the server-side GameState into React's render cycle.
@@ -97,12 +97,6 @@ export function GameStateProvider({ children, initialState }) {
         return result;
     }, []);
 
-    const doAwardMinigameCoins = useCallback(async (correctCount) => {
-        const result = await awardMinigameCoins(correctCount);
-        store.setState(result);
-        return result;
-    }, []);
-
     // Note: tick() is removed - hunger decay is now handled by server polling (usePolling)
     // kept for backwards compatibility but does nothing
     const doTick = useCallback(() => {
@@ -132,7 +126,6 @@ export function GameStateProvider({ children, initialState }) {
         equipCosmetic: doEquipCosmetic,
         tick: doTick,
         init: doInit,
-        awardMinigameCoins: doAwardMinigameCoins,
     }), [
         state,
         doChoosePancho,
@@ -142,7 +135,6 @@ export function GameStateProvider({ children, initialState }) {
         doEquipCosmetic,
         doTick,
         doInit,
-        doAwardMinigameCoins,
     ]);
 
     return (

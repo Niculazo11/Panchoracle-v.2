@@ -2,6 +2,7 @@ import QuizOption from "./QuizOption.jsx";
 
 // Current question: the prompt, its 4 options, and a "Next" button that
 // only appears once the player has picked an answer.
+// Note: correctIndex is NOT available (server-side grading per UN-501).
 export default function QuizQuestion({ quiz }) {
     const { current, questionNumber, totalQuestions, selected, selectAnswer, goToNext, isLastQuestion } = quiz;
 
@@ -18,7 +19,6 @@ export default function QuizQuestion({ quiz }) {
                     <QuizOption
                         key={option}
                         text={option}
-                        isCorrect={optionIndex === current.correctIndex}
                         isSelected={selected === optionIndex}
                         answered={selected !== null}
                         onClick={() => selectAnswer(optionIndex)}

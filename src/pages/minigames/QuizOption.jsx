@@ -1,13 +1,12 @@
-// One answer button. Once `selected` is set (the player has answered),
-// the correct option turns green and a wrong pick turns red, so the
-// feedback is visible without any extra state in the parent.
-export default function QuizOption({ text, isCorrect, isSelected, answered, onClick }) {
+// One answer button. Shows selected state. Correct/incorrect feedback
+// is shown in results (server-side grading per UN-501).
+export default function QuizOption({ text, isSelected, answered, onClick }) {
     let colorClasses = "bg-white hover:bg-gray-100 text-black border-black/20";
 
-    if (answered && isCorrect) {
-        colorClasses = "bg-green-100 border-green-600 text-green-900";
-    } else if (answered && isSelected && !isCorrect) {
-        colorClasses = "bg-red-100 border-red-600 text-red-900";
+    if (answered && isSelected) {
+        colorClasses = "bg-[#6B5A8E]/20 border-[#6B5A8E] text-[#6B5A8E]";
+    } else if (answered) {
+        colorClasses = "bg-gray-50 border-gray-300 text-gray-500";
     }
 
     return (

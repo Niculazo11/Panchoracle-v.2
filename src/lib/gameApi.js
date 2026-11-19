@@ -33,7 +33,13 @@ export async function equipCosmetic(cosmeticId, slot) {
     return res;
 }
 
-export async function awardMinigameCoins(correctCount) {
-    const res = await api.post("/minigames/reward", { correctCount });
+// UN-501: Quiz minigame - Server-side grading
+export async function fetchQuizQuestions() {
+    const res = await api.get("/minigames/quiz");
+    return res.questions;
+}
+
+export async function submitQuiz(answers) {
+    const res = await api.post("/minigames/quiz/submit", { answers });
     return res;
 }
