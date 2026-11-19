@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { asset } from "../lib/asset.js";
 import { useFeedback } from "../lib/useFeedback.js";
 import { fetchAssignedMinigames } from "../lib/gameApi.js";
@@ -13,6 +14,7 @@ const MINIGAME_COMPONENTS = {
 };
 
 export default function MiniGames() {
+  const navigate = useNavigate();
   const { feedback, showFeedback } = useFeedback(FEEDBACK_TIMEOUT_MS);
   const [assignedMinigames, setAssignedMinigames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -104,6 +106,13 @@ export default function MiniGames() {
             className="absolute inset-0 h-full w-full object-cover object-bottom"
           />
           <div className="relative z-10 flex min-h-screen flex-col justify-start gap-8 px-6 py-12 sm:px-12 sm:py-16">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="self-start px-4 py-2 text-sm font-medium text-white bg-[#5a57d9] rounded hover:bg-[#4a47c9] transition-colors"
+            >
+              Back
+            </button>
             <Component onComplete={(result) => handleMinigameComplete(activeMinigame, result)} />
           </div>
         </main>
@@ -123,12 +132,19 @@ export default function MiniGames() {
       />
 
       <div className="relative z-10 flex min-h-screen flex-col justify-start gap-8 px-6 py-12 sm:px-12 sm:py-16">
-        <div>
+        <div className="flex items-center justify-between">
           <h1 className="text-3xl font-extrabold uppercase text-[#1a1a1a] sm:text-4xl">Minigames</h1>
-          <p className="mt-2 max-w-md font-semibold text-[#1a1a1a]/80">
-            Quick, ungraded activities to earn coins for the shop. Your homework grade is never affected here.
-          </p>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="px-4 py-2 text-sm font-medium text-white bg-[#5a57d9] rounded hover:bg-[#4a47c9] transition-colors"
+          >
+            Back
+          </button>
         </div>
+        <p className="mt-2 max-w-md font-semibold text-[#1a1a1a]/80">
+          Quick, ungraded activities to earn coins for the shop. Your homework grade is never affected here.
+        </p>
 
         <div className="flex flex-col gap-4 w-full max-w-xl">
           {uniqueMinigames.map((mg) => (

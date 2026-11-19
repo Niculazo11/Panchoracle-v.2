@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import ParkBackground from "./ParkBackground.jsx";
 import { getAssignedMinigames, assignMinigame, removeMinigameAssignment, getClassroomMinigamePlays } from "../../lib/classroomApi.js";
 import { useFeedback } from "../../lib/useFeedback.js";
@@ -30,6 +31,7 @@ function MinigamePhotoPlaceholder({ minigameId, className = "" }) {
 }
 
 export default function ManageMinigames() {
+  const navigate = useNavigate();
   const { classroom, showError } = useOutletContext();
   const { feedback, showFeedback } = useFeedback(FEEDBACK_TIMEOUT_MS);
   const [assignedMinigames, setAssignedMinigames] = useState([]);
@@ -129,7 +131,17 @@ export default function ManageMinigames() {
   return (
     <ParkBackground>
       <div className="relative z-10 max-w-4xl mx-auto mt-12 p-6 sm:p-8 rounded-lg bg-white/95 text-black dark:bg-[#14200f]/95 dark:text-white shadow-lg">
-        <h2 className="m-0 mb-6 text-3xl font-bold text-center">Manage Minigames</h2>
+        <div className="flex items-center justify-between mb-6">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="px-4 py-2 text-sm font-medium text-white bg-[#5a57d9] rounded hover:bg-[#4a47c9] transition-colors"
+          >
+            Back
+          </button>
+          <h2 className="m-0 mb-6 text-3xl font-bold text-center">Manage Minigames</h2>
+          <div className="w-24" /> {/* Spacer for alignment */}
+        </div>
 
         {loading ? (
           <p className="text-center text-gray-600 dark:text-gray-400">Loading...</p>

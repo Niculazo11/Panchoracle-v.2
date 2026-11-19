@@ -1,4 +1,5 @@
 const BASE_URL = import.meta.env.VITE_API_URL || "/api";
+const DEFAULT_TIMEOUT_MS = 10000; // 10 seconds
 
 export const AUTH_EXPIRED_EVENT = "auth:expired";
 
@@ -11,29 +12,46 @@ export class ApiError extends Error {
   }
 }
 
-async function request(method, path, { signal, body, headers = {} } = {}) {
+async function request(method, path, { signal, body, headers = {}, timeout = DEFAULT_TIMEOUT_MS } = {}) {
   const hasBody = body !== undefined;
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method,
-    signal,
-    credentials: "same-origin",
-    headers: { ...(hasBody ? { "Content-Type": "application/json" } : {}), ...headers },
-    body: hasBody ? JSON.stringify(body) : undefined,
-  });
 
-  let data = null;
-  if (res.status !== 204) {
-    try { data = await res.json(); } catch { data = null; }
+  // Create an AbortController with timeout if no signal provided
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  // If caller provided a signal, listen for its abort
+  let signalListener;
+  if (signal) {
+    signalListener = () => controller.abort();
+    signal.addEventListener("abort", signalListener);
   }
 
-  if (!res.ok) {
-    const isAuthEntry = /^\/auth\/(login|register)(\/|$|\?)/.test(path);
-    if (res.status === 401 && !isAuthEntry) {
-      window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      method,
+      signal: controller.signal,
+      credentials: "same-origin",
+      headers: { ...(hasBody ? { "Content-Type": "application/json" } : {}), ...headers },
+      body: hasBody ? JSON.stringify(body) : undefined,
+    });
+
+    let data = null;
+    if (res.status !== 204) {
+      try { data = await res.json(); } catch { data = null; }
     }
-    throw new ApiError(res.status, data, data?.error?.message || `HTTP ${res.status}`);
+
+    if (!res.ok) {
+      const isAuthEntry = /^\/auth\/(login|register)(\/|$|\?)/.test(path);
+      if (res.status === 401 && !isAuthEntry) {
+        window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+      }
+      throw new ApiError(res.status, data, data?.error?.message || `HTTP ${res.status}`);
+    }
+    return data;
+  } finally {
+    clearTimeout(timeoutId);
+    if (signalListener) signal.removeEventListener("abort", signalListener);
   }
-  return data;
 }
 
 export const api = {
