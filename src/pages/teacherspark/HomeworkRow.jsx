@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { asset } from "../../lib/asset.js";
 import { PenIcon, LongArrowIcon } from "./HomeworkIcons.jsx";
-import { submissionsPath } from "./teacherPaths.js";
+import { submissionsPath, editHomeworkPath } from "./teacherPaths.js";
 
 // TODO(IMAGE): yellow dog-food bag, the same file the top bar uses for Manage Homework.
 const BAG = "images/teacher-homework-bag.png";
@@ -23,7 +23,9 @@ export default function HomeworkRow({ assignment }) {
                     <p className="m-0 text-sm break-words">{assignment.description}</p>
                     <p className="m-0 mt-1 text-xs opacity-80">Due {formatDue(assignment.dueAt)}</p>
                 </div>
-                <PenIcon />
+                <Link to={editHomeworkPath(assignment.id)} aria-label={"Edit " + assignment.title} title="Edit" className="text-black dark:text-white">
+                    <PenIcon />
+                </Link>
             </div>
 
             <Link
