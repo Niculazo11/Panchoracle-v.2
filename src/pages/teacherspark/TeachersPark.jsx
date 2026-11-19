@@ -1,17 +1,28 @@
 import ParkBackground from "./ParkBackground.jsx";
 import ParkDog from "./ParkDog.jsx";
 import SettingsGearLink from "./SettingsGearLink.jsx";
-import { PARK_DOGS } from "./parkDogs.js";
+import { useParkStudents } from "./useParkStudents.js";
 
-// The park, the main teacher view. TeacherShell draws the top bar around it and
-// makes sure the teacher has a classroom. The dogs are still the fixed ones from
-// parkDogs.js until the real students replace them.
+// The park, the main teacher view. TeacherShell draws the top bar around it and makes
+// sure the teacher has a classroom. The dogs are the real students' Panchos.
 export default function TeachersPark() {
+    const { dogs, message } = useParkStudents();
+
     return (
         <ParkBackground>
-            {PARK_DOGS.map((dog) => (
-                <ParkDog key={dog.id} dog={dog} />
+            {dogs.map((dog) => (
+                <ParkDog key={dog.student.id} dog={dog} />
             ))}
+
+            {message && (
+                <p
+                    role="status"
+                    className="absolute left-1/2 top-8 -translate-x-1/2 m-0 px-4 py-2 rounded font-bold bg-white/85 text-black dark:bg-black/70 dark:text-white"
+                >
+                    {message}
+                </p>
+            )}
+
             <SettingsGearLink />
         </ParkBackground>
     );
