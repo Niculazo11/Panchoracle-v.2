@@ -10,12 +10,14 @@ import {
   renameClassroomSchema,
   joinClassroomSchema,
   restoreHealthSchema,
+  studentSubmissionsParamsSchema,
 } from "../validators/classroom.js";
 import {
   assignMinigameSchema,
   minigameAssignmentParamsSchema,
 } from "../validators/minigames.js";
 import * as service from "../services/classroomService.js";
+import { listStudentSubmissions } from "../services/classroomService.js";
 import {
   assignMinigame,
   listAssignedMinigames,
@@ -67,6 +69,18 @@ router.get("/:id/students", teacherOnly, validateIds("id"), async (req, res) => 
   const students = await service.listStudents(req.user, req.params.id);
   res.status(200).json({ students });
 });
+
+// GET /api/classrooms/:id/students/:studentId/submissions -> 200
+// Teacher fetches all submissions for a specific student in their classroom
+router.get(
+  "/:id/students/:studentId/submissions",
+  teacherOnly,
+  validateIds("id", "studentId"),
+  async (req, res) => {
+    const result = await listStudentSubmissions(req.user, req.params.id, req.params.studentId);
+    res.status(200).json(result);
+  }
+);
 
 // DELETE /api/classrooms/:id/students/:studentId -> 200
 // POST /api/classrooms/:id/students/:studentId/restore-health -> 200 (UN-108, Rev. 2.3)

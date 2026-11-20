@@ -59,3 +59,9 @@ export const restoreHealthSchema = z.strictObject({
     .min(3, "reason must have at least 3 characters")
     .max(200, "reason must have at most 200 characters"),
 });
+
+// GET /api/classrooms/:id/students/:studentId/submissions - teacher fetches all submissions for a student
+export const studentSubmissionsParamsSchema = z.strictObject({
+  id: z.string({ error: "id must be a string" }).min(1),
+  studentId: z.string({ error: "studentId must be a string" }).min(1),
+});

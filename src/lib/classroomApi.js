@@ -46,6 +46,12 @@ export function removeStudent(classroomId, studentId) {
   return api.delete("/classrooms/" + classroomId + "/students/" + studentId);
 }
 
+// Fetches all submissions for a specific student in a classroom (teacher only)
+export async function getStudentSubmissions(classroomId, studentId, signal) {
+  const data = await api.get("/classrooms/" + classroomId + "/students/" + studentId + "/submissions", { signal });
+  return data;
+}
+
 // Minigame assignments (UN-XXX) - Teacher only
 export async function assignMinigame(classroomId, minigameId) {
   const data = await api.post("/classrooms/" + classroomId + "/minigames/assign", { minigameId });

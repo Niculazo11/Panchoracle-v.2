@@ -212,3 +212,60 @@ export async function removeStudent(teacher, classroomId, studentId) {
     throw new AppError(404, "NOT_FOUND", "That student is not in this classroom");
   }
 }
+
+// Lists all submissions for a specific student in a classroom.
+// Returns submissions with assignment title, submittedAt, status/grade, and file/link references.
+export async function listStudentSubmissions(teacher, classroomId, studentId) {
+  const classroom = await getOwnedClassroom(classroomId, teacher);
+
+  // Verify the student belongs to this classroom
+  const student = await User.findOne({
+    _id: studentId,
+    classroomId: classroom._id,
+    role: "student",
+  }).select("name email");
+  if (!student) {
+    throw new AppError(404, "NOT_FOUND", "Student not found in this classroom");
+  }
+
+  // Get all assignments for this classroom
+  const Assignment = (await import("../models/index.js")).Assignment;
+  const assignments = await Assignment.find({ classroomId: classroom._id })
+    .select("_id title dueDate")
+    .lean();
+
+  const assignmentIds = assignments.map((a) => a._id);
+  const assignmentMap = {};
+  for (const a of assignments) assignmentMap[a._id.toString()] = a;
+
+  // Get all submissions for these assignments by this student
+  const Submission = (await import("../models/index.js")).Submission;
+  const submissions = await Submission.find({
+    assignmentId: { $in: assignmentIds },
+    studentId: studentId,
+  })
+    .select("assignmentId submittedAt status grade fileUrl linkUrl")
+    .sort({ submittedAt: -1 })
+    .lean();
+
+  // Format submissions for teacher view
+  const result = [];
+  for (const s of submissions) {
+    const assignment = assignmentMap[s.assignmentId.toString()];
+    if (assignment) {
+      result.push({
+        id: s._id.toString(),
+        assignmentId: s.assignmentId.toString(),
+        assignmentTitle: assignment.title,
+        dueDate: assignment.dueDate,
+        submittedAt: s.submittedAt,
+        status: s.status,
+        grade: s.grade,
+        fileUrl: s.fileUrl,
+        linkUrl: s.linkUrl,
+      });
+    }
+  }
+
+  return { student: { id: student._id.toString(), name: student.name, email: student.email }, submissions: result };
+}

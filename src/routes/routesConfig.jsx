@@ -20,6 +20,7 @@ import HomeworkSubmissions from "../pages/teacherspark/HomeworkSubmissions.jsx";
 import EditHomework from "../pages/teacherspark/EditHomework.jsx";
 import StudentHomework from "../pages/homework/StudentHomework.jsx";
 import StudentsPage from "../pages/teacherspark/StudentsPage.jsx";
+import StudentDetail from "../pages/teacherspark/StudentDetail.jsx";
 import ManageMinigames from "../pages/teacherspark/ManageMinigames.jsx";
 import {
   PARK_PATH, CLASSROOM_PATH, NEW_CLASSROOM_PATH, SETTINGS_PATH,
@@ -84,6 +85,7 @@ export function renderTeacherRoutes() {
       <Route path="homework/:assignmentId/edit" element={<EditHomework />} />
       <Route path="homework/:assignmentId/submissions" element={<HomeworkSubmissions />} />
       <Route path="students" element={<StudentsPage />} />
+      <Route path="students/:studentId" element={<StudentDetail />} />
       {/* The old "Search for a Dog" tab is now Manage Students. */}
       <Route path="search" element={<Navigate replace to={STUDENTS_PATH} />} />
       <Route path="minigames" element={<ManageMinigames />} />
