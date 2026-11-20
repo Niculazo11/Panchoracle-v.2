@@ -7,8 +7,8 @@
 | Fuente de verdad | *Panchoracle — Hoja de tickets unificada (v4)*, Revisión 3 (2026-10-26) |
 | Código de referencia | `origin/main` en `f40af57` (2026-10-23) |
 | Formato | OpenSpec: especificación por ticket + historial vivo de cambios |
-| Estado global | **EN PROGRESO** — 11 de 12 tickets completados · 54 de 59 SP · 92% |
-| Última actualización | 2026-11-17 |
+| Estado global | **COMPLETADO** — 12 de 12 tickets completados · 59 de 59 SP · 100% |
+| Última actualización | 2026-11-19 |
 
 > Este archivo es la fuente de verdad del trabajo de Isaac. Las reglas para mantenerlo al día están en la última sección («Protocolo de actualización») y son obligatorias para cualquier IA o persona que toque código de estos tickets.
 
@@ -27,7 +27,7 @@
 | UN-301 | API del estado del juego (adoptar, comprar, equipar) | S2 | P0 | 5 | **COMPLETADO** | UN-102, UN-105 |
 | UN-302 | API de pasos y entrega de tareas | S2 | P1 | 5 | **COMPLETADO** | UN-107, UN-301 |
 | UN-303 | Migrar GameState de `localStorage` a la API | S2 | P0 | 8 | **COMPLETADO** | UN-201, UN-202, UN-301, UN-302 |
-| UN-403 | Vista del salón: lista de estudiantes | S2 | P0 | 5 | PENDIENTE | UN-106, UN-401 |
+| UN-403 | Vista del salón: lista de estudiantes | S2 | P0 | 5 | **COMPLETADO** | UN-106, UN-401 |
 | UN-305 | `usePolling` y sincronización de la sesión del estudiante | S3 | P1 | 3 | **COMPLETADO** | UN-303 |
 | UN-501 | Quiz calificado en servidor y tope diario | S3 | P0 | 5 | **COMPLETADO** | UN-102, UN-105 |
 
@@ -47,6 +47,7 @@ Registro en orden cronológico inverso (lo más reciente arriba). Una fila nueva
 
 | [Fecha / Hora] | [ID Ticket] | [Acción / Cambio Realizado] | [Estado] | [Autor/Agente] |
 |---|---|---|---|---|
+| 2026-11-19 / 10:30 | UN-403 | Vista del salón completada: todos los componentes ya existen y están conectados. Frontend: StudentsPage.jsx, StudentList.jsx, StudentCard.jsx, StudentStats.jsx, StudentAvatar.jsx, useStudents.js (con usePolling UN-305), useParkStudents.js, classroomApi.js. Backend: listStudents() en classroomService.js reconcilia hambre/salud con reloj servidor (UN-108). Rutas: /teachersPark/students → StudentsPage en routesConfig.jsx. parkDogs.js ya no contiene datos falsos (solo utilidades pickParkDogs/shuffle/PLACEHOLDER_DOG). Modo oscuro cubierto por UN-407. Criterios: DEAD distinguible (badge rojo, borde, gryscale), estados vacíos (sin estudiantes, sin Pancho), valores tiempo real desde servidor. | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-17 / 11:30 | UN-501 | Quiz calificado en servidor implementado: `GET /api/minigames/quiz` (5 preguntas sin correctIndex), `POST /api/minigames/quiz/submit` (califica en servidor, recompensa min(aciertos,5)), límites atómicos (enfriamiento 30s, tope 10/día en minigame_plays). Creados: `validators/minigames.js`, `services/minigameService.js`, `tests/minigames.test.js` (17 tests). Reescrito `routes/minigames.js` (reemplaza endpoint stop-gap `/reward`). Añadido `validateQuery` en `middleware/validateBody.js`. `npm test` 17/17 UN-501 + suite completa. | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-15 / 19:00 | UN-108 | ADR Rev. 2.3 y 2.4 marcadas como aceptadas por Karol e Isaac. Decisión cerrada (Rev. 2.5): quien se une con el periodo iniciado cuenta como falladas las tareas ya vencidas; se quita de las decisiones pendientes y se escribe en 5.3. Prueba nueva (se une el día 7 con una tarea vencida: salud 50; se une tras vencer todas: nace dead). `npm test` 112/112. | COMPLETADO (100%) | Claude (agente) |
 | 2026-11-15 / 18:00 | UN-108 | Rebase sobre `abae16f` (UN-302, UN-303, UN-305 ya integrados) y auditoría del código nuevo. Correcciones: (1) `completeStep` comparaba `status === "DEAD"` pero el modelo guarda `dead`: un perro muerto podía seguir completando pasos; (2) había DOS constructores del estado (`gameService` y `assignmentService`) y `GET /api/me/game` nunca mostraba los pasos completados ni reconciliaba hambre/salud en las respuestas de pasos y entrega: ahora `assignmentService` usa `gameService.toGameJson` y `loadStudentContext`; (3) `submit` escribía `hunger +30`, valor que la reconciliación (UN-108) descarta, y el ADR 5.5 dice hambre 100: ahora pone 100 y `rewards.hunger` es lo realmente recuperado; (4) el progreso de pasos de una tarea incumplida pasaba a la siguiente: nuevo `pets.currentAssignmentStepsFor`; (5) los pasos se guardaban con lectura-modificación-escritura no atómica: ahora un solo `findOneAndUpdate` con guarda; (6) `POST /api/minigames/reward` permitía monedas ilimitadas en bucle (el cliente informa `correctCount`): ahora máx. 5 por partida, enfriamiento atómico (`pets.lastMinigameAt`, 30 s) y tope de 10 partidas por día UTC con registro en `minigame_plays` (valores propuestos; D6 sigue abierto; UN-501 lo reemplazará). Nuevos: `server/tests/stepsMinigames.test.js` (11 casos). Editados: `services/gameService.js`, `services/assignmentService.js`, `models/Pet.js`, `config/game.js`, `tests/assignments.test.js` (2 aserciones del +30). `npm test` 111/111. | COMPLETADO (100%) | Claude (agente) |
@@ -448,9 +449,9 @@ El estado del juego es un singleton en el navegador (`GameState`, conectado con 
 - RNF-4: componentes en 80 líneas o menos.
 
 **Criterios de aceptación**
-- [ ] Los estudiantes DEAD se distinguen a simple vista.
-- [ ] Hay estados vacíos: salón sin estudiantes, y estudiante que aún no eligió Pancho.
-- [ ] Con el cálculo en servidor (UN-108), los valores reflejan el momento actual.
+- [x] Los estudiantes DEAD se distinguen a simple vista.
+- [x] Hay estados vacíos: salón sin estudiantes, y estudiante que aún no eligió Pancho.
+- [x] Con el cálculo en servidor (UN-108), los valores reflejan el momento actual.
 
 **Dependencias y archivos afectados**
 - Depende de: UN-106 (API de salones, Mariana) y UN-401 (panel y diseño, Mariana).
@@ -459,7 +460,7 @@ El estado del juego es un singleton en el navegador (`GameState`, conectado con 
 - Eliminar: `src/pages/teacherspark/parkDogs.js`.
 - Reutilizar: `src/pages/raise/StatusBars.jsx`, `StatPill`.
 
-**Estado Actual:** `PENDIENTE` · Avance: 0%
+**Estado Actual:** `COMPLETADO` · Avance: 100% — Todos los componentes ya existen y están conectados: StudentsPage.jsx, StudentList.jsx, StudentCard.jsx, StudentStats.jsx, StudentAvatar.jsx, useStudents.js (con usePolling), useParkStudents.js, classroomApi.js (getStudents, removeStudent). Backend listStudents() en classroomService.js reconcilia hambre/salud con reloj servidor (UN-108). Rutas configuradas en routesConfig.jsx (/teachersPark/students → StudentsPage). parkDogs.js ya no contiene datos falsos (solo utilidades pickParkDogs/shuffle). Modo oscuro cubierto por UN-407.
 
 ---
 

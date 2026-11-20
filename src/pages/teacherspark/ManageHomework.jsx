@@ -1,14 +1,13 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import HomeworkRow from "./HomeworkRow.jsx";
 import HomeworkDog from "./HomeworkDog.jsx";
 import { BackIcon, PlusIcon } from "./HomeworkIcons.jsx";
 import { useAssignments } from "./useAssignments.js";
-import { ADD_HOMEWORK_PATH } from "./teacherPaths.js";
+import { ADD_HOMEWORK_PATH, CLASSROOM_PATH } from "./teacherPaths.js";
 
 // Manage Homework page (UN-405): one row per assignment, soonest due date first.
 // TeacherShell draws the top bar; the dog stays fixed at the bottom of the screen.
 export default function ManageHomework() {
-    const navigate = useNavigate();
     const { status, assignments, error, reload } = useAssignments();
 
     let content;
@@ -47,14 +46,13 @@ export default function ManageHomework() {
                 {content}
             </div>
 
-            <button
-                type="button"
-                onClick={() => navigate(-1)}
-                aria-label="Back"
+            <Link
+                to={CLASSROOM_PATH}
+                aria-label="Back to classroom"
                 className="absolute top-6 right-5 sm:right-10 z-10 flex items-center justify-center w-14 h-14 rounded-full bg-[#cfe8f5] border-4 border-[#7aa3b8]"
             >
                 <BackIcon />
-            </button>
+            </Link>
 
             <HomeworkDog />
         </main>
