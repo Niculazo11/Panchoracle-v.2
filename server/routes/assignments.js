@@ -1,7 +1,6 @@
-// Assignment routes (UN-107 + UN-302), mounted in app.js under /api/assignments.
+// Assignment routes (UN-107), mounted in app.js under /api/assignments.
 // Teachers create, edit and delete; students and teachers of the classroom can read.
-// Students complete steps and submit assignments (4-step flow) or hand in a link or a file
-// (docs/submissions-api.md). Teachers read what was handed in.
+// Students hand in a link or a file (docs/submissions-api.md). Teachers read what was handed in.
 // Express 5 forwards errors thrown in async handlers to the error handler.
 import express, { Router } from "express";
 import { authorize } from "../middleware/authenticate.js";
@@ -10,8 +9,6 @@ import { validateIds } from "../middleware/validateIds.js";
 import {
   createAssignmentSchema,
   updateAssignmentSchema,
-  completeStepSchema,
-  submitAssignmentSchema,
   createSubmissionSchema,
 } from "../validators/assignment.js";
 import { SUBMISSION_BODY_LIMIT } from "../config/submissions.js";
@@ -50,16 +47,6 @@ router.patch("/:id", teacherOnly, validateIds("id"), validateBody(updateAssignme
 router.delete("/:id", teacherOnly, validateIds("id"), async (req, res) => {
   const result = await service.deleteAssignment(req.user, req.params.id);
   res.status(200).json({ deleted: true, ...result });
-});
-
-// POST /api/assignments/:id/steps -> 200 { success, step, state } (UN-302, student only)
-router.post("/:id/steps", studentOnly, validateIds("id"), validateBody(completeStepSchema), async (req, res) => {
-  res.status(200).json(await service.completeStep(req.user, req.params.id, req.body.stepId));
-});
-
-// POST /api/assignments/:id/submit -> 200 { success, rewards, state } (UN-302, student only)
-router.post("/:id/submit", studentOnly, validateIds("id"), validateBody(submitAssignmentSchema), async (req, res) => {
-  res.status(200).json(await service.submitAssignment(req.user, req.params.id));
 });
 
 // GET /api/assignments/:id/submissions -> 200 { submissions } oldest first (teacher who owns the classroom)

@@ -9,15 +9,10 @@ import {
   MINIGAME_MAX_COINS_PER_PLAY,
   SLOTS,
   SLOT_BY_CATEGORY,
-  STEP_LABELS,
   minigameLimits,
 } from "../config/game.js";
 import { clock } from "../utils/clock.js";
 import { reconcilePet } from "./petStateService.js";
-
-function buildSteps(completed = []) {
-  return STEP_LABELS.map((label, index) => ({ id: index + 1, label, completed: completed[index] === true }));
-}
 
 // Only a student that joined a classroom has a Pancho (created on join, ADR 8.4).
 async function getPet(user) {
@@ -28,7 +23,8 @@ async function getPet(user) {
 
 // ADR 5.3: the active assignment is the first one (by dueAt) the student has not submitted,
 // with dueAt in the future and the period already started. Falls back to the default task.
-export async function getCurrentAssignment(user, classroom, pet) {
+// (Extra arguments from older callers are ignored.)
+export async function getCurrentAssignment(user, classroom) {
   let active = null;
   const now = clock.now();
   if (classroom && now >= classroom.period.startDate.getTime()) {
@@ -44,12 +40,9 @@ export async function getCurrentAssignment(user, classroom, pet) {
     const done = new Set(submitted.map((item) => item.assignmentId.toString()));
     active = assignments.find((item) => !done.has(item._id.toString())) || null;
   }
-  const task = active
+  return active
     ? { id: active._id.toString(), title: active.title, description: active.description, dueAt: active.dueAt }
     : { ...DEFAULT_ASSIGNMENT };
-  // Step progress only counts if it was made on THIS assignment.
-  const progress = pet && pet.currentAssignmentStepsFor === task.id ? pet.currentAssignmentSteps : [];
-  return { ...task, steps: buildSteps(progress) };
 }
 
 // Same shape the client keeps in useGameState() (src/state/defaults.js), so UN-303 can swap
@@ -76,16 +69,8 @@ export async function toGameJson(user, storedPet) {
       status: pet.status.toUpperCase(),
       equippedCosmetics: Object.fromEntries(SLOTS.map((slot) => [slot, pet.equipped[slot] ?? null])),
     },
-    currentAssignment: await getCurrentAssignment(user, classroom, pet),
+    currentAssignment: await getCurrentAssignment(user, classroom),
   };
-}
-
-// Reconciled Pancho + active assignment of a student, for the step/submit endpoints (UN-302).
-export async function loadStudentContext(user) {
-  const stored = await getPet(user);
-  const classroom = user.classroomId ? await Classroom.findById(user.classroomId) : null;
-  const pet = await reconcilePet(classroom, stored);
-  return { pet, assignment: await getCurrentAssignment(user, classroom, pet) };
 }
 
 // Reconciled Pancho of a student plus their classroom (the hand-in route needs both: the Pancho to
@@ -97,17 +82,23 @@ export async function loadReconciledPet(user) {
   return { pet, classroom };
 }
 
-// ADR 5.5: handing in the ACTIVE assignment on time puts hunger at 100 and clears the step
-// checklist. Shared by POST /api/assignments/:id/submit (4-step flow) and by the hand-in route
-// (docs/submissions-api.md, rule 5), so both reward a submission the same way. With the submission
-// saved, the next reconciliation also moves the active assignment on and never counts it as missed.
-// Returns the updated Pancho (the hunger it had before is in `pet`).
+// Called by the hand-in route (docs/submissions-api.md, rule 5) once the submission is saved.
+// Recalculates hunger straight away from the saved submissions: it goes back to 100 when nothing
+// is left pending, or follows the deadline of the next pending assignment. Health is NOT touched
+// by the submission itself: it only ever changes through the idempotent overdue penalty (and that
+// one depends on the clock, not on what was handed in).
+// Kept under its old name so the hand-in service does not change. Returns the updated Pancho.
 export async function rewardActiveSubmission(pet) {
-  return Pet.findOneAndUpdate(
-    { _id: pet._id },
-    { $set: { hunger: 100, currentAssignmentSteps: [false, false, false, false], currentAssignmentStepsFor: null } },
+  const current = await Pet.findById(pet._id);
+  if (!current) return pet;
+  const classroom = await Classroom.findOne({ "period.periodId": pet.periodId });
+  await reconcilePet(classroom, current); // recomputes current.hunger in memory
+  const updated = await Pet.findOneAndUpdate(
+    { _id: pet._id, status: "alive" }, // a dead Pancho never changes (ADR 5.4)
+    { $set: { hunger: current.hunger } },
     { returnDocument: "after" }
   );
+  return updated ?? current;
 }
 
 // GET /api/me/game

@@ -64,8 +64,7 @@ describe("UN-301 · GET /api/me/game", () => {
       equippedCosmetics: { head: null, face: null, neck: null, body: null },
     });
     assert.equal(body.currentAssignment.id, "000000000000000000000001"); // no assignments: default task
-    assert.equal(body.currentAssignment.steps.length, 4);
-    assert.ok(body.currentAssignment.steps.every((s) => s.completed === false));
+    assert.equal(body.currentAssignment.steps, undefined); // the checklist no longer exists
   });
 
   it("usa la tarea activa del salón (ADR 5.3) y salta la ya entregada", async () => {

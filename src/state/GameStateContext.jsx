@@ -1,5 +1,5 @@
 import { createContext, useContext, useSyncExternalStore, useCallback, useMemo, useState, useEffect } from "react";
-import { fetchGameState, choosePancho, completeStep, submitAssignment, buyCosmetic, equipCosmetic } from "../lib/gameApi.js";
+import { fetchGameState, choosePancho, buyCosmetic, equipCosmetic } from "../lib/gameApi.js";
 import { defaultState } from "./defaults.js";
 
 // Bridges the server-side GameState into React's render cycle.
@@ -71,20 +71,6 @@ export function GameStateProvider({ children, initialState }) {
         return result;
     }, []);
 
-    const doCompleteStep = useCallback(async (stepId) => {
-        if (!state?.currentAssignment?.id) return { success: false, message: "No active assignment" };
-        const result = await completeStep(state.currentAssignment.id, stepId);
-        store.setState(result.state);
-        return result;
-    }, [state]);
-
-    const doSubmitAssignment = useCallback(async () => {
-        if (!state?.currentAssignment?.id) return { success: false, message: "No active assignment" };
-        const result = await submitAssignment(state.currentAssignment.id);
-        store.setState(result.state);
-        return result;
-    }, [state]);
-
     const doBuyCosmetic = useCallback(async (cosmetic) => {
         try {
             const result = await buyCosmetic(cosmetic.id);
@@ -128,8 +114,6 @@ export function GameStateProvider({ children, initialState }) {
         student: state?.student,
         currentAssignment: state?.currentAssignment,
         choosePancho: doChoosePancho,
-        completeStep: doCompleteStep,
-        submitAssignment: doSubmitAssignment,
         buyCosmetic: doBuyCosmetic,
         equipCosmetic: doEquipCosmetic,
         tick: doTick,
@@ -137,8 +121,6 @@ export function GameStateProvider({ children, initialState }) {
     }), [
         state,
         doChoosePancho,
-        doCompleteStep,
-        doSubmitAssignment,
         doBuyCosmetic,
         doEquipCosmetic,
         doTick,

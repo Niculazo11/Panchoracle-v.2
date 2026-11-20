@@ -1,5 +1,6 @@
 // UN-108 [ADR Rev. 2.3] · El profesor perdona puntos de salud de un Pancho VIVO.
 // POST /api/classrooms/:id/students/:studentId/restore-health
+// Cada tarea vencida sin entrega cuesta 10 puntos; con 10 tareas, perder todas mata a Pancho.
 // Ejecutar con: node --test server/tests/restoreHealth.test.js
 
 import { describe, it, before, after, beforeEach } from "node:test";
@@ -52,55 +53,57 @@ beforeEach(async () => {
   await User.updateOne({ _id: teacher._id }, { classroomId: classroom._id });
   student = await mkUser("ana", "student", classroom._id);
   await Pet.create({ ownerId: student._id, periodId: classroom.period.periodId, coins: 270 });
-  const base = { classroomId: classroom._id, periodId: classroom.period.periodId };
-  for (const d of [1, 2, 3, 4, 5]) await Assignment.create({ ...base, title: `T${d}`, dueAt: at(d) }); // 20 puntos cada una
+  const base = { classroomId: classroom._id, periodId: classroom.period.periodId, createdAt: at(0) };
+  for (let d = 1; d <= 10; d++) await Assignment.create({ ...base, title: `T${d}`, dueAt: at(d) }); // 10 puntos cada una
 });
 
 describe("restore-health · reglas", () => {
-  it("devuelve los 20 puntos perdidos por una tarea (80 → 100) y lo registra", async () => {
-    assert.equal((await (day(1.5), game())).dog.health, 80);
-    const res = await restore(teacher, { points: 20, reason: "Excusa médica" }).expect(200);
-    assert.equal(res.body.restored, 20);
-    assert.deepEqual([res.body.pet.status, res.body.pet.health, res.body.pet.healthAdjustment], ["alive", 100, 20]);
+  it("devuelve los 10 puntos perdidos por una tarea (90 → 100) y lo registra", async () => {
+    assert.equal((await (day(1.5), game())).dog.health, 90);
+    const res = await restore(teacher, { points: 10, reason: "Excusa médica" }).expect(200);
+    assert.equal(res.body.restored, 10);
+    assert.deepEqual([res.body.pet.status, res.body.pet.health, res.body.pet.healthAdjustment], ["alive", 100, 10]);
     assert.equal((await game()).dog.health, 100);
     const log = (await petOf()).healthRestoreLog;
     assert.equal(log.length, 1);
-    assert.deepEqual([log[0].points, log[0].healthBefore, log[0].healthAfter, log[0].reason], [20, 80, 100, "Excusa médica"]);
+    assert.deepEqual([log[0].points, log[0].healthBefore, log[0].healthAfter, log[0].reason], [10, 90, 100, "Excusa médica"]);
     assert.equal(log[0].teacherId.toString(), teacher._id.toString());
   });
 
-  it("la reconciliación automática NO pisa la restauración, y las tareas nuevas siguen restando", async () => {
+  it("una tarea perdonada no se vuelve a cobrar, y las tareas nuevas siguen restando", async () => {
     day(2.5);
-    assert.equal((await game()).dog.health, 60);
+    assert.equal((await game()).dog.health, 80);
     await restore(teacher, { points: 20, reason: "Enfermedad" }).expect(200);
-    for (const d of [2.5, 2.6, 2.9]) assert.equal((day(d), (await game()).dog.health), 80); // leer muchas veces no cambia nada
-    assert.equal((await (day(3.5), game())).dog.health, 60); // 3 falladas: 100 - 60 + 20 = 60
+    for (const d of [2.5, 2.6, 2.9]) assert.equal((day(d), (await game()).dog.health), 100); // leer muchas veces no cambia nada
+    assert.equal((await (day(3.5), game())).dog.health, 90); // solo la tarea 3 es nueva
     assert.equal((await petOf()).healthAdjustment, 20);
   });
 
   it("sin points restaura todo lo perdido; con points menor, solo esa parte", async () => {
-    day(3.5); // 3 falladas: salud 40
+    day(3.5); // 3 falladas: salud 70
     let res = await restore(teacher, { points: 10, reason: "Parcial" }).expect(200);
-    assert.equal(res.body.pet.health, 50);
+    assert.equal(res.body.pet.health, 80);
     res = await restore(teacher, { reason: "Todo el resto" }).expect(200);
-    assert.deepEqual([res.body.restored, res.body.pet.health], [50, 100]);
+    assert.deepEqual([res.body.restored, res.body.pet.health], [20, 100]);
     assert.equal((await petOf()).healthRestoreLog.length, 2);
   });
 
   it("nunca supera 100: pedir más de lo perdido o restaurar con salud completa da 409 y no cambia nada", async () => {
-    day(1.5); // salud 80
+    day(1.5); // salud 90
     const over = await restore(teacher, { points: 30, reason: "Demasiado" }).expect(409);
     assert.equal(over.body.error.code, "CONFLICT");
-    day(0.5); // salud 100
+    let pet = await petOf();
+    assert.deepEqual([pet.healthAdjustment, pet.healthRestoreLog.length], [0, 0]);
+    await restore(teacher, { reason: "Todo" }).expect(200); // salud 100
     await restore(teacher, { points: 5, reason: "Nada que restaurar" }).expect(409);
     await restore(teacher, { reason: "Nada que restaurar" }).expect(409);
-    const pet = await petOf();
-    assert.deepEqual([pet.healthAdjustment, pet.healthRestoreLog.length], [0, 0]);
+    pet = await petOf();
+    assert.deepEqual([pet.health, pet.healthAdjustment, pet.healthRestoreLog.length], [100, 10, 1]);
   });
 
-  it("un Pancho muerto NO se restaura ni aunque la salud ya esté guardada en 0", async () => {
-    day(6); // las 5 falladas: dead
-    const res = await restore(teacher, { points: 20, reason: "Muy tarde" }).expect(409);
+  it("un Pancho muerto NO se restaura ni aunque el reloj vuelva atrás", async () => {
+    day(11); // las 10 falladas: dead
+    const res = await restore(teacher, { points: 10, reason: "Muy tarde" }).expect(409);
     assert.match(res.body.error.message, /dead/i);
     day(0.5); // aunque el reloj "vuelva atrás", dead es terminal
     await restore(teacher, { reason: "Intento" }).expect(409);
@@ -110,17 +113,17 @@ describe("restore-health · reglas", () => {
   });
 
   it("si murió desde la última lectura, la restauración lo detecta y se niega", async () => {
-    clock.now = () => T0 + 6 * DAY; // nadie ha leído a Pancho: en BD sigue alive con 100
+    clock.now = () => T0 + 11 * DAY; // nadie ha leído a Pancho: en BD sigue alive con 100
     assert.equal((await petOf()).status, "alive");
     await restore(teacher, { reason: "Intento tardío" }).expect(409);
     assert.equal((await petOf()).status, "dead");
   });
 
   it("dos restauraciones simultáneas no se acumulan sobre el mismo estado", async () => {
-    day(2.5); // salud 60, 40 perdidos
+    day(2.5); // salud 80, 20 perdidos
     const results = await Promise.all([1, 2, 3].map(() => restore(teacher, { reason: "Doble clic" })));
     assert.equal(results.filter((r) => r.status === 200).length, 1);
-    assert.equal((await petOf()).healthAdjustment, 40);
+    assert.equal((await petOf()).healthAdjustment, 20);
     assert.equal((await game()).dog.health, 100);
   });
 });

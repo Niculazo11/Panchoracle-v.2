@@ -1,64 +1,53 @@
-const BASE_URL = import.meta.env.VITE_API_URL || "/api";
-const DEFAULT_TIMEOUT_MS = 10000; // 10 seconds
+import { api } from "./api.js";
 
-export const AUTH_EXPIRED_EVENT = "auth:expired";
+// Game state API calls for UN-303 migration
+// All actions are now async and wait for server response (no optimistic updates)
 
-export class ApiError extends Error {
-  constructor(status, data, message) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-    this.data = data;
-  }
+export async function fetchGameState() {
+    const res = await api.get("/me/game");
+    return res;
 }
 
-async function request(method, path, { signal, body, headers = {}, timeout = DEFAULT_TIMEOUT_MS } = {}) {
-  const hasBody = body !== undefined;
-
-  // Create an AbortController with timeout if no signal provided
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  // If caller provided a signal, listen for its abort
-  let signalListener;
-  if (signal) {
-    signalListener = () => controller.abort();
-    signal.addEventListener("abort", signalListener);
-  }
-
-  try {
-    const res = await fetch(`${BASE_URL}${path}`, {
-      method,
-      signal: controller.signal,
-      credentials: "same-origin",
-      headers: { ...(hasBody ? { "Content-Type": "application/json" } : {}), ...headers },
-      body: hasBody ? JSON.stringify(body) : undefined,
-    });
-
-    let data = null;
-    if (res.status !== 204) {
-      try { data = await res.json(); } catch { data = null; }
-    }
-
-    if (!res.ok) {
-      const isAuthEntry = /^\/auth\/(login|register)(\/|$|\?)/.test(path);
-      if (res.status === 401 && !isAuthEntry) {
-        window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
-      }
-      throw new ApiError(res.status, data, data?.error?.message || `HTTP ${res.status}`);
-    }
-    return data;
-  } finally {
-    clearTimeout(timeoutId);
-    if (signalListener) signal.removeEventListener("abort", signalListener);
-  }
+export async function choosePancho(panchoId, imgUrl) {
+    const res = await api.put("/pets/me/pancho", { panchoId, imgUrl });
+    return res;
 }
 
-export const api = {
-  get: (path, opts) => request("GET", path, opts),
-  post: (path, body, opts) => request("POST", path, { ...opts, body }),
-  put: (path, body, opts) => request("PUT", path, { ...opts, body }),
-  patch: (path, body, opts) => request("PATCH", path, { ...opts, body }),
-  delete: (path, opts) => request("DELETE", path, opts),
-  request,
-};
+export async function buyCosmetic(cosmeticId) {
+    const res = await api.post("/pets/me/inventory", { cosmeticId });
+    return res;
+}
+
+export async function equipCosmetic(cosmeticId, slot) {
+    const res = await api.put("/pets/me/equipped", { [slot]: cosmeticId });
+    return res;
+}
+
+// UN-501: Quiz minigame - Server-side grading
+export async function fetchQuizQuestions() {
+    const res = await api.get("/minigames/quiz");
+    return res.questions;
+}
+
+export async function submitQuiz(answers) {
+    const res = await api.post("/minigames/quiz/submit", { answers });
+    return res;
+}
+
+
+// UN-303 RF-5: Fetch cosmetics catalog from server (replaces local catalog.js)
+export async function fetchCosmetics() {
+    const res = await api.get("/cosmetics");
+    // Server returns: { cosmetics: [{ cosmeticId, name, category, cost, image }] }
+    return (res.cosmetics ?? []).map((item) => ({
+        ...item,
+        id: item.id ?? item.cosmeticId,
+    }));
+}
+
+// UN-XXX: Fetch minigames assigned to the student by their teacher
+export async function fetchAssignedMinigames() {
+    const res = await api.get("/minigames/assigned");
+    // Server returns: { assignments: [{ _id, minigameId, name, description, assignedAt }] }
+    return res.assignments;
+}

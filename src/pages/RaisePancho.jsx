@@ -1,25 +1,22 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useGameState } from "../state/GameStateContext.jsx";
-import { useFeedback } from "../lib/useFeedback.js";
 import { usePolling } from "../lib/usePolling.js";
 import RaiseNav from "./raise/RaiseNav.jsx";
 import PanchoSection from "./raise/PanchoSection.jsx";
 import StatusBars from "./raise/StatusBars.jsx";
-import AssignmentPanel from "./raise/AssignmentPanel.jsx";
 import DeadNotice from "./raise/DeadNotice.jsx";
 import { asset } from "../lib/asset.js";
 
-const FEEDBACK_TIMEOUT_MS = 3000;
-const POLL_INTERVAL_MS = 15000; // Poll server every 15s for hunger decay/state updates
+const POLL_INTERVAL_MS = 15000; // Poll server every 15s so the hunger countdown stays current
 
+// Students manage and hand in assignments from the Homework page; this view only shows Pancho.
 export default function RaisePancho() {
     const navigate = useNavigate();
-    const { dog, student, currentAssignment, completeStep, submitAssignment, init } = useGameState();
-    const { feedback, showFeedback } = useFeedback(FEEDBACK_TIMEOUT_MS);
+    const { dog, student, init } = useGameState();
 
-    // Poll server for state updates (hunger decay, etc.)
-    const { refresh } = usePolling(init, { intervalMs: POLL_INTERVAL_MS, enabled: true });
+    // Poll server for state updates (hunger countdown, overdue health penalties).
+    usePolling(init, { intervalMs: POLL_INTERVAL_MS, enabled: true });
 
     // Redirect to ChoosePancho if the student hasn't picked a Pancho yet.
     useEffect(() => {
@@ -30,18 +27,6 @@ export default function RaisePancho() {
 
     if (!dog.imgUrl) {
         return null;
-    }
-
-    async function handleStepClick(stepId) {
-        const result = await completeStep(stepId);
-        if (!result.success) showFeedback(result.message);
-    }
-
-    async function handleSubmitAssignment() {
-        const result = await submitAssignment();
-        showFeedback(result.success
-            ? `Assignment submitted! +${result.rewards.hunger} Hunger`
-            : result.message);
     }
 
     return (
@@ -58,13 +43,6 @@ export default function RaisePancho() {
                     <DeadNotice dog={dog} className="rounded-xl bg-red-100 border border-red-400 text-red-800 text-sm font-bold text-center px-4 py-3" />
 
                     <StatusBars dog={dog} />
-                    <AssignmentPanel
-                        dog={dog}
-                        assignment={currentAssignment}
-                        feedback={feedback}
-                        onStepClick={handleStepClick}
-                        onSubmit={handleSubmitAssignment}
-                    />
                 </section>
             </main>
 

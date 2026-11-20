@@ -5,8 +5,9 @@ const { Schema } = mongoose;
 const isFiniteNumber = (value) => Number.isFinite(value);
 
 // ADR 8.4: Pancho. Un documento por estudiante, reiniciado en cada periodo.
-// NO existen campos para revivir (ADR 5.4). healthAdjustment/healthRestoreLog solo perdonan
-// penalizaciones de un Pancho VIVO (UN-108, ADR Rev. 2.3); un Pancho dead nunca se restaura.
+// NO existen campos para revivir (ADR 5.4). healthAdjustment/healthRestoreLog solo registran las
+// penalizaciones que el profesor perdonó a un Pancho VIVO (UN-108, ADR Rev. 2.3); un Pancho dead
+// nunca se restaura.
 const petSchema = new Schema(
   {
     ownerId: {
@@ -25,8 +26,8 @@ const petSchema = new Schema(
       default: "Pancho", // mismo nombre por defecto que defaultDog() del frontend
       maxlength: 50, // decisión técnica
     },
-    // ADR 5.3: rango 0-100, valor inicial 100. NO se fuerza entero: el ADR
-    // persiste health sin redondear (100 / totalAssignments puede ser decimal).
+    // Rango 0-100, valor inicial 100. Solo baja de 10 en 10, una vez por tarea vencida sin entrega
+    // (ver petStateService.js); nunca decae con el tiempo ni cambia al entregar una tarea.
     health: {
       type: Number,
       default: 100,
@@ -34,7 +35,7 @@ const petSchema = new Schema(
       max: 100,
       validate: { validator: isFiniteNumber, message: "health debe ser un número" },
     },
-    // Snapshot; el valor vigente se calcula en cada petición (ADR 5.3).
+    // Snapshot; el valor vigente se calcula en cada petición como cuenta regresiva hasta dueAt.
     hunger: {
       type: Number,
       default: 100,
@@ -42,8 +43,15 @@ const petSchema = new Schema(
       max: 100,
       validate: { validator: isFiniteNumber, message: "hunger debe ser un número" },
     },
-    // UN-108 [Rev. 2.3]: puntos de salud que el profesor perdonó (p. ej. una excusa médica).
-    // Se SUMAN al cálculo base: health = clamp(100 - missed*100/total + healthAdjustment, 0, 100).
+    // Tareas vencidas sin entrega cuya penalización de -10 de salud YA se aplicó. Es lo que hace
+    // idempotente el cobro: leer /api/me/game muchas veces nunca descuenta dos veces la misma tarea.
+    // Se vacía al empezar un periodo nuevo.
+    penalizedAssignments: {
+      type: [Schema.Types.ObjectId],
+      default: [],
+    },
+    // UN-108 [Rev. 2.3]: total de puntos de salud que el profesor perdonó (p. ej. una excusa
+    // médica). Es solo un registro: la salud perdonada ya se devuelve en `health` al restaurar.
     // Solo crece (restore-health) y vuelve a 0 al empezar un nuevo periodo.
     healthAdjustment: {
       type: Number,
@@ -88,7 +96,7 @@ const petSchema = new Schema(
       enum: { values: ["alive", "dead"], message: "status debe ser alive o dead" },
       default: "alive",
     },
-        // [Rev. 2] cosmeticId comprados, sin duplicados.
+    // [Rev. 2] cosmeticId comprados, sin duplicados.
     inventory: {
       type: [Number],
       default: [],
@@ -104,21 +112,8 @@ const petSchema = new Schema(
       neck: { type: Number, default: null },
       body: { type: Number, default: null },
     },
-    // Which assignment `currentAssignmentSteps` belongs to (assignment id, or the default task id).
-    // Progress of another assignment is ignored, so unfinished steps of a missed task never carry
-    // over to the next one.
-    currentAssignmentStepsFor: { type: String, default: null, maxlength: 40 },
     // When the student last claimed a minigame reward (cooldown, claimed atomically).
     lastMinigameAt: { type: Date, default: null },
-    // UN-302: step progress for current assignment (1-4, true/false). Reset on submit.
-    currentAssignmentSteps: {
-      type: [Boolean],
-      default: [false, false, false, false],
-      validate: {
-        validator: (v) => v.length === 4 && v.every((val) => typeof val === "boolean"),
-        message: "currentAssignmentSteps must be array of 4 booleans",
-      },
-    },
   },
   {
     collection: "pets",
