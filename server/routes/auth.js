@@ -41,7 +41,7 @@ router.post("/register", registerRateLimit, validateBody(registerSchema), async 
     try {
       user = await User.create({ name, email, passwordHash, role });
     } catch (error) {
-      if (error.code === 11000) throw new AppError(409, "CONFLICT", "El email ya está registrado");
+      if (error.code === 11000) throw new AppError(409, "CONFLICT", "Email is already registered");
       throw error;
     }
 
@@ -58,7 +58,7 @@ router.post("/login", loginRateLimit, validateBody(loginSchema), async (req, res
     const { email, password } = req.body;
     const user = await User.findOne({ email }).select("+passwordHash");
     const valid = await bcrypt.compare(password, user ? user.passwordHash : DUMMY_HASH);
-    if (!user || !valid) throw new AppError(401, "UNAUTHORIZED", "Credenciales inválidas");
+    if (!user || !valid) throw new AppError(401, "UNAUTHORIZED", "Invalid credentials");
 
     startSession(res, user);
     res.json({ user: toUserJson(user) });

@@ -48,7 +48,7 @@ export default function Login() {
     }
   };
 
-  // La condición va después de ejecutar todos los hooks.
+  // The condition goes after executing all hooks.
   if (status === "authenticated") {
     return <Navigate replace to={homeFor(role)} />;
   }

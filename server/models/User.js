@@ -2,25 +2,25 @@ import mongoose from "mongoose";
 
 const { Schema } = mongoose;
 
-// Mismo patrón de correo que ya usa el frontend (src/lib/validation.js).
+// Same email pattern as frontend (src/lib/validation.js).
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// ADR 8.1 (revisión 1) + ticket UN-102.
+// ADR 8.1 (revision 1) + ticket UN-102.
 const userSchema = new Schema(
   {
     name: {
       type: String,
-      required: [true, "name es obligatorio"],
+      required: [true, "name is required"],
       trim: true,
-      minlength: 2, // mismo mínimo que validateName() del frontend
-      maxlength: 80, // decisión técnica: el ADR no define longitud máxima
+      minlength: 2, // same minimum as validateName() on frontend
+      maxlength: 80, // technical decision: ADR doesn't define max length
     },
 
-    // Decisión del equipo C1 (ADR 8.1, revisión 1): campo OPCIONAL con índice
-    // único parcial. No es required para no romper POST /api/auth/register
-    // (ADR 7.4 solo envía name, email, password, role). Sin patrón de formato:
-    // el "username" actual del frontend es texto libre. Los límites 3-30 son
-    // una decisión técnica de implementación (no están en el ADR).
+    // Team decision C1 (ADR 8.1, revision 1): OPTIONAL field with partial
+    // unique index. Not required to avoid breaking POST /api/auth/register
+    // (ADR 7.4 only sends name, email, password, role). No format pattern:
+    // current frontend "username" is free text. Limits 3-30 are a
+    // technical implementation decision (not in ADR).
     username: {
       type: String,
       trim: true,
@@ -31,44 +31,44 @@ const userSchema = new Schema(
 
     email: {
       type: String,
-      required: [true, "email es obligatorio"],
+      required: [true, "email is required"],
       trim: true,
-      lowercase: true, // ADR 8.1: "normalizado a minúsculas"
-      maxlength: 254, // decisión técnica (límite estándar de correo)
-      match: [EMAIL_REGEX, "email no es válido"],
-      unique: true, // ADR 8.1: índice único en email
+      lowercase: true, // ADR 8.1: "normalized to lowercase"
+      maxlength: 254, // technical decision (standard email limit)
+      match: [EMAIL_REGEX, "email is not valid"],
+      unique: true, // ADR 8.1: unique index on email
     },
 
-    // ADR 8.1: nunca se expone en la API. select:false evita devolverlo por
-    // accidente; el login deberá pedirlo con .select("+passwordHash").
+    // ADR 8.1: never exposed in API. select:false prevents accidental return;
+    // login must request it with .select("+passwordHash").
     passwordHash: {
       type: String,
-      required: [true, "passwordHash es obligatorio"],
+      required: [true, "passwordHash is required"],
       select: false,
     },
 
     role: {
       type: String,
-      enum: { values: ["student", "teacher"], message: "role debe ser student o teacher" },
-      required: [true, "role es obligatorio"],
+      enum: { values: ["student", "teacher"], message: "role must be student or teacher" },
+      required: [true, "role is required"],
     },
 
-    // ADR 5.6 / 8.1: un solo classroom por usuario.
+    // ADR 5.6 / 8.1: one classroom per user.
     classroomId: {
       type: Schema.Types.ObjectId,
       ref: "Classroom",
       default: null,
-      index: true, // ADR 8.1: índice en classroomId
+      index: true, // ADR 8.1: index on classroomId
     },
   },
   {
     collection: "users",
-    timestamps: { createdAt: true, updatedAt: false }, // ADR 8.1 solo define createdAt
+    timestamps: { createdAt: true, updatedAt: false }, // ADR 8.1 only defines createdAt
   }
 );
 
-// Índice único PARCIAL (ADR 8.1): solo aplica a documentos cuyo username es un
-// string. Así varios usuarios sin username no chocan entre sí.
+// Partial UNIQUE index (ADR 8.1): only applies to documents whose username is a
+// string. This way multiple users without username don't clash.
 userSchema.index(
   { username: 1 },
   { unique: true, partialFilterExpression: { username: { $type: "string" } } }

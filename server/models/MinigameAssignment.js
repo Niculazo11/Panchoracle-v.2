@@ -9,12 +9,12 @@ const minigameAssignmentSchema = new Schema(
     classroomId: {
       type: Schema.Types.ObjectId,
       ref: "Classroom",
-      required: [true, "classroomId es obligatorio"],
+      required: [true, "classroomId is required"],
     },
-    // Minigame identifier: "quiz", "memory", etc. (ADR 12: catálogo pendiente => sin enum)
+    // Minigame identifier: "quiz", "memory", etc. (ADR 12: catalog pending => no enum)
     minigameId: {
       type: String,
-      required: [true, "minigameId es obligatorio"],
+      required: [true, "minigameId is required"],
       trim: true,
       maxlength: 50,
     },
@@ -22,15 +22,15 @@ const minigameAssignmentSchema = new Schema(
     assignedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "assignedBy es obligatorio"],
+      required: [true, "assignedBy is required"],
     },
   },
   { collection: "minigame_assignments" }
 );
 
-// Un profesor no puede asignar el mismo minijuego dos veces al mismo salón
+// A teacher cannot assign the same minigame twice to the same classroom
 minigameAssignmentSchema.index({ classroomId: 1, minigameId: 1 }, { unique: true });
-// Para listar asignaciones de un salón ordenadas por fecha
+// To list assignments for a classroom sorted by date
 minigameAssignmentSchema.index({ classroomId: 1, assignedAt: 1 });
 
 export default mongoose.models.MinigameAssignment || mongoose.model("MinigameAssignment", minigameAssignmentSchema);

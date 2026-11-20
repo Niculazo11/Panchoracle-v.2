@@ -1,5 +1,5 @@
-// UN-107 · Pruebas de integración de la API de tareas (/api/assignments)
-// Ejecutar con: node --test server/tests/assignments.test.js   (usa node:test + mongodb-memory-server)
+// UN-107 · Integration tests for assignments API (/api/assignments)
+// Run with: node --test server/tests/assignments.test.js   (uses node:test + mongodb-memory-server)
 
 import { describe, it, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
@@ -68,35 +68,36 @@ beforeEach(async () => {
 });
 
 describe("UN-107 · POST /api/assignments", () => {
-  it("el profesor crea una tarea y el contador del periodo sube", async () => {
-    const res = await as(teacher, "post", "/").send({ title: "Taller 1", description: "Ejercicios 1-5", dueAt: iso(20) }).expect(201);
-    assert.equal(res.body.assignment.title, "Taller 1");
+  it("teacher creates an assignment and period counter increments", async () => {
+    const res = await as(teacher, "post", "/").send({ title: "Workshop 1", description: "Exercises 1-5", dueAt: iso(20) }).expect(201);
+    assert.equal(res.body.assignment.title, "Workshop 1");
     assert.equal(res.body.assignment.classroomId, classroom._id.toString());
     assert.equal(res.body.assignment.periodId, classroom.period.periodId.toString());
     assert.equal((await Classroom.findById(classroom._id)).period.totalAssignments, 1);
   });
 
-  it("un estudiante recibe 403; sin sesión 401", async () => {
+  it("student gets 403; no session gets 401", async () => {
     await as(student, "post", "/").send({ title: "X", dueAt: iso(20) }).expect(403);
     await as(null, "post", "/").send({ title: "X", dueAt: iso(20) }).expect(401);
   });
 
-  it("valida fechas: formato, fuera del periodo y duplicada", async () => {
+  it("validates dates: format, outside period; allows duplicate dates", async () => {
     await as(teacher, "post", "/").send({ title: "X", dueAt: "mañana" }).expect(400);
     await as(teacher, "post", "/").send({ title: "X", dueAt: iso(5) }).expect(400); // before startDate
     await as(teacher, "post", "/").send({ title: "X", dueAt: iso(200) }).expect(400); // after endDate
     await as(teacher, "post", "/").send({ title: "A", dueAt: iso(20) }).expect(201);
-    const dup = await as(teacher, "post", "/").send({ title: "B", dueAt: iso(20) }).expect(409);
-    assert.equal(dup.body.error.code, "CONFLICT");
+    // Duplicate dueAt is now allowed (team decision 2026-11-19)
+    const dup = await as(teacher, "post", "/").send({ title: "B", dueAt: iso(20) }).expect(201);
+    assert.equal(dup.body.assignment.title, "B");
   });
 
-  it("rechaza objetos NoSQL, campos desconocidos y títulos vacíos", async () => {
+  it("rejects NoSQL objects, unknown fields, and empty titles", async () => {
     await as(teacher, "post", "/").send({ title: { $ne: null }, dueAt: iso(20) }).expect(400);
     await as(teacher, "post", "/").send({ title: "X", dueAt: iso(20), classroomId: "1" }).expect(400);
     await as(teacher, "post", "/").send({ title: "   ", dueAt: iso(20) }).expect(400);
   });
 
-  it("un título con <script> se guarda como texto y se devuelve intacto", async () => {
+  it("title with <script> is stored as text and returned intact", async () => {
     const title = "<script>alert(1)</script>";
     const created = await as(teacher, "post", "/").send({ title, dueAt: iso(20) }).expect(201);
     assert.equal(created.body.assignment.title, title);
@@ -104,15 +105,15 @@ describe("UN-107 · POST /api/assignments", () => {
     assert.equal(read.body.assignment.title, title);
   });
 
-  it("con el periodo ya iniciado responde 409 PERIOD_LOCKED", async () => {
+  it("with period already started responds 409 PERIOD_LOCKED", async () => {
     await Classroom.updateOne({ _id: classroom._id }, { "period.startDate": new Date(Date.now() - DAY) });
     const res = await as(teacher, "post", "/").send({ title: "X", dueAt: iso(20) }).expect(409);
     assert.equal(res.body.error.code, "PERIOD_LOCKED");
   });
 });
 
-describe("UN-107 · lectura (GET)", () => {
-  it("estudiante inscrito y profesor leen la lista ordenada por dueAt", async () => {
+describe("UN-107 · reading (GET)", () => {
+  it("enrolled student and teacher read list sorted by dueAt", async () => {
     await as(teacher, "post", "/").send({ title: "Segunda", dueAt: iso(30) }).expect(201);
     await as(teacher, "post", "/").send({ title: "Primera", dueAt: iso(20) }).expect(201);
     for (const user of [teacher, student]) {
@@ -121,7 +122,7 @@ describe("UN-107 · lectura (GET)", () => {
     }
   });
 
-  it("un estudiante sin salón recibe 404; con id ajeno 403; id inválido 400; inexistente 404", async () => {
+  it("student without classroom gets 404; with foreign id 403; invalid id 400; nonexistent 404", async () => {
     const created = await as(teacher, "post", "/").send({ title: "A", dueAt: iso(20) }).expect(201);
     const id = created.body.assignment.id;
     await as(outsider, "get", "/").expect(404);
@@ -132,31 +133,32 @@ describe("UN-107 · lectura (GET)", () => {
   });
 });
 
-describe("UN-107 · PATCH y DELETE", () => {
+describe("UN-107 · PATCH and DELETE", () => {
   let id;
   beforeEach(async () => {
     const res = await as(teacher, "post", "/").send({ title: "A", dueAt: iso(20) });
     id = res.body.assignment.id;
   });
 
-  it("el profesor dueño edita; el estudiante y el profesor ajeno reciben 403", async () => {
-    const res = await as(teacher, "patch", `/${id}`).send({ title: "Nuevo", dueAt: iso(25) }).expect(200);
-    assert.equal(res.body.assignment.title, "Nuevo");
+  it("owner teacher edits; student and other teacher get 403", async () => {
+    const res = await as(teacher, "patch", `/${id}`).send({ title: "New", dueAt: iso(25) }).expect(200);
+    assert.equal(res.body.assignment.title, "New");
     await as(student, "patch", `/${id}`).send({ title: "Hack" }).expect(403);
     await as(otherTeacher, "patch", `/${id}`).send({ title: "Hack" }).expect(403);
     await as(student, "delete", `/${id}`).expect(403);
     await as(otherTeacher, "delete", `/${id}`).expect(403);
-    assert.equal((await Assignment.findById(id)).title, "Nuevo");
+    assert.equal((await Assignment.findById(id)).title, "New");
   });
 
-  it("PATCH valida: vacío, fecha fuera del periodo y fecha duplicada", async () => {
+  it("PATCH validates: empty, date outside period; allows duplicate dates", async () => {
     await as(teacher, "patch", `/${id}`).send({}).expect(400);
     await as(teacher, "patch", `/${id}`).send({ dueAt: iso(5) }).expect(400);
     await as(teacher, "post", "/").send({ title: "B", dueAt: iso(30) }).expect(201);
-    await as(teacher, "patch", `/${id}`).send({ dueAt: iso(30) }).expect(409);
+    // Duplicate dueAt is now allowed (team decision 2026-11-19)
+    await as(teacher, "patch", `/${id}`).send({ dueAt: iso(30) }).expect(200);
   });
 
-  it("DELETE borra la tarea y baja el contador", async () => {
+  it("DELETE deletes assignment and decrements counter", async () => {
     assert.equal((await Classroom.findById(classroom._id)).period.totalAssignments, 1);
     await as(teacher, "delete", `/${id}`).expect(200);
     assert.equal(await Assignment.countDocuments({}), 0);
@@ -164,7 +166,7 @@ describe("UN-107 · PATCH y DELETE", () => {
     await as(teacher, "delete", `/${id}`).expect(404);
   });
 
-  it("con el periodo iniciado, PATCH y DELETE responden 409 PERIOD_LOCKED y no cambian nada", async () => {
+  it("with period started, PATCH and DELETE respond 409 PERIOD_LOCKED and change nothing", async () => {
     await Classroom.updateOne({ _id: classroom._id }, { "period.startDate": new Date(Date.now() - DAY) });
     const patch = await as(teacher, "patch", `/${id}`).send({ title: "Tarde" }).expect(409);
     assert.equal(patch.body.error.code, "PERIOD_LOCKED");
@@ -182,7 +184,7 @@ describe("UN-302 · POST /api/assignments/:id/steps", () => {
 
   beforeEach(async () => {
     // Create assignment first (period not started yet), then start the period
-    const res = await as(teacher, "post", "/").send({ title: "Tarea UN-302", dueAt: iso(20) }).expect(201);
+    const res = await as(teacher, "post", "/").send({ title: "UN-302 Assignment", dueAt: iso(20) }).expect(201);
     assignmentId = res.body.assignment.id;
     await Classroom.updateOne({ _id: classroom._id }, { "period.startDate": new Date(Date.now() - DAY) });
     // Ensure student has a Pet (Pancho) for the current period
@@ -199,7 +201,7 @@ describe("UN-302 · POST /api/assignments/:id/steps", () => {
     });
   });
 
-  it("estudiante completa paso 1, 2 y 3 exitosamente", async () => {
+  it("student completes steps 1, 2, and 3 successfully", async () => {
     for (const stepId of [1, 2, 3]) {
       const res = await as(student, "post", `/${assignmentId}/steps`).send({ stepId }).expect(200);
       assert.equal(res.body.success, true);
@@ -209,31 +211,31 @@ describe("UN-302 · POST /api/assignments/:id/steps", () => {
     }
   });
 
-  it("estudiante no puede completar paso 4 (solo 1-3)", async () => {
+  it("student cannot complete step 4 (only 1-3)", async () => {
     const res = await as(student, "post", `/${assignmentId}/steps`).send({ stepId: 4 }).expect(400);
     assert.equal(res.body.error.code, "VALIDATION_ERROR");
   });
 
-  it("estudiante no puede completar paso 0 o negativo", async () => {
+  it("student cannot complete step 0 or negative", async () => {
     await as(student, "post", `/${assignmentId}/steps`).send({ stepId: 0 }).expect(400);
     await as(student, "post", `/${assignmentId}/steps`).send({ stepId: -1 }).expect(400);
   });
 
-  it("completar paso ya completado devuelve 409 CONFLICT", async () => {
+  it("completing already completed step returns 409 CONFLICT", async () => {
     await as(student, "post", `/${assignmentId}/steps`).send({ stepId: 1 }).expect(200);
     const res = await as(student, "post", `/${assignmentId}/steps`).send({ stepId: 1 }).expect(409);
     assert.equal(res.body.error.code, "CONFLICT");
   });
 
-  it("profesor recibe 403 FORBIDDEN", async () => {
+  it("teacher gets 403 FORBIDDEN", async () => {
     await as(teacher, "post", `/${assignmentId}/steps`).send({ stepId: 1 }).expect(403);
   });
 
-  it("sin sesión recibe 401", async () => {
+  it("no session gets 401", async () => {
     await as(null, "post", `/${assignmentId}/steps`).send({ stepId: 1 }).expect(401);
   });
 
-  it("estudiante sin salón usa tarea por defecto y puede completar pasos", async () => {
+  it("student without classroom uses default assignment and can complete steps", async () => {
     // outsider has no classroom, but needs a Pet to work on assignments
     await Pet.create({
       ownerId: outsider._id,
@@ -252,12 +254,12 @@ describe("UN-302 · POST /api/assignments/:id/steps", () => {
     assert.equal(res.body.step.id, 1);
   });
 
-  it("tarea inexistente devuelve 404", async () => {
+  it("nonexistent assignment returns 404", async () => {
     const fakeId = new mongoose.Types.ObjectId();
     await as(student, "post", `/${fakeId}/steps`).send({ stepId: 1 }).expect(404);
   });
 
-  it("id inválido devuelve 400", async () => {
+  it("invalid id returns 400", async () => {
     await as(student, "post", "/nope/steps").send({ stepId: 1 }).expect(400);
   });
 });
@@ -267,7 +269,7 @@ describe("UN-302 · POST /api/assignments/:id/submit", () => {
 
   beforeEach(async () => {
     // Create assignment first, then start the period
-    const res = await as(teacher, "post", "/").send({ title: "Tarea Submit", dueAt: iso(20) }).expect(201);
+    const res = await as(teacher, "post", "/").send({ title: "Submit Assignment", dueAt: iso(20) }).expect(201);
     assignmentId = res.body.assignment.id;
     await Classroom.updateOne({ _id: classroom._id }, { "period.startDate": new Date(Date.now() - DAY) });
     // Ensure student has a Pet (Pancho) for the current period
@@ -295,7 +297,7 @@ describe("UN-302 · POST /api/assignments/:id/submit", () => {
     });
   });
 
-  it("estudiante entrega tras completar pasos 1-3: crea Submission, hambre 100 (ADR 5.5), reinicia pasos", async () => {
+  it("student submits after completing steps 1-3: creates Submission, hunger 100 (ADR 5.5), resets steps", async () => {
     // Complete steps 1-3
     await as(student, "post", `/${assignmentId}/steps`).send({ stepId: 1 }).expect(200);
     await as(student, "post", `/${assignmentId}/steps`).send({ stepId: 2 }).expect(200);
@@ -317,13 +319,13 @@ describe("UN-302 · POST /api/assignments/:id/submit", () => {
     assert.equal(submission.status, "submitted");
   });
 
-  it("entregar sin completar pasos 1-3 devuelve 409 CONFLICT", async () => {
+  it("submitting without completing steps 1-3 returns 409 CONFLICT", async () => {
     const res = await as(student, "post", `/${assignmentId}/submit`).expect(409);
     assert.equal(res.body.error.code, "CONFLICT");
     assert.match(res.body.error.message, /Complete steps 1-3/);
   });
 
-  it("entregar dos veces la misma tarea devuelve 409 CONFLICT (índice único)", async () => {
+  it("submitting same assignment twice returns 409 CONFLICT (unique index)", async () => {
     await as(student, "post", `/${assignmentId}/steps`).send({ stepId: 1 }).expect(200);
     await as(student, "post", `/${assignmentId}/steps`).send({ stepId: 2 }).expect(200);
     await as(student, "post", `/${assignmentId}/steps`).send({ stepId: 3 }).expect(200);
@@ -335,7 +337,7 @@ describe("UN-302 · POST /api/assignments/:id/submit", () => {
     assert.match(res.body.error.message, /already submitted/);
   });
 
-  it("profesor recibe 403 FORBIDDEN", async () => {
+  it("teacher gets 403 FORBIDDEN", async () => {
     await as(teacher, "post", `/${assignmentId}/submit`).expect(403);
   });
 
@@ -343,7 +345,7 @@ describe("UN-302 · POST /api/assignments/:id/submit", () => {
     await as(null, "post", `/${assignmentId}/submit`).expect(401);
   });
 
-  it("estudiante con perro DEAD no puede entregar", async () => {
+  it("student with DEAD dog cannot submit", async () => {
     // First complete steps
     await as(student, "post", `/${assignmentId}/steps`).send({ stepId: 1 }).expect(200);
     await as(student, "post", `/${assignmentId}/steps`).send({ stepId: 2 }).expect(200);
@@ -357,7 +359,7 @@ describe("UN-302 · POST /api/assignments/:id/submit", () => {
     assert.match(res.body.error.message, /Pancho can't submit/);
   });
 
-  it("entregas de un estudiante no aparecen en otro (propiedad de recursos)", async () => {
+  it("submissions of one student don't appear in another (resource ownership)", async () => {
     // Create another student in same classroom
     const student2 = await makeUser("carlos", "student", classroom._id);
     // Create Pet for student2
@@ -391,7 +393,7 @@ describe("UN-302 · POST /api/assignments/:id/submit", () => {
     assert.deepEqual(studentIds, [student._id.toString(), student2._id.toString()].sort());
   });
 
-  it("sin salón o sin tareas activas usa tarea por defecto", async () => {
+  it("without classroom or active assignments uses default assignment", async () => {
     // outsider has no classroom but has a Pet (created in previous test)
     // The outsider will use the DEFAULT_ASSIGNMENT since they have no classroom
     const defaultAssignmentId = "000000000000000000000001";

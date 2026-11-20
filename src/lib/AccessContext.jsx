@@ -13,7 +13,7 @@ export function AccessProvider({ children }) {
       .then(({ user }) => setState({ status: "authenticated", user }))
       .catch((error) => { if (error.name !== "AbortError") setState(ANON); });
 
-    // UN-201 RF-6 / ADR 5.2: cualquier 401 cierra la sesión del cliente.
+    // UN-201 RF-6 / ADR 5.2: any 401 closes the client session.
     const onExpired = () => setState(ANON);
     window.addEventListener(AUTH_EXPIRED_EVENT, onExpired);
     return () => {

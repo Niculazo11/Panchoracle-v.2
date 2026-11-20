@@ -22,9 +22,9 @@ export function validateChooseForm(formData) {
     };
 }
 
-// El formulario de login solo tiene email y contraseña: no se validan
-// "name" ni "confirmPassword" (no existen en esa pantalla). La contraseña solo
-// debe estar presente; la política de longitud la aplica el registro, no el login.
+// The login form only has email and password: "name" and "confirmPassword"
+/// are not validated (they don't exist on that screen). The password only
+/// needs to be present; the length policy is enforced at registration, not login.
 export function validateLoginForm(formData) {
     return {
         email: validateEmail(formData.email),

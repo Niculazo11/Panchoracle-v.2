@@ -1,7 +1,7 @@
-// Verifica de punta a punta que la app puede hablar con MongoDB (Atlas o local):
+// End-to-end check that the app can talk to MongoDB (Atlas or local):
 //   npm run db:check
-// Conecta, hace ping, ESCRIBE un documento, lo LEE de vuelta, lo BORRA y revisa el esquema.
-// No toca tus datos: usa solo la colección temporal "__healthcheck".
+// Connects, pings, WRITES a document, READS it back, DELETES it, and verifies the schema.
+// Doesn't touch your data: uses only the temporary "__healthcheck" collection.
 import "dotenv/config";
 import mongoose from "mongoose";
 import { redact } from "../utils/safeLog.js";
@@ -11,32 +11,32 @@ const ok = (m) => console.log(`  ✅ ${m}`);
 const warn = (m) => console.log(`  ⚠️  ${m}`);
 const fail = (m) => console.log(`  ❌ ${m}`);
 
-// Traduce los errores más comunes de Atlas a una causa y una acción concreta.
+// Translates common Atlas errors into a cause and concrete action.
 function hint(message) {
   const m = String(message);
-  if (/bad auth|authentication failed/i.test(m)) return "Usuario o contraseña incorrectos. Revisa Atlas → Database Access y, si la contraseña tiene @ : / ? # %, codifícala (encodeURIComponent).";
-  if (/not authorized|requires authentication/i.test(m)) return "El usuario existe pero no tiene permiso de escritura. Atlas → Database Access → Edit → rol 'readWrite' sobre la base de datos de la URI.";
-  if (/querySrv|ENOTFOUND|EAI_AGAIN/i.test(m)) return "No se resuelve el DNS del cluster. Revisa que el host de la URI esté bien copiado; si persiste, tu DNS bloquea SRV: usa DNS 8.8.8.8 o la cadena 'mongodb://' (no +srv) de Atlas.";
-  if (/Server selection timed out|ReplicaSetNoPrimary|ECONNREFUSED|ETIMEDOUT|SSL|tlsv1/i.test(m)) return "No hay ruta de red hacia Atlas. Atlas → Network Access → agrega tu IP actual (o 0.0.0.0/0 para Vercel) y confirma que el cluster NO esté pausado.";
-  if (/Invalid scheme|Invalid connection string|URI/i.test(m)) return "La cadena MONGODB_URI está mal formada. Debe empezar por mongodb+srv:// o mongodb://";
-  return "Revisa el mensaje anterior y la sección 'Troubleshooting' de la guía.";
+  if (/bad auth|authentication failed/i.test(m)) return "Wrong username or password. Check Atlas → Database Access and, if the password has @ : / ? # %, encode it (encodeURIComponent).";
+  if (/not authorized|requires authentication/i.test(m)) return "User exists but lacks write permission. Atlas → Database Access → Edit → 'readWrite' role on the database in the URI.";
+  if (/querySrv|ENOTFOUND|EAI_AGAIN/i.test(m)) return "Cannot resolve cluster DNS. Verify the URI host is copied correctly; if it persists, your DNS blocks SRV: use DNS 8.8.8.8 or the 'mongodb://' (not +srv) string from Atlas.";
+  if (/Server selection timed out|ReplicaSetNoPrimary|ECONNREFUSED|ETIMEDOUT|SSL|tlsv1/i.test(m)) return "No network route to Atlas. Atlas → Network Access → add your current IP (or 0.0.0.0/0 for Vercel) and confirm the cluster is NOT paused.";
+  if (/Invalid scheme|Invalid connection string|URI/i.test(m)) return "MONGODB_URI is malformed. Must start with mongodb+srv:// or mongodb://";
+  return "Check the error above and the 'Troubleshooting' section of the guide.";
 }
 
 const uri = process.env.MONGODB_URI;
-console.log("\n=== Diagnóstico de MongoDB ===");
+console.log("\n=== MongoDB Diagnostics ===");
 if (!uri) {
-  fail("MONGODB_URI no está definida. Copia .env.example a .env y complétala.");
+  fail("MONGODB_URI is not defined. Copy .env.example to .env and fill it in.");
   process.exit(1);
 }
 
-// Muestra host/usuario/base SIN la contraseña.
+// Show host/user/database WITHOUT the password.
 try {
   const u = new URL(uri);
   const dbName = u.pathname.replace("/", "");
-  console.log(`  host: ${u.host}\n  usuario: ${decodeURIComponent(u.username) || "(sin usuario)"}\n  base de datos en la URI: ${dbName || "(NINGUNA → usaría 'test')"}`);
-  if (!dbName || dbName === "test") warn("La URI no nombra una base. Añade /panchoracle antes del '?' (…mongodb.net/panchoracle?retryWrites=true&w=majority).");
+  console.log(`  host: ${u.host}\n  user: ${decodeURIComponent(u.username) || "(no user)"}\n  database in URI: ${dbName || "(NONE → would use 'test')"}`);
+  if (!dbName || dbName === "test") warn("URI doesn't name a database. Add /panchoracle before the '?' (…mongodb.net/panchoracle?retryWrites=true&w=majority).");
 } catch {
-  warn("No pude analizar la URI para mostrarla (se intentará conectar igualmente).");
+  warn("Could not parse URI for display (will attempt connection anyway).");
 }
 
 let exitCode = 0;

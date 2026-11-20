@@ -15,16 +15,16 @@ const AVAILABLE_MINIGAMES = [
 
 /**
  * Placeholder component for minigame photos.
- * TODO(COMPAÑERO): Reemplazar este componente con la imagen real del minijuego.
- * Las fotos deben colocarse en public/images/minigames/ con el nombre del minigameId (ej: quiz.png, memory.png).
- * Luego actualizar este componente para usar <img src={asset(`images/minigames/${minigameId}.png`)} />.
+ * TODO: Replace this component with the actual minigame image.
+ * Photos should be placed in public/images/minigames/ with the minigameId name (e.g., quiz.png, memory.png).
+ * Then update this component to use <img src={asset(`images/minigames/${minigameId}.png`)} />.
  */
 function MinigamePhotoPlaceholder({ minigameId, className = "" }) {
-  // TODO: Cuando se agreguen las fotos, cambiar esto por:
+  // TODO: When photos are added, change this to:
   // import { asset } from "../../lib/asset.js";
   // return <img src={asset(`images/minigames/${minigameId}.png`)} alt={minigameId} className={className} />;
   return (
-    <div className={`w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center ${className}`} aria-label={`Foto de ${minigameId}`}>
+    <div className={`w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center ${className}`} aria-label={`Photo of ${minigameId}`}>
       <span className="text-2xl" aria-hidden="true">🎮</span>
     </div>
   );

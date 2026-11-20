@@ -5,9 +5,10 @@ import Assignment from "./Assignment.js";
 import Pet from "./Pet.js";
 import Submission from "./Submission.js";
 import SubmissionFile from "./SubmissionFile.js";
+import AssignmentFile from "./AssignmentFile.js";
 import MinigamePlay from "./MinigamePlay.js";
 import Cosmetic from "./Cosmetic.js";
 import QuizQuestion from "./QuizQuestion.js";
 import MinigameAssignment from "./MinigameAssignment.js";
 
-export { User, Classroom, Assignment, Pet, Submission, SubmissionFile, MinigamePlay, Cosmetic, QuizQuestion, MinigameAssignment };
+export { User, Classroom, Assignment, Pet, Submission, SubmissionFile, AssignmentFile, MinigamePlay, Cosmetic, QuizQuestion, MinigameAssignment };

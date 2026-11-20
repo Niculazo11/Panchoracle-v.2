@@ -3,7 +3,7 @@
 // z.strictObject() rechaza claves que no estén en el contrato.
 import { z } from "zod";
 
-z.config(z.locales.es()); // mensajes de validación en español
+z.config(z.locales.en()); // mensajes de validación en inglés
 
 // Mismo patrón que server/models/User.js y src/lib/validation.js.
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -13,7 +13,7 @@ const email = z
   .trim()
   .toLowerCase()
   .max(254)
-  .regex(EMAIL_REGEX, "email no es válido");
+  .regex(EMAIL_REGEX, "email is not valid");
 
 // POST /api/auth/login → { email, password }
 export const loginSchema = z.strictObject({

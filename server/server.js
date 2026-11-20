@@ -1,7 +1,7 @@
-// Arranque SOLO para desarrollo local. En Vercel no se usa (ver api/index.js).
-//import "dotenv/config" carga tu .env (solo aquí; en Vercel las variables las pone el dashboard). 
-// Enciende el servidor e intenta conectar a Mongo para avisarte en la terminal; si falla, el servidor
-//  sigue vivo y te dice por qué se usa solo en local.
+// Local development entry point ONLY. Not used in Vercel (see api/index.js).
+// import "dotenv/config" loads your .env (only here; in Vercel the dashboard sets variables).
+// Starts the server and attempts MongoDB connection to log status; if it fails, the server
+//  stays alive and explains why this is local-only.
 import "dotenv/config";
 import app from "./app.js";
 import { connectDB } from "./config/db.js";
@@ -10,8 +10,8 @@ import { redact } from "./utils/safeLog.js";
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Servidor escuchando en http://localhost:${PORT}`);
+  console.log(`Server listening on http://localhost:${PORT}`);
   connectDB()
-    .then(() => console.log("MongoDB conectado"))
-    .catch((error) => console.error("No se pudo conectar a MongoDB:", redact(error.message)));
+    .then(() => console.log("MongoDB connected"))
+    .catch((error) => console.error("Failed to connect to MongoDB:", redact(error.message)));
 });

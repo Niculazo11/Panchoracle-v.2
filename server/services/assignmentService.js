@@ -1,14 +1,19 @@
 // Business logic for assignments (UN-107 + UN-302). Plain functions, no Express objects.
 // Rules come from ADR section 6. AMENDMENT (team decision, 2026-11-19): the teacher can add,
-// edit and remove assignments at any time, not only before the period starts (6.2). What stays:
-// every dueAt is unique and inside the period (6.4), and an assignment that is already due is
+// edit and remove assignments at any time, not only before the period starts (6.2).
+// Multiple assignments CAN share the same dueAt (team decision 2026-11-19).
+// Teachers can also upload files to assignments (team decision 2026-11-19).
+// What stays: dueAt must be inside the period (6.4), and an assignment that is already due is
 // history: its date cannot change and it cannot be removed, and no assignment can be given a
 // due date in the past, so nobody is charged for a task that is created already missed.
 // UN-302: step completion and submission (student-only).
 import mongoose from "mongoose";
 import AppError from "../utils/AppError.js";
-import { Assignment, Classroom, Pet, Submission, SubmissionFile } from "../models/index.js";
+import { Assignment, AssignmentFile, Classroom, Pet, Submission, SubmissionFile } from "../models/index.js";
 import { loadStudentContext, rewardActiveSubmission, toGameJson } from "./gameService.js";
+
+const MAX_FILE_BYTES = 3 * 1024 * 1024; // 3 MB
+const FILE_ROUTE = (assignmentId) => `/api/assignments/${assignmentId}/file`;
 
 function isDuplicateKey(error) {
   return error && error.code === 11000;
@@ -24,7 +29,55 @@ export function toAssignmentJson(assignment) {
     description: assignment.description,
     dueAt: assignment.dueAt,
     createdAt: assignment.createdAt,
+    // Teacher file fields
+    fileName: assignment.fileName,
+    fileUrl: assignment.fileUrl,
+    fileMimeType: assignment.fileMimeType,
+    fileSize: assignment.fileSize,
   };
+}
+
+// ---------------------------------------------------------------------------
+// File handling (mirrors submissionService.js logic)
+// ---------------------------------------------------------------------------
+const startsWith = (bytes, signature, offset = 0) => signature.every((value, index) => bytes[offset + index] === value);
+
+function detectMimeType(bytes) {
+  if (startsWith(bytes, [0xff, 0xd8, 0xff])) return "image/jpeg";
+  if (startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return "image/png";
+  if (startsWith(bytes, [0x52, 0x49, 0x46, 0x46]) && startsWith(bytes, [0x57, 0x45, 0x42, 0x50], 8)) return "image/webp";
+  if (startsWith(bytes, [0x25, 0x50, 0x44, 0x46, 0x2d])) return "application/pdf";
+  return null;
+}
+
+function decodeFile({ mimeType, dataBase64 }) {
+  const data = Buffer.from(dataBase64, "base64");
+  if (data.length === 0) {
+    throw new AppError(400, "VALIDATION_ERROR", "The file is empty");
+  }
+  if (data.length > MAX_FILE_BYTES) {
+    throw new AppError(400, "VALIDATION_ERROR", "The file is too big. The limit is 3 MB.");
+  }
+  if (detectMimeType(data) !== mimeType) {
+    throw new AppError(400, "VALIDATION_ERROR", "The content of the file does not match its type");
+  }
+  return data;
+}
+
+async function saveAssignmentFile(assignmentId, mimeType, data) {
+  const _id = new mongoose.Types.ObjectId();
+  await AssignmentFile.create({
+    _id,
+    assignmentId,
+    mimeType,
+    size: data.length,
+    data,
+  });
+  return FILE_ROUTE(assignmentId);
+}
+
+async function deleteAssignmentFile(assignmentId) {
+  await AssignmentFile.deleteOne({ assignmentId });
 }
 
 // The classroom a user belongs to: the one a teacher owns, or the one a student joined.
@@ -54,10 +107,6 @@ function assertDueAtInPeriod(classroom, dueAt) {
   if (dueAt < startDate || dueAt > endDate) {
     throw new AppError(400, "VALIDATION_ERROR", "dueAt must be inside the classroom period");
   }
-}
-
-function duplicateDueAt() {
-  return new AppError(409, "CONFLICT", "Another assignment already has that dueAt");
 }
 
 // Finds an assignment and checks that the teacher owns its classroom.
@@ -103,18 +152,36 @@ export async function createAssignment(teacher, input) {
   assertDueAtInPeriod(classroom, dueAt);
   assertDueAtInFuture(dueAt);
 
-  let assignment;
-  try {
-    assignment = await Assignment.create({
-      classroomId: classroom._id,
-      periodId: classroom.period.periodId,
-      title: input.title,
-      description: input.description,
-      dueAt,
-    });
-  } catch (error) {
-    if (isDuplicateKey(error)) throw duplicateDueAt(); // unique { classroomId, periodId, dueAt }
-    throw error;
+  // Handle teacher file upload if provided
+  let fileData = null;
+  if (input.fileName && input.mimeType && input.dataBase64) {
+    fileData = decodeFile({ mimeType: input.mimeType, dataBase64: input.dataBase64 });
+  }
+
+  const _id = new mongoose.Types.ObjectId();
+  const fileUrl = fileData ? FILE_ROUTE(_id) : undefined;
+
+  const assignment = await Assignment.create({
+    _id,
+    classroomId: classroom._id,
+    periodId: classroom.period.periodId,
+    title: input.title,
+    description: input.description,
+    dueAt,
+    fileName: input.fileName,
+    fileUrl,
+    fileMimeType: input.mimeType,
+    fileSize: fileData ? fileData.length : undefined,
+  });
+
+  if (fileData) {
+    try {
+      await saveAssignmentFile(_id, input.mimeType, fileData);
+    } catch (error) {
+      // Never leave an assignment with a file URL but no file
+      await Assignment.deleteOne({ _id });
+      throw error;
+    }
   }
 
   // Denormalized counter used by lifeLossPerTask = 100 / totalAssignments (ADR 8.2).
@@ -122,7 +189,7 @@ export async function createAssignment(teacher, input) {
   return assignment;
 }
 
-// PATCH /api/assignments/:id: only title, description and dueAt can change.
+// PATCH /api/assignments/:id: title, description, dueAt, and file can change.
 export async function updateAssignment(teacher, assignmentId, input) {
   const { assignment, classroom } = await getOwnedAssignment(assignmentId, teacher);
 
@@ -139,12 +206,35 @@ export async function updateAssignment(teacher, assignmentId, input) {
     }
   }
 
-  try {
-    await assignment.save();
-  } catch (error) {
-    if (isDuplicateKey(error)) throw duplicateDueAt();
-    throw error;
+  // Handle teacher file upload if provided
+  if (input.fileName !== undefined || input.mimeType !== undefined || input.dataBase64 !== undefined) {
+    const hasNewFile = input.fileName && input.mimeType && input.dataBase64;
+    const hadFile = !!assignment.fileName;
+
+    if (hasNewFile) {
+      // New file provided - replace existing if any
+      const fileData = decodeFile({ mimeType: input.mimeType, dataBase64: input.dataBase64 });
+      const fileUrl = FILE_ROUTE(assignment._id);
+
+      // Save new file
+      await saveAssignmentFile(assignment._id, input.mimeType, fileData);
+
+      // Update assignment file fields
+      assignment.fileName = input.fileName;
+      assignment.fileUrl = fileUrl;
+      assignment.fileMimeType = input.mimeType;
+      assignment.fileSize = fileData.length;
+    } else if (hadFile) {
+      // Explicitly removing the file (by sending null/empty)
+      await deleteAssignmentFile(assignment._id);
+      assignment.fileName = undefined;
+      assignment.fileUrl = undefined;
+      assignment.fileMimeType = undefined;
+      assignment.fileSize = undefined;
+    }
   }
+
+  await assignment.save();
   return assignment;
 }
 
@@ -153,6 +243,9 @@ export async function updateAssignment(teacher, assignmentId, input) {
 export async function deleteAssignment(teacher, assignmentId) {
   const { assignment, classroom } = await getOwnedAssignment(assignmentId, teacher);
   assertNotDue(assignment, "This assignment is already due and can no longer be removed");
+
+  // The stored bytes of teacher-uploaded file go too (collection assignment_files).
+  await deleteAssignmentFile(assignment._id);
 
   // The stored bytes of handed-in files go too (collection submission_files).
   const handedIn = await Submission.find({ assignmentId: assignment._id }).select("_id");
@@ -163,6 +256,33 @@ export async function deleteAssignment(teacher, assignmentId) {
     await Classroom.updateOne({ _id: classroom._id }, { $inc: { "period.totalAssignments": -1 } });
   }
   return { assignmentId: assignment._id.toString() };
+}
+
+// GET /api/assignments/:id/file - serve the teacher-uploaded file to teacher or students in the classroom
+export async function getAssignmentFile(user, assignmentId) {
+  const assignment = await Assignment.findById(assignmentId);
+  if (!assignment) throw new AppError(404, "NOT_FOUND", "Assignment not found");
+
+  // Check if user has access to this assignment's classroom
+  const classroom = await Classroom.findById(assignment.classroomId);
+  if (!classroom) throw new AppError(404, "NOT_FOUND", "Classroom not found");
+
+  const isTeacher = user.role === "teacher" && classroom.teacherId.equals(user._id);
+  const isStudent = user.role === "student" && user.classroomId && user.classroomId.equals(classroom._id);
+
+  if (!isTeacher && !isStudent) {
+    throw new AppError(403, "FORBIDDEN", "You do not have access to this assignment");
+  }
+
+  // A link has no stored file.
+  if (!assignment.fileName) {
+    throw new AppError(404, "NOT_FOUND", "This assignment has no attached file");
+  }
+
+  const file = await AssignmentFile.findOne({ assignmentId: assignment._id });
+  if (!file) throw new AppError(404, "NOT_FOUND", "This assignment's file is missing");
+
+  return { fileName: assignment.fileName, mimeType: file.mimeType, data: Buffer.from(file.data) };
 }
 
 // ---------------------------------------------------------------------------

@@ -83,4 +83,13 @@ router.post(
   }
 );
 
+// GET /api/assignments/:id/file -> 200 file download (teacher who owns classroom, or enrolled student)
+router.get("/:id/file", validateIds("id"), async (req, res) => {
+  const { fileName, mimeType, data } = await service.getAssignmentFile(req.user, req.params.id);
+  res.setHeader("Content-Type", mimeType);
+  res.setHeader("Content-Disposition", `inline; filename="${fileName}"`);
+  res.setHeader("Content-Length", data.length);
+  res.status(200).send(data);
+});
+
 export default router;

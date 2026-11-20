@@ -1,6 +1,6 @@
-// UN-301 · Pruebas de integración del estado del juego (/api/me/game, /api/cosmetics, /api/pets/me/*)
-// Ejecutar con: node --test server/tests/game.test.js   (usa node:test + mongodb-memory-server)
-// Los casos reflejan los de las reglas del cliente (src/state/actions/pancho.js y shop.js).
+// UN-301 · Integration tests for game state (/api/me/game, /api/cosmetics, /api/pets/me/*)
+// Run with: node --test server/tests/game.test.js   (uses node:test + mongodb-memory-server)
+// Cases reflect client rules (src/state/actions/pancho.js and shop.js).
 
 import { describe, it, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
@@ -56,7 +56,7 @@ beforeEach(async () => {
 });
 
 describe("UN-301 · GET /api/me/game", () => {
-  it("devuelve { student, dog, currentAssignment } con la forma del cliente", async () => {
+  it("returns { student, dog, currentAssignment } with client shape", async () => {
     const { body } = await call(student, "get", "/api/me/game").expect(200);
     assert.deepEqual(body.student, { id: "ana", userId: student._id.toString(), coins: 270, inventory: [], assignmentsCompleted: 0 });
     assert.deepEqual(body.dog, {
@@ -68,7 +68,7 @@ describe("UN-301 · GET /api/me/game", () => {
     assert.ok(body.currentAssignment.steps.every((s) => s.completed === false));
   });
 
-  it("usa la tarea activa del salón (ADR 5.3) y salta la ya entregada", async () => {
+  it("uses classroom's active assignment (ADR 5.3) and skips already submitted", async () => {
     const first = await Assignment.create({ classroomId: classroom._id, periodId: classroom.period.periodId, title: "Primera", dueAt: new Date(Date.now() + 2 * DAY) });
     const second = await Assignment.create({ classroomId: classroom._id, periodId: classroom.period.periodId, title: "Segunda", dueAt: new Date(Date.now() + 9 * DAY) });
     await Assignment.create({ classroomId: classroom._id, periodId: classroom.period.periodId, title: "Vencida", dueAt: new Date(Date.now() - DAY) });
@@ -82,7 +82,7 @@ describe("UN-301 · GET /api/me/game", () => {
     assert.equal(body.student.assignmentsCompleted, 1);
   });
 
-  it("profesor 403, sin sesión 401, estudiante sin salón (sin Pancho) 404", async () => {
+  it("teacher 403, no session 401, student without classroom (no Pancho) 404", async () => {
     await call(teacher, "get", "/api/me/game").expect(403);
     await call(null, "get", "/api/me/game").expect(401);
     const loose = await User.create({ name: "beto", email: "beto@test.com", passwordHash: "x".repeat(60), role: "student" });
@@ -91,7 +91,7 @@ describe("UN-301 · GET /api/me/game", () => {
 });
 
 describe("UN-301 · GET /api/cosmetics", () => {
-  it("entrega el catálogo desde la colección cosmetics, con los campos del cliente", async () => {
+  it("delivers catalog from cosmetics collection, with client fields", async () => {
     const { body } = await call(student, "get", "/api/cosmetics").expect(200);
     assert.equal(body.cosmetics.length, CATALOG.length);
     assert.deepEqual(body.cosmetics[0], CATALOG[0]);
@@ -101,21 +101,21 @@ describe("UN-301 · GET /api/cosmetics", () => {
   });
 });
 
-describe("UN-301 · PUT /api/pets/me/pancho (adoptar)", () => {
-  it("guarda el Pancho elegido", async () => {
+describe("UN-301 · PUT /api/pets/me/pancho (adopt)", () => {
+  it("saves chosen Pancho", async () => {
     const { body } = await call(student, "put", "/api/pets/me/pancho").send({ panchoId: "n02085620_10074", imgUrl: IMG }).expect(200);
     assert.equal(body.dog.id, "n02085620_10074");
     assert.equal(body.dog.imgUrl, IMG);
     assert.equal(body.dog.health, 100);
   });
 
-  it("nunca revive ni cura: un Pancho muerto o herido conserva su estado", async () => {
+  it("never revives or heals: dead or injured Pancho keeps its state", async () => {
     await Pet.updateOne({ ownerId: student._id }, { status: "dead", health: 0, hunger: 0 });
     const { body } = await call(student, "put", "/api/pets/me/pancho").send({ panchoId: "otro", imgUrl: IMG }).expect(200);
     assert.deepEqual([body.dog.status, body.dog.health, body.dog.hunger], ["DEAD", 0, 0]);
   });
 
-  it("rechaza imágenes que no son de dog.ceo, ids raros, objetos y claves extra", async () => {
+  it("rejects non-dog.ceo images, weird ids, objects, and extra keys", async () => {
     const bad = [
       { panchoId: "a", imgUrl: "https://evil.test/a.jpg" },
       { panchoId: "a", imgUrl: "http://images.dog.ceo/a.jpg" },
@@ -129,14 +129,14 @@ describe("UN-301 · PUT /api/pets/me/pancho (adoptar)", () => {
   });
 });
 
-describe("UN-301 · POST /api/pets/me/inventory (comprar)", () => {
-  it("compra: descuenta el costo y agrega el cosmético (270 - 230 = 40)", async () => {
+describe("UN-301 · POST /api/pets/me/inventory (buy)", () => {
+  it("buy: deducts cost and adds cosmetic (270 - 230 = 40)", async () => {
     const { body } = await call(student, "post", "/api/pets/me/inventory").send({ cosmeticId: 1 }).expect(201);
     assert.equal(body.student.coins, 40);
     assert.deepEqual(body.student.inventory, [1]);
   });
 
-  it("sin saldo, duplicado o inexistente: error y no cambia nada", async () => {
+  it("no balance, duplicate, or nonexistent: error and nothing changes", async () => {
     await call(student, "post", "/api/pets/me/inventory").send({ cosmeticId: 17 }).expect(409); // costs 777
     let pet = await petOf(student);
     assert.deepEqual([pet.coins, pet.inventory.length], [270, 0]);
@@ -149,25 +149,25 @@ describe("UN-301 · POST /api/pets/me/inventory (comprar)", () => {
     assert.deepEqual([pet.coins, [...pet.inventory]], [70, [2]]);
   });
 
-  it("mensajes igual que el cliente: saldo insuficiente", async () => {
+  it("messages same as client: insufficient balance", async () => {
     const res = await call(student, "post", "/api/pets/me/inventory").send({ cosmeticId: 18 }).expect(409);
     assert.equal(res.body.error.message, "Not enough coins.");
   });
 
-  it("dos compras simultáneas del mismo cosmético: solo una se cobra", async () => {
+  it("two simultaneous purchases of same cosmetic: only one charged", async () => {
     const results = await Promise.all([1, 2, 3, 4].map(() => call(student, "post", "/api/pets/me/inventory").send({ cosmeticId: 2 })));
     assert.equal(results.filter((r) => r.status === 201).length, 1);
     const pet = await petOf(student);
     assert.deepEqual([pet.coins, [...pet.inventory]], [70, [2]]);
   });
 
-  it("dos compras simultáneas distintas sin saldo para ambas: el saldo nunca queda negativo", async () => {
+  it("two different simultaneous purchases without balance for both: balance never negative", async () => {
     const results = await Promise.all([2, 3].map((id) => call(student, "post", "/api/pets/me/inventory").send({ cosmeticId: id })));
     assert.equal(results.filter((r) => r.status === 201).length, 1);
     assert.equal((await petOf(student)).coins, 70);
   });
 
-  it("valida el cuerpo y bloquea a profesores", async () => {
+  it("validates body and blocks teachers", async () => {
     for (const body of [{}, { cosmeticId: "1" }, { cosmeticId: { $gt: 0 } }, { cosmeticId: 1.5 }, { cosmeticId: -1 }, { cosmeticId: 1, cost: 0 }]) {
       await call(student, "post", "/api/pets/me/inventory").send(body).expect(400);
     }
@@ -176,12 +176,12 @@ describe("UN-301 · POST /api/pets/me/inventory (comprar)", () => {
   });
 });
 
-describe("UN-301 · PUT /api/pets/me/equipped (equipar / desequipar)", () => {
+describe("UN-301 · PUT /api/pets/me/equipped (equip / unequip)", () => {
   beforeEach(async () => {
     await Pet.updateOne({ ownerId: student._id }, { inventory: [2, 6, 12] });
   });
 
-  it("equipa por ranura, sin tocar las demás, y desequipa con null", async () => {
+  it("equips by slot, without touching others, and unequips with null", async () => {
     let { body } = await call(student, "put", "/api/pets/me/equipped").send({ head: 2 }).expect(200);
     assert.deepEqual(body.dog.equippedCosmetics, { head: 2, face: null, neck: null, body: null });
     ({ body } = await call(student, "put", "/api/pets/me/equipped").send({ face: 6, neck: 12 }).expect(200));
@@ -190,7 +190,7 @@ describe("UN-301 · PUT /api/pets/me/equipped (equipar / desequipar)", () => {
     assert.deepEqual(body.dog.equippedCosmetics, { head: null, face: 6, neck: 12, body: null });
   });
 
-  it("no equipa lo que no tiene, lo inexistente ni en la ranura equivocada", async () => {
+  it("does not equip what it doesn't own, nonexistent, or in wrong slot", async () => {
     const notOwned = await call(student, "put", "/api/pets/me/equipped").send({ head: 3 }).expect(409);
     assert.equal(notOwned.body.error.message, "That cosmetic isn't in your inventory yet.");
     await call(student, "put", "/api/pets/me/equipped").send({ head: 999 }).expect(404);
@@ -199,12 +199,12 @@ describe("UN-301 · PUT /api/pets/me/equipped (equipar / desequipar)", () => {
     assert.deepEqual(pet.equipped.toObject(), { head: null, face: null, neck: null, body: null });
   });
 
-  it("es todo o nada: una ranura mala entre ranuras válidas no cambia nada", async () => {
+  it("all or nothing: one bad slot among valid ones changes nothing", async () => {
     await call(student, "put", "/api/pets/me/equipped").send({ head: 2, neck: 13 }).expect(409); // 13 is a Neck cosmetic not owned
     assert.equal((await petOf(student)).equipped.head, null);
   });
 
-  it("rechaza ranuras inválidas, cuerpo vacío y tipos erróneos; profesor 403", async () => {
+  it("rejects invalid slots, empty body, and wrong types; teacher 403", async () => {
     for (const body of [{}, { tail: 2 }, { head: "2" }, { head: { $ne: 1 } }, { head: 0 }]) {
       await call(student, "put", "/api/pets/me/equipped").send(body).expect(400);
     }
@@ -212,8 +212,8 @@ describe("UN-301 · PUT /api/pets/me/equipped (equipar / desequipar)", () => {
   });
 });
 
-describe("Auditoría · errores de Mongoose y login", () => {
-  it("un ValidationError de Mongoose responde 400, no 500", async () => {
+describe("Audit · Mongoose errors and login", () => {
+  it("a Mongoose ValidationError responds 400, not 500", async () => {
     const { errorHandler } = await import("../middleware/errorHandler.js");
     const err = new mongoose.Error.ValidationError();
     const res = { headersSent: false, status(c) { this.code = c; return this; }, json(b) { this.body = b; } };

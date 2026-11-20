@@ -20,7 +20,7 @@ let server;
 let teacher, student, classroom;
 
 const DAY = 24 * 60 * 60 * 1000;
-const FOREIGN_ORIGIN = "https://sitio-ajeno.example";
+const FOREIGN_ORIGIN = "https://foreign-site.example";
 const cookieOf = (user) => [`session=${signToken({ sub: user._id.toString() })}`];
 
 async function makeUser(name, role, classroomId = null) {
@@ -123,7 +123,7 @@ describe("UN-603 · request limits and unknown routes", () => {
   });
 
   it("an unknown /api route answers 404 with the standard error format", async () => {
-    const res = await request(server).get("/api/desconocida").set("Cookie", cookieOf(teacher)).expect(404);
+    const res = await request(server).get("/api/unknown").set("Cookie", cookieOf(teacher)).expect(404);
     assert.equal(res.body.error.code, "NOT_FOUND");
     assert.equal(typeof res.body.error.message, "string");
   });

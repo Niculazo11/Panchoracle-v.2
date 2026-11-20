@@ -22,11 +22,31 @@ const description = z
 
 const dueAt = z.iso.datetime({ error: "dueAt must be an ISO 8601 UTC date" });
 
+// Teacher file fields (team decision 2026-11-19): teachers can attach a file to the assignment
+const assignmentFileName = z
+  .string({ error: "fileName must be a string" })
+  .trim()
+  .min(1, "fileName is required")
+  .max(MAX_FILE_NAME_LENGTH, `fileName must have at most ${MAX_FILE_NAME_LENGTH} characters`)
+  .refine((value) => !/[\\/]/.test(value), "fileName must not contain path separators")
+  .refine((value) => !/[\u0000-\u001f\u007f]/.test(value), "fileName must not contain control characters");
+
+const assignmentDataBase64 = z
+  .string({ error: "dataBase64 must be a string" })
+  .min(1, "dataBase64 is required")
+  .max(MAX_BASE64_LENGTH, "The file is too big. The limit is 3 MB.")
+  .refine((value) => value.length % 4 === 0 && /^[A-Za-z0-9+/]+={0,2}$/.test(value), "dataBase64 is not valid base64");
+
+const assignmentMimeType = z.enum(ALLOWED_MIME_TYPES, { error: "mimeType must be image/jpeg, image/png, image/webp or application/pdf" });
+
 // POST /api/assignments
 export const createAssignmentSchema = z.strictObject({
   title,
   description: description.optional(),
   dueAt,
+  fileName: assignmentFileName.optional(),
+  mimeType: assignmentMimeType.optional(),
+  dataBase64: assignmentDataBase64.optional(),
 });
 
 // PATCH /api/assignments/:id (at least one field)
@@ -35,9 +55,12 @@ export const updateAssignmentSchema = z
     title: title.optional(),
     description: description.optional(),
     dueAt: dueAt.optional(),
+    fileName: assignmentFileName.optional(),
+    mimeType: assignmentMimeType.optional(),
+    dataBase64: assignmentDataBase64.optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
-    message: "send at least one of: title, description, dueAt",
+    message: "send at least one of: title, description, dueAt, fileName, mimeType, dataBase64",
   });
 
 // POST /api/assignments/:id/steps - complete step 1, 2 or 3

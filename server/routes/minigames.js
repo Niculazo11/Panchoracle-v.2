@@ -10,20 +10,20 @@ const router = Router();
 router.use(authorize("student"));
 
 // GET /api/minigames/quiz -> 200 { questions: [{ id, prompt, options }, ...] }
-// Devuelve las 5 preguntas SIN correctIndex (el servidor califica).
+// Returns 5 questions WITHOUT correctIndex (server grades).
 router.get("/quiz", validateQuery(quizQuerySchema), async (req, res) => {
   res.status(200).json(await getQuizQuestions());
 });
 
 // POST /api/minigames/quiz/submit -> 200 { reward, correctCount, gameState, ... }
-// Recibe las 5 respuestas, califica en el servidor, aplica recompensa y límites.
+// Receives 5 answers, grades on server, applies reward and limits.
 router.post("/quiz/submit", validateBody(submitQuizSchema), async (req, res) => {
   const result = await submitQuiz(req.user, req.body.answers);
   res.status(200).json(result);
 });
 
 // GET /api/minigames/assigned -> 200 { assignments: [...] }
-// Lista los minijuegos asignados al estudiante por su profesor.
+// Lists minigames assigned to the student by their teacher.
 router.get("/assigned", async (req, res) => {
   const assignments = await getStudentAssignedMinigames(req.user);
   res.status(200).json({ assignments });

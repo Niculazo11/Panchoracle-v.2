@@ -1,5 +1,5 @@
-// UN-104 · Pruebas de integración para API de autenticación
-// Ejecutar con: node --test server/tests/auth.test.js   (usa node:test, no vitest)
+// UN-104 · Integration tests for authentication API
+// Run with: node --test server/tests/auth.test.js   (uses node:test, not vitest)
 
 import { describe, it, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
@@ -18,51 +18,51 @@ const TEST_TEACHER_CODE = "TEACHER_SECRET_2024";
 const TEST_JWT_SECRET = "test-jwt-secret-very-long-and-secure-for-testing-only";
 
 before(async () => {
-  // Configurar variables de entorno para tests
-  process.env.MONGODB_URI = ""; // Se sobrescribe con mongod
+  // Configure environment variables for tests
+  process.env.MONGODB_URI = ""; // Will be overridden by mongod
   process.env.TEACHER_CODE = TEST_TEACHER_CODE;
   process.env.JWT_SECRET = TEST_JWT_SECRET;
   process.env.NODE_ENV = "test";
 
-  // Levantar MongoDB en memoria
+  // Start in-memory MongoDB
   mongod = await MongoMemoryServer.create({
     binary: { version: "7.0.0" },
   });
   const uri = mongod.getUri();
   process.env.MONGODB_URI = uri;
 
-  // Conectar mongoose
+  // Connect mongoose
   await mongoose.connect(uri);
-  console.log("MongoDB memory server iniciado:", uri);
+  console.log("MongoDB memory server started:", uri);
 
-  // Iniciar servidor Express en puerto aleatorio
+  // Start Express server on random port
   server = app.listen(0);
   const port = server.address().port;
-  agent = request.agent(server); // agente mantiene cookies
-  console.log("Servidor de pruebas en puerto:", port);
+  agent = request.agent(server); // agent maintains cookies
+  console.log("Test server on port:", port);
 });
 
 after(async () => {
   await mongoose.disconnect();
   await mongod.stop();
   server.close();
-  console.log("Limpieza completada");
+  console.log("Cleanup completed");
 });
 
 beforeEach(async () => {
-  // Limpiar colecciones entre tests
+  // Clear collections between tests
   await User.deleteMany({});
   await Pet.deleteMany({});
 });
 
-describe("UN-104 · API de Autenticación", () => {
+describe("UN-104 · Authentication API", () => {
   // ===== REGISTER =====
   describe("POST /api/auth/register", () => {
-    it("✅ Debe registrar un estudiante correctamente", async () => {
+    it("✅ Should register a student correctly", async () => {
       const res = await agent
         .post("/api/auth/register")
         .send({
-          name: "Ana Estudiante",
+          name: "Ana Student",
           email: "ana@test.com",
           password: "123456",
           role: "student",
@@ -71,13 +71,13 @@ describe("UN-104 · API de Autenticación", () => {
 
       assert.equal(res.body.user.email, "ana@test.com");
       assert.equal(res.body.user.role, "student");
-      assert.equal(res.body.user.name, "Ana Estudiante");
+      assert.equal(res.body.user.name, "Ana Student");
       assert.ok(res.body.user.id);
-      // Verificar que NO hay passwordHash en respuesta
+      // Verify there is NO passwordHash in response
       assert.equal(res.body.user.passwordHash, undefined);
     });
 
-    it("✅ El registro NO crea a Pancho: se crea al unirse a un classroom (ADR 5.6 / 8.4)", async () => {
+    it("✅ Register does NOT create Pancho: created when joining a classroom (ADR 5.6 / 8.4)", async () => {
       const res = await agent
         .post("/api/auth/register")
         .send({
@@ -92,7 +92,7 @@ describe("UN-104 · API de Autenticación", () => {
       assert.equal(await Pet.countDocuments({ ownerId: res.body.user.id }), 0);
     });
 
-    it("✅ Debe registrar un profesor con TEACHER_CODE válido", async () => {
+    it("✅ Should register a teacher with valid TEACHER_CODE", async () => {
       const res = await agent
         .post("/api/auth/register")
         .send({
@@ -108,41 +108,41 @@ describe("UN-104 · API de Autenticación", () => {
       assert.equal(res.body.user.email, "prof@test.com");
     });
 
-    it("❌ Debe rechazar profesor sin TEACHER_CODE (403)", async () => {
+    it("❌ Should reject teacher without TEACHER_CODE (403)", async () => {
       const res = await agent
         .post("/api/auth/register")
         .send({
-          name: "Profesor Sin Código",
+          name: "Teacher Without Code",
           email: "prof2@test.com",
           password: "123456",
           role: "teacher",
-          // sin teacherCode
+          // without teacherCode
         })
         .expect(403);
 
       assert.equal(res.body.error.code, "FORBIDDEN");
     });
 
-    it("❌ Debe rechazar profesor con TEACHER_CODE inválido (403)", async () => {
+    it("❌ Should reject teacher with invalid TEACHER_CODE (403)", async () => {
       const res = await agent
         .post("/api/auth/register")
         .send({
-          name: "Profesor Código Malo",
+          name: "Teacher Bad Code",
           email: "prof3@test.com",
           password: "123456",
           role: "teacher",
-          teacherCode: "CODIGO_INCORRECTO",
+          teacherCode: "WRONG_CODE",
         })
         .expect(403);
 
       assert.equal(res.body.error.code, "FORBIDDEN");
     });
 
-    it("❌ Debe rechazar email duplicado (409)", async () => {
+    it("❌ Should reject duplicate email (409)", async () => {
       await agent
         .post("/api/auth/register")
         .send({
-          name: "Usuario 1",
+          name: "User 1",
           email: "dup@test.com",
           password: "123456",
           role: "student",
@@ -152,7 +152,7 @@ describe("UN-104 · API de Autenticación", () => {
       const res = await agent
         .post("/api/auth/register")
         .send({
-          name: "Usuario 2",
+          name: "User 2",
           email: "dup@test.com",
           password: "123456",
           role: "student",
@@ -162,12 +162,12 @@ describe("UN-104 · API de Autenticación", () => {
       assert.equal(res.body.error.code, "CONFLICT");
     });
 
-    it("❌ Debe validar email inválido (400)", async () => {
+    it("❌ Should validate invalid email (400)", async () => {
       const res = await agent
         .post("/api/auth/register")
         .send({
           name: "Test",
-          email: "no-es-email",
+          email: "not-an-email",
           password: "123456",
           role: "student",
         })
@@ -176,7 +176,7 @@ describe("UN-104 · API de Autenticación", () => {
       assert.ok(res.body.error?.message);
     });
 
-    it("❌ Debe validar nombre muy corto (400)", async () => {
+    it("❌ Should validate very short name (400)", async () => {
       const res = await agent
         .post("/api/auth/register")
         .send({
@@ -188,7 +188,7 @@ describe("UN-104 · API de Autenticación", () => {
         .expect(400);
     });
 
-    it("❌ Debe validar contraseña muy corta (400)", async () => {
+    it("❌ Should validate very short password (400)", async () => {
       const res = await agent
         .post("/api/auth/register")
         .send({
@@ -200,7 +200,7 @@ describe("UN-104 · API de Autenticación", () => {
         .expect(400);
     });
 
-    it("❌ Debe validar role inválido (400)", async () => {
+    it("❌ Should validate invalid role (400)", async () => {
       const res = await agent
         .post("/api/auth/register")
         .send({
@@ -216,7 +216,7 @@ describe("UN-104 · API de Autenticación", () => {
   // ===== LOGIN =====
   describe("POST /api/auth/login", () => {
     beforeEach(async () => {
-      // Crear usuario de prueba
+      // Create test user
       await agent
         .post("/api/auth/register")
         .send({
@@ -227,7 +227,7 @@ describe("UN-104 · API de Autenticación", () => {
         });
     });
 
-    it("✅ Debe loguear con credenciales correctas", async () => {
+    it("✅ Should log in with correct credentials", async () => {
       const res = await agent
         .post("/api/auth/login")
         .send({
@@ -239,11 +239,11 @@ describe("UN-104 · API de Autenticación", () => {
       assert.equal(res.body.user.email, "login@test.com");
       assert.equal(res.body.user.role, "student");
       assert.ok(res.body.user.id);
-      // Verificar que NO hay passwordHash
+      // Verify there is NO passwordHash
       assert.equal(res.body.user.passwordHash, undefined);
     });
 
-    it("✅ Debe establecer cookie httpOnly en login", async () => {
+    it("✅ Should set httpOnly cookie on login", async () => {
       const res = await agent
         .post("/api/auth/login")
         .send({
@@ -252,7 +252,7 @@ describe("UN-104 · API de Autenticación", () => {
         })
         .expect(200);
 
-      // Verificar cookie en headers
+      // Verify cookie in headers
       const cookies = res.headers["set-cookie"];
       assert.ok(cookies);
       const sessionCookie = cookies.find((c) => c.startsWith("session="));
@@ -261,7 +261,7 @@ describe("UN-104 · API de Autenticación", () => {
       assert.ok(sessionCookie.includes("SameSite=Lax"));
     });
 
-    it("❌ Debe rechazar contraseña incorrecta (401 genérico)", async () => {
+    it("❌ Should reject incorrect password (generic 401)", async () => {
       const res = await agent
         .post("/api/auth/login")
         .send({
@@ -271,11 +271,11 @@ describe("UN-104 · API de Autenticación", () => {
         .expect(401);
 
       assert.equal(res.body.error.code, "UNAUTHORIZED");
-      // Mensaje genérico, no revela si usuario existe
-      assert.equal(res.body.error.message, "Credenciales inválidas");
+      // Generic message, does not reveal if user exists
+      assert.equal(res.body.error.message, "Invalid credentials");
     });
 
-    it("❌ Debe rechazar usuario inexistente (401 genérico)", async () => {
+    it("❌ Should reject nonexistent user (generic 401)", async () => {
       const res = await agent
         .post("/api/auth/login")
         .send({
@@ -285,14 +285,14 @@ describe("UN-104 · API de Autenticación", () => {
         .expect(401);
 
       assert.equal(res.body.error.code, "UNAUTHORIZED");
-      assert.equal(res.body.error.message, "Credenciales inválidas");
+      assert.equal(res.body.error.message, "Invalid credentials");
     });
   });
 
   // ===== ME =====
   describe("GET /api/me", () => {
-    it("✅ Debe devolver usuario autenticado con cookie válida", async () => {
-      // Registrar y loguear
+    it("✅ Should return authenticated user with valid cookie", async () => {
+      // Register and log in
       await agent
         .post("/api/auth/register")
         .send({
@@ -311,21 +311,21 @@ describe("UN-104 · API de Autenticación", () => {
       assert.equal(res.body.user.passwordHash, undefined);
     });
 
-    it("❌ Debe rechazar sin cookie (401)", async () => {
-      // Request sin cookies (no usar agent)
+    it("❌ Should reject without cookie (401)", async () => {
+      // Request without cookies (don't use agent)
       const res = await request(server).get("/api/me").expect(401);
       assert.equal(res.body.error.code, "UNAUTHORIZED");
     });
 
-    it("❌ Debe rechazar token expirado (401)", async () => {
-      // Este test requeriría manipular el tiempo o crear token expirado manualmente
-      // Se omite por simplicidad - la verificación de expiración está en verifyToken()
+    it("❌ Should reject expired token (401)", async () => {
+      // This test would require manipulating time or creating expired token manually
+      // Omitted for simplicity - expiration verification is in verifyToken()
     });
   });
 
   // ===== LOGOUT =====
   describe("POST /api/auth/logout", () => {
-    it("✅ Debe limpiar cookie y responder 204", async () => {
+    it("✅ Should clear cookie and respond 204", async () => {
       await agent
         .post("/api/auth/register")
         .send({
@@ -337,7 +337,7 @@ describe("UN-104 · API de Autenticación", () => {
 
       const res = await agent.post("/api/auth/logout").expect(204);
 
-      // Verificar que cookie se limpia
+      // Verify cookie is cleared
       const cookies = res.headers["set-cookie"];
       assert.ok(cookies);
       const sessionCookie = cookies.find((c) => c.startsWith("session="));
@@ -345,7 +345,7 @@ describe("UN-104 · API de Autenticación", () => {
       assert.ok(sessionCookie.includes("Max-Age=0") || sessionCookie.includes("Expires="));
     });
 
-    it("✅ Debe invalidar sesión - me falla tras logout", async () => {
+    it("✅ Should invalidate session - me fails after logout", async () => {
       await agent
         .post("/api/auth/register")
         .send({
@@ -362,9 +362,9 @@ describe("UN-104 · API de Autenticación", () => {
     });
   });
 
-  // ===== SEGURIDAD =====
-  describe("Seguridad - passwordHash nunca expuesto", () => {
-    it("✅ register no expone passwordHash", async () => {
+  // ===== SECURITY =====
+  describe("Security - passwordHash never exposed", () => {
+    it("✅ register does not expose passwordHash", async () => {
       const res = await agent
         .post("/api/auth/register")
         .send({
@@ -378,7 +378,7 @@ describe("UN-104 · API de Autenticación", () => {
       assert.equal(res.body.user.passwordHash, undefined);
     });
 
-    it("✅ login no expone passwordHash", async () => {
+    it("✅ login does not expose passwordHash", async () => {
       await agent
         .post("/api/auth/register")
         .send({
@@ -396,7 +396,7 @@ describe("UN-104 · API de Autenticación", () => {
       assert.equal(res.body.user.passwordHash, undefined);
     });
 
-    it("✅ me no expone passwordHash", async () => {
+    it("✅ me does not expose passwordHash", async () => {
       await agent
         .post("/api/auth/register")
         .send({
@@ -412,21 +412,21 @@ describe("UN-104 · API de Autenticación", () => {
   });
 });
 
-// Resumen final
-console.log("\n=== RESUMEN UN-104 ===");
-console.log("Endpoints probados:");
+// Final summary
+console.log("\n=== UN-104 SUMMARY ===");
+console.log("Endpoints tested:");
 console.log("  POST   /api/auth/register");
 console.log("  POST   /api/auth/login");
 console.log("  GET    /api/me");
 console.log("  POST   /api/auth/logout");
-console.log("\nCriterios validados:");
-console.log("  ✅ Registro student/teacher con validaciones");
-console.log("  ✅ TEACHER_CODE obligatorio para teacher (403 si falta/inválido)");
-console.log("  ✅ Creación automática Pet para students");
-console.log("  ✅ 409 Conflict en email duplicado");
-console.log("  ✅ 401 genérico en credenciales inválidas (no revela existencia)");
-console.log("  ✅ 403 Forbidden en teacher sin código válido");
-console.log("  ✅ passwordHash NUNCA en respuestas (register, login, me)");
-console.log("  ✅ bcryptjs para hash de contraseñas");
-console.log("  ✅ JWT expiración corta (1h) en cookie httpOnly");
-console.log("  ✅ Logout limpia cookie y invalida sesión");
+console.log("\nCriteria validated:");
+console.log("  ✅ Student/teacher registration with validations");
+console.log("  ✅ TEACHER_CODE required for teacher (403 if missing/invalid)");
+console.log("  ✅ Automatic Pet creation for students");
+console.log("  ✅ 409 Conflict on duplicate email");
+console.log("  ✅ Generic 401 on invalid credentials (does not reveal existence)");
+console.log("  ✅ 403 Forbidden for teacher without valid code");
+console.log("  ✅ passwordHash NEVER in responses (register, login, me)");
+console.log("  ✅ bcryptjs for password hashing");
+console.log("  ✅ JWT short expiry (1h) in httpOnly cookie");
+console.log("  ✅ Logout clears cookie and invalidates session");
