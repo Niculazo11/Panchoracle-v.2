@@ -13,11 +13,6 @@ export async function choosePancho(panchoId, imgUrl) {
     return res;
 }
 
-export async function completeStep(assignmentId, stepId) {
-    const res = await api.post(`/assignments/${assignmentId}/steps`, { stepId });
-    return res;
-}
-
 export async function submitAssignment(assignmentId) {
     const res = await api.post(`/assignments/${assignmentId}/submit`);
     return res;

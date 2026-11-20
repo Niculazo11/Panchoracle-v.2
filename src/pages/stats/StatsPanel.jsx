@@ -2,21 +2,14 @@ import { formatCoins } from "../../lib/formatCoins.js";
 import DeadNotice from "../raise/DeadNotice.jsx";
 import StatPill from "./StatPill.jsx";
 
-const TOTAL_ASSIGNMENT_STEPS = 4;
 
-export default function StatsPanel({ dog, student, currentAssignment }) {
-    const completedSteps = currentAssignment.steps.filter((s) => s.completed).length;
-    const stepsRemaining = TOTAL_ASSIGNMENT_STEPS - completedSteps;
-    const barWidth = (completedSteps / TOTAL_ASSIGNMENT_STEPS) * 100 + "%";
+export default function StatsPanel({ dog, student }) {
 
     return (
         <div className="mt-10 w-[300px]">
 
             <section className="mb-6">
-                <h2 className="mb-2 text-xl font-bold">
-                    Tasks remaining: <span id="tasksRemainingLabel">{stepsRemaining}</span>
-                </h2>
-
+                
                 <div className="h-5 overflow-hidden rounded-full border border-black bg-[#b9d9f0]">
                     <div id="tasksRemainingBar" className="h-full rounded-full bg-[#5654e8] transition-all duration-300" style={{ width: barWidth }}></div>
                 </div>

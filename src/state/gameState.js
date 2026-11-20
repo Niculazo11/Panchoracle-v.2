@@ -12,7 +12,6 @@
 
 import { GameStateBase } from "./GameStateBase.js";
 import * as panchoActions from "./actions/pancho.js";
-import * as assignmentActions from "./actions/assignment.js";
 import * as lifecycleActions from "./actions/lifecycle.js";
 import * as shopActions from "./actions/shop.js";
 import * as minigameActions from "./actions/minigames.js";
@@ -21,10 +20,6 @@ class GameStateManager extends GameStateBase {
 
     choosePancho(id, imgUrl) {
         return this._run(panchoActions.choosePancho(this.state, id, imgUrl));
-    }
-
-    completeStep(stepId) {
-        return this._run(assignmentActions.completeStep(this.state, stepId));
     }
 
     submitAssignment() {

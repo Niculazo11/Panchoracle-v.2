@@ -12,7 +12,7 @@ import { asset } from "../lib/asset.js";
 export default function PanchoStats() {
     const navigate = useNavigate();
     const { username } = useParams();
-    const { dog, student, currentAssignment, init } = useGameState();
+    const { dog, student, init } = useGameState();
 
     // Poll server for state updates (hunger decay, etc.)
     const { refresh } = usePolling(init, { intervalMs: 15000, enabled: true });
@@ -54,7 +54,7 @@ export default function PanchoStats() {
                     Profile: <span className="font-semibold">{username || student.id}</span>
                 </p>
 
-                <StatsPanel dog={dog} student={student} currentAssignment={currentAssignment} />
+                <StatsPanel dog="{dog}" student="{student}"/>
 
                 <Link to="/raisePancho.html"
                    className="absolute bottom-8 left-8 flex h-12 w-12 items-center justify-center rounded-full border-2 border-black bg-[#b9d9f0] text-2xl transition hover:scale-110">

@@ -12,18 +12,6 @@ function buildAssignmentSteps() {
     });
 }
 
-export function defaultAssignment(previousId) {
-
-    const match = previousId ? /(\d+)$/.exec(previousId) : null;
-    const nextNumber = match ? String(Number(match[1]) + 1).padStart(2, "0") : "01";
-
-    return {
-        id: `assign_${nextNumber}`,
-        title: "Java REST Controller Task",
-        steps: buildAssignmentSteps()
-    };
-}
-
 export function defaultStudent(username) {
     return {
         id: username,
@@ -48,8 +36,7 @@ export function defaultDog() {
 export function defaultState(username) {
     return {
         student: defaultStudent(username),
-        dog: defaultDog(),
-        currentAssignment: defaultAssignment()
+        dog: defaultDog()
     };
 }
 
@@ -74,6 +61,5 @@ export function normalizeState(parsed, user) {
             ...dog,
             equippedCosmetics: { ...EMPTY_EQUIPPED, ...(dog.equippedCosmetics || {}) }
         },
-        currentAssignment: saved.currentAssignment || base.currentAssignment
     };
 }

@@ -112,7 +112,6 @@ export function GameStateProvider({ children, initialState }) {
         state,
         dog: state?.dog,
         student: state?.student,
-        currentAssignment: state?.currentAssignment,
         choosePancho: doChoosePancho,
         buyCosmetic: doBuyCosmetic,
         equipCosmetic: doEquipCosmetic,
