@@ -1,19 +1,21 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { validateJoinForm, EMPTY_JOIN_ERRORS } from "../../lib/formValidators.js";
 import { hasErrors } from "../../lib/validation.js";
 import { useAccess } from "../../lib/useAccess.js";
-import { roleFromAnswer } from "../../lib/joinRole.js";
 import { PARK_PATH } from "../teacherspark/teacherPaths.js";
+import { useGameState } from "../../state/GameStateContext.jsx";
 
-const EMPTY_FORM = { name: "", email: "", password: "", message: "" };
+const EMPTY_FORM = { name: "", email: "", password: "", role: "student" };
 
 export function useJoinForm() {
     const [formData, setFormData] = useState(EMPTY_FORM);
     const [errors, setErrors] = useState(EMPTY_JOIN_ERRORS);
     const [formSuccessText, setFormSuccessText] = useState("Thanks for raising a Pancho!");
+    const [submitting, setSubmitting] = useState(false);
     const { register } = useAccess();
+    const { init } = useGameState();
     const navigate = useNavigate();
 
     function handleChange(field) {
@@ -22,6 +24,12 @@ export function useJoinForm() {
             setFormData((current) => ({ ...current, [field]: value }));
         };
     }
+
+    // Called by the Teacher/Student buttons in JoinSection.
+    // Sets the role immediately so the user sees feedback, then submits.
+    const handleJoin = useCallback((role) => {
+        setFormData((current) => ({ ...current, role }));
+    }, []);
 
     async function handleSubmit(event) {
         const nextErrors = validateJoinForm(formData);
@@ -34,31 +42,36 @@ export function useJoinForm() {
         }
 
         event.preventDefault();
+        setSubmitting(true);
 
         try {
-            // The "student or teacher?" answer decides the role. Anything that does not say
-            // "teacher" stays a student. No code is needed: typing "teacher" is enough.
             const user = await register({
                 name: formData.name.trim(),
                 email: formData.email.trim(),
                 password: formData.password,
-                role: roleFromAnswer(formData.message),
+                role: formData.role,
             });
 
             setFormSuccessText("Welcome to Raise a Pancho!");
             setFormData(EMPTY_FORM);
             setErrors(EMPTY_JOIN_ERRORS);
 
-            // Same landing pages as the login: a new teacher goes to the teacher park (TeacherShell
-            // sends them on to the create-classroom page when they have no classroom yet) and a
-            // student goes to their Pancho. Without this the form seemed to do nothing on success,
-            // because the success message below is hidden.
+            // For students, initialize game state (loads Pancho/classroom) before navigating,
+            // same as Login.jsx does. This ensures the student has their data when they land.
+            if (user.role === "student") {
+                await init().catch(() => {});
+            }
+
+            // Teacher -> TeachersPark (ClassroomsPanel). TeacherShell redirects to create-classroom if needed.
+            // Student -> /raise (ChoosePancho shows JoinClassroomForm if no classroom yet).
             navigate(user.role === "teacher" ? PARK_PATH : "/raise");
         } catch (error) {
             setFormSuccessText("");
             setErrors({ email: error.message || "Error al registrarse" });
+        } finally {
+            setSubmitting(false);
         }
     }
 
-    return { formData, errors, formSuccessText, handleChange, handleSubmit };
+    return { formData, errors, formSuccessText, submitting, handleChange, handleSubmit, handleJoin };
 }
