@@ -23,10 +23,12 @@ export default function JoinSection() {
                 <div className="w-full">
                     <p className="text-white mb-2">Join as:</p>
                     <div className="flex gap-4">
-                        <button type="button" disabled={submitting} onClick={() => handleJoin("teacher")} className="flex-1 px-5 py-2 bg-[rgb(21,116,62)] dark:bg-[#5d7467] text-white rounded disabled:opacity-50 disabled:cursor-not-allowed">Teacher</button>
-                        <button type="button" disabled={submitting} onClick={() => handleJoin("student")} className="flex-1 px-5 py-2 bg-[rgb(21,116,62)] dark:bg-[#5d7467] text-white rounded disabled:opacity-50 disabled:cursor-not-allowed">Student</button>
+                        <button type="button" disabled={submitting} onClick={() => handleJoin("teacher")} aria-pressed={formData.role === "teacher"} className={`flex-1 px-5 py-2 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed ${formData.role === "teacher" ? "bg-green-900 ring-2 ring-white" : "bg-[rgb(21,116,62)] dark:bg-[#5d7467]"}`}>Teacher</button>
+                        <button type="button" disabled={submitting} onClick={() => handleJoin("student")} aria-pressed={formData.role === "student"} className={`flex-1 px-5 py-2 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed ${formData.role === "student" ? "bg-green-900 ring-2 ring-white" : "bg-[rgb(21,116,62)] dark:bg-[#5d7467]"}`}>Student</button>
                     </div>
                 </div>
+
+                <button type="submit" disabled={submitting} className="w-full px-5 py-3 bg-white text-green-800 font-semibold rounded disabled:opacity-50 disabled:cursor-not-allowed">{submitting ? "Creating account..." : "Create Account"}</button>
 
                 {/* Kept hidden exactly like the original #formSuccess paragraph. */}
                 <p id="formSuccess" className="hidden text-white font-semibold">{formSuccessText}</p>
