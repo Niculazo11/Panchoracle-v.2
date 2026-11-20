@@ -64,8 +64,7 @@ describe("UN-301 · GET /api/me/game", () => {
       equippedCosmetics: { head: null, face: null, neck: null, body: null },
     });
     assert.equal(body.currentAssignment.id, "000000000000000000000001"); // no assignments: default task
-    assert.equal(body.currentAssignment.steps.length, 4);
-    assert.ok(body.currentAssignment.steps.every((s) => s.completed === false));
+    assert.equal(body.currentAssignment.steps, undefined); // the checklist no longer exists
   });
 
   it("uses classroom's active assignment (ADR 5.3) and skips already submitted", async () => {

@@ -1,7 +1,6 @@
-// Assignment routes (UN-107 + UN-302), mounted in app.js under /api/assignments.
+// Assignment routes (UN-107), mounted in app.js under /api/assignments.
 // Teachers create, edit and delete; students and teachers of the classroom can read.
-// Students complete steps and submit assignments (4-step flow) or hand in a link or a file
-// (docs/submissions-api.md). Teachers read what was handed in.
+// Students hand in a link or a file (docs/submissions-api.md). Teachers read what was handed in.
 // Express 5 forwards errors thrown in async handlers to the error handler.
 import express, { Router } from "express";
 import { authorize } from "../middleware/authenticate.js";
@@ -10,8 +9,6 @@ import { validateIds } from "../middleware/validateIds.js";
 import {
   createAssignmentSchema,
   updateAssignmentSchema,
-  completeStepSchema,
-  submitAssignmentSchema,
   createSubmissionSchema,
 } from "../validators/assignment.js";
 import { SUBMISSION_BODY_LIMIT } from "../config/submissions.js";
@@ -52,16 +49,6 @@ router.delete("/:id", teacherOnly, validateIds("id"), async (req, res) => {
   res.status(200).json({ deleted: true, ...result });
 });
 
-// POST /api/assignments/:id/steps -> 200 { success, step, state } (UN-302, student only)
-router.post("/:id/steps", studentOnly, validateIds("id"), validateBody(completeStepSchema), async (req, res) => {
-  res.status(200).json(await service.completeStep(req.user, req.params.id, req.body.stepId));
-});
-
-// POST /api/assignments/:id/submit -> 200 { success, rewards, state } (UN-302, student only)
-router.post("/:id/submit", studentOnly, validateIds("id"), validateBody(submitAssignmentSchema), async (req, res) => {
-  res.status(200).json(await service.submitAssignment(req.user, req.params.id));
-});
-
 // GET /api/assignments/:id/submissions -> 200 { submissions } oldest first (teacher who owns the classroom)
 router.get("/:id/submissions", teacherOnly, validateIds("id"), async (req, res) => {
   res.status(200).json({ submissions: await submissions.listAssignmentSubmissions(req.user, req.params.id) });
@@ -82,14 +69,5 @@ router.post(
     res.status(201).json({ submission: submissions.toSubmissionJson(submission) });
   }
 );
-
-// GET /api/assignments/:id/file -> 200 file download (teacher who owns classroom, or enrolled student)
-router.get("/:id/file", validateIds("id"), async (req, res) => {
-  const { fileName, mimeType, data } = await service.getAssignmentFile(req.user, req.params.id);
-  res.setHeader("Content-Type", mimeType);
-  res.setHeader("Content-Disposition", `inline; filename="${fileName}"`);
-  res.setHeader("Content-Length", data.length);
-  res.status(200).send(data);
-});
 
 export default router;

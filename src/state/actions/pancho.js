@@ -1,7 +1,4 @@
 "use strict";
-
-import { defaultAssignment } from "../defaults.js";
-
 // 1. Pancho selection (called from the ChoosePancho flow).
 // Returns { success, state } with a brand new state object: nothing in
 // the previous state is mutated.
@@ -23,7 +20,6 @@ export function choosePancho(state, id, imgUrl) {
                 hunger: 100,
                 status: "ALIVE"
             },
-            currentAssignment: defaultAssignment()
         }
     };
 }

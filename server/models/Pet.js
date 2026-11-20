@@ -4,55 +4,63 @@ const { Schema } = mongoose;
 
 const isFiniteNumber = (value) => Number.isFinite(value);
 
-// ADR 8.4: Pancho. One document per student, reset each period.
-// NO revive fields exist (ADR 5.4). healthAdjustment/healthRestoreLog only forgive
-// penalties of a LIVE Pancho (UN-108, ADR Rev. 2.3); a dead Pancho is never restored.
+// ADR 8.4: Pancho. Un documento por estudiante, reiniciado en cada periodo.
+// NO existen campos para revivir (ADR 5.4). healthAdjustment/healthRestoreLog solo registran las
+// penalizaciones que el profesor perdonó a un Pancho VIVO (UN-108, ADR Rev. 2.3); un Pancho dead
+// nunca se restaura.
 const petSchema = new Schema(
   {
     ownerId: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "ownerId is required"],
-      unique: true, // ADR 8.4: unique on ownerId
+      required: [true, "ownerId es obligatorio"],
+      unique: true, // ADR 8.4: único en ownerId
     },
     periodId: {
       type: Schema.Types.ObjectId,
-      required: [true, "periodId is required"],
+      required: [true, "periodId es obligatorio"],
     },
     name: {
       type: String,
       trim: true,
-      default: "Pancho", // same default name as defaultDog() on frontend
-      maxlength: 50, // technical decision
+      default: "Pancho", // mismo nombre por defecto que defaultDog() del frontend
+      maxlength: 50, // decisión técnica
     },
-    // ADR 5.3: range 0-100, initial value 100. NOT forced to integer: ADR
-    // persists health without rounding (100 / totalAssignments can be decimal).
+    // Rango 0-100, valor inicial 100. Solo baja de 10 en 10, una vez por tarea vencida sin entrega
+    // (ver petStateService.js); nunca decae con el tiempo ni cambia al entregar una tarea.
     health: {
       type: Number,
       default: 100,
       min: 0,
       max: 100,
-      validate: { validator: isFiniteNumber, message: "health must be a number" },
+      validate: { validator: isFiniteNumber, message: "health debe ser un número" },
     },
-    // Snapshot; current value calculated on each request (ADR 5.3).
+    // Snapshot; el valor vigente se calcula en cada petición como cuenta regresiva hasta dueAt.
     hunger: {
       type: Number,
       default: 100,
       min: 0,
       max: 100,
-      validate: { validator: isFiniteNumber, message: "hunger must be a number" },
+      validate: { validator: isFiniteNumber, message: "hunger debe ser un número" },
     },
-    // UN-108 [Rev. 2.3]: health points teacher forgave (e.g., medical excuse).
-    // Added to base calculation: health = clamp(100 - missed*100/total + healthAdjustment, 0, 100).
-    // Only increases (restore-health) and resets to 0 when new period starts.
+    // Tareas vencidas sin entrega cuya penalización de -10 de salud YA se aplicó. Es lo que hace
+    // idempotente el cobro: leer /api/me/game muchas veces nunca descuenta dos veces la misma tarea.
+    // Se vacía al empezar un periodo nuevo.
+    penalizedAssignments: {
+      type: [Schema.Types.ObjectId],
+      default: [],
+    },
+    // UN-108 [Rev. 2.3]: total de puntos de salud que el profesor perdonó (p. ej. una excusa
+    // médica). Es solo un registro: la salud perdonada ya se devuelve en `health` al restaurar.
+    // Solo crece (restore-health) y vuelve a 0 al empezar un nuevo periodo.
     healthAdjustment: {
       type: Number,
       default: 0,
       min: 0,
       max: 100,
-      validate: { validator: isFiniteNumber, message: "healthAdjustment must be a number" },
+      validate: { validator: isFiniteNumber, message: "healthAdjustment debe ser un número" },
     },
-    // UN-108 [Rev. 2.3]: who restored how much and why (max 50 entries, most recent).
+    // UN-108 [Rev. 2.3]: quién restauró cuánto y por qué (máximo 50 entradas, las más recientes).
     healthRestoreLog: {
       type: [
         new Schema(
@@ -69,31 +77,32 @@ const petSchema = new Schema(
       ],
       default: [],
     },
-    // UN-301: chosen Pancho (id derived from dog.ceo URL and image). null until
-    // student chooses in /choosePancho; client redirects while null.
+    // UN-301: Pancho elegido (id derivado de la URL de dog.ceo e imagen). null hasta que
+    // el estudiante lo elige en /choosePancho; el cliente redirige mientras sea null.
     panchoId: { type: String, trim: true, maxlength: 100, default: null },
     imgUrl: { type: String, trim: true, maxlength: 500, default: null },
-    // ADR 8.4: integer balance. ADR does NOT define initial coins (frontend
-    // uses 270), so required without default: decided by whoever creates Pancho (classroom join).
+    // ADR 8.4: saldo entero. El ADR NO define las monedas iniciales (el
+    // frontend usa 270), por eso es obligatorio y sin default: lo decide quien
+    // cree a Pancho (join del classroom).
     coins: {
       type: Number,
-      required: [true, "coins is required"],
+      required: [true, "coins es obligatorio"],
       min: 0,
-      validate: { validator: Number.isInteger, message: "coins must be an integer" },
+      validate: { validator: Number.isInteger, message: "coins debe ser entero" },
     },
-    // ADR uses lowercase ("alive" | "dead"); current frontend uses "ALIVE"/"DEAD".
+    // ADR usa minúsculas ("alive" | "dead"); el frontend actual usa "ALIVE"/"DEAD".
     status: {
       type: String,
-      enum: { values: ["alive", "dead"], message: "status must be alive or dead" },
+      enum: { values: ["alive", "dead"], message: "status debe ser alive o dead" },
       default: "alive",
     },
-        // [Rev. 2] purchased cosmeticIds, no duplicates.
+    // [Rev. 2] cosmeticId comprados, sin duplicados.
     inventory: {
       type: [Number],
       default: [],
       validate: {
         validator: (v) => v.every(Number.isInteger) && new Set(v).size === v.length,
-        message: "inventory does not allow duplicates or non-integer values",
+        message: "inventory no admite duplicados ni valores no enteros",
       },
     },
     // [Rev. 2] slot -> cosmeticId | null
@@ -103,21 +112,8 @@ const petSchema = new Schema(
       neck: { type: Number, default: null },
       body: { type: Number, default: null },
     },
-    // Which assignment `currentAssignmentSteps` belongs to (assignment id, or the default task id).
-    // Progress of another assignment is ignored, so unfinished steps of a missed task never carry
-    // over to the next one.
-    currentAssignmentStepsFor: { type: String, default: null, maxlength: 40 },
     // When the student last claimed a minigame reward (cooldown, claimed atomically).
     lastMinigameAt: { type: Date, default: null },
-    // UN-302: step progress for current assignment (1-4, true/false). Reset on submit.
-    currentAssignmentSteps: {
-      type: [Boolean],
-      default: [false, false, false, false],
-      validate: {
-        validator: (v) => v.length === 4 && v.every((val) => typeof val === "boolean"),
-        message: "currentAssignmentSteps must be array of 4 booleans",
-      },
-    },
   },
   {
     collection: "pets",

@@ -3,7 +3,7 @@
 //
 // Each tab points to a real route under /teachersPark (UN-401). The pages are
 // "coming soon" placeholders until their own tickets replace them.
-import { HOMEWORK_PATH, SEARCH_PATH, MINIGAMES_PATH } from "./teacherPaths.js";
+import { HOMEWORK_PATH, STUDENTS_PATH, MINIGAMES_PATH } from "./teacherPaths.js";
 
 export const NAV_ITEMS = [
     {
@@ -14,11 +14,11 @@ export const NAV_ITEMS = [
         to: HOMEWORK_PATH
     },
     {
-        id: "search",
-        label: ["Search for", "a Dog"],
-        // TODO(IMAGE): "Search for a Dog" icon (magnifying glass).
+        id: "students",
+        label: ["Manage", "Students"],
+        // TODO(IMAGE): "Manage Students" icon (it keeps the magnifying glass file name).
         icon: "images/teacher-search-lens.png",
-        to: SEARCH_PATH
+        to: STUDENTS_PATH
     },
     {
         id: "minigames",

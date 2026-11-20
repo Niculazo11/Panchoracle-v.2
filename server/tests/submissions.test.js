@@ -303,28 +303,28 @@ describe("POST /api/assignments/:id/submissions · rules", () => {
     assert.equal(await Submission.countDocuments({ studentId: student._id }), 2);
   });
 
-  it("handing in the ACTIVE assignment resets the steps and sets hunger to 100", async () => {
-    await Pet.updateOne(
-      { ownerId: student._id },
-      { $set: { hunger: 20, currentAssignmentSteps: [true, true, true, false], currentAssignmentStepsFor: assignment._id.toString() } }
-    );
+    it("handing in the ACTIVE assignment recalculates hunger for the next deadline and leaves health alone", async () => {
+    await Pet.updateOne({ ownerId: student._id }, { $set: { hunger: 20, health: 70 } });
     await handIn(student, assignment._id, linkBody()).expect(201);
     const pet = await Pet.findOne({ ownerId: student._id });
-    assert.equal(pet.hunger, 100);
-    assert.deepEqual([...pet.currentAssignmentSteps], [false, false, false, false]);
-    assert.equal(pet.currentAssignmentStepsFor, null);
+    // Task 2 is now the active one and was created a moment ago, so its countdown is almost full.
+    assert.ok(pet.hunger > 99.9 && pet.hunger <= 100);
+    assert.equal(pet.health, 70);
   });
 
-  it("handing in an assignment that is NOT the active one leaves the steps alone", async () => {
-    const progress = [true, false, false, false];
-    await Pet.updateOne(
-      { ownerId: student._id },
-      { $set: { hunger: 20, currentAssignmentSteps: progress, currentAssignmentStepsFor: assignment._id.toString() } }
-    );
+  it("handing in an assignment that is NOT the active one leaves health alone", async () => {
+    await Pet.updateOne({ ownerId: student._id }, { $set: { hunger: 20, health: 70 } });
     await handIn(student, laterAssignment._id, linkBody()).expect(201);
-    const pet = await Pet.findOne({ ownerId: student._id });
-    assert.deepEqual([...pet.currentAssignmentSteps], progress);
-    assert.equal(pet.currentAssignmentStepsFor, assignment._id.toString());
+    const game = await call(student, "get", "/api/me/game").expect(200);
+    assert.equal(game.body.dog.health, 70);
+    assert.ok(game.body.dog.hunger > 99.9); // still counting down to the first (active) task
+  });
+
+  it("handing in everything that is pending puts hunger back at 100", async () => {
+    await handIn(student, assignment._id, linkBody()).expect(201);
+    await handIn(student, laterAssignment._id, linkBody()).expect(201);
+    const game = await call(student, "get", "/api/me/game").expect(200);
+    assert.equal(game.body.dog.hunger, 100);
   });
 
   it("the submission counts in the game state (assignmentsCompleted) and the next task moves on", async () => {

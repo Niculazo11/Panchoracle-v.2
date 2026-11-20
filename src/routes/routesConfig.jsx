@@ -84,7 +84,8 @@ export function renderTeacherRoutes() {
       <Route path="homework/:assignmentId/edit" element={<EditHomework />} />
       <Route path="homework/:assignmentId/submissions" element={<HomeworkSubmissions />} />
       <Route path="students" element={<StudentsPage />} />
-      <Route path="search" element={<TeacherSection title="Search for a Dog" />} />
+      {/* The old "Search for a Dog" tab is now Manage Students. */}
+      <Route path="search" element={<Navigate replace to={STUDENTS_PATH} />} />
       <Route path="minigames" element={<ManageMinigames />} />
     </Route>
   );

@@ -13,14 +13,6 @@ export const SLOT_BY_CATEGORY = { Head: "head", Face: "face", Neck: "neck", Body
 // Must be a valid ObjectId (24 hex chars) to pass validateIds middleware.
 export const DEFAULT_ASSIGNMENT = { id: "000000000000000000000001", title: "Java REST Controller Task" };
 
-// The 4 steps of the checklist (state/constants.js). Progress is tracked by UN-302.
-export const STEP_LABELS = [
-  "Go for a Walk (Research)",
-  "Play in the Park (Brainstorming)",
-  "Study Together (Drafting Task)",
-  "Feed Pancho (Submit Assignment)",
-];
-
 // Minigame reward limits (UN-303 stop-gap until UN-501 grades the quiz on the server).
 // ADR section 12 leaves the cap and the cooldown open; these are proposed values, and can be
 // changed with the MINIGAME_COOLDOWN_MS and MINIGAME_MAX_PLAYS_PER_DAY environment variables.
