@@ -19,21 +19,21 @@ export default function PanchoStats() {
 
     // No Pancho chosen yet -> send the student to pick one first.
     useEffect(() => {
-        if (!dog.imgUrl) {
+        if (dog && !dog.imgUrl) {
             navigate("/choosePancho.html");
         }
-    }, [dog.imgUrl, navigate]);
+    }, [dog, navigate]);
 
     // Keep the URL in sync with the registered student: old static
     // links (/stats, /panchoStats.html) or a stale/foreign :username
     // both get canonicalized to this student's own profile URL.
     useEffect(() => {
-        if (dog.imgUrl && student.id && username !== student.id) {
+        if (dog?.imgUrl && student?.id && username !== student.id) {
             navigate(`/stats/${encodeURIComponent(student.id)}`, { replace: true });
         }
-    }, [dog.imgUrl, student.id, username, navigate]);
+    }, [dog?.imgUrl, student?.id, username, navigate]);
 
-    if (!dog.imgUrl) {
+    if (!dog?.imgUrl) {
         return null;
     }
 
@@ -51,10 +51,10 @@ export default function PanchoStats() {
                 </h1>
 
                 <p className="text-black/70 text-sm mb-4">
-                    Profile: <span className="font-semibold">{username || student.id}</span>
+                    Profile: <span className="font-semibold">{username || student?.id}</span>
                 </p>
 
-                <StatsPanel dog="{dog}" student="{student}"/>
+                <StatsPanel dog={dog} student={student} />
 
                 <Link to="/raisePancho.html"
                    className="absolute bottom-8 left-8 flex h-12 w-12 items-center justify-center rounded-full border-2 border-black bg-[#b9d9f0] text-2xl transition hover:scale-110">
