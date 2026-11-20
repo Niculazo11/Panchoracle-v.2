@@ -36,7 +36,7 @@ export default function ManageHomework() {
     }
 
     return (
-        <main className="relative flex-1 w-full bg-[#a2b15f] dark:bg-[#4b5a2a] text-black dark:text-white px-5 sm:px-10 pt-8 pb-64 box-border">
+        <main className="relative flex-1 w-full bg-[#a2b15f] dark:bg-[#4b5a2a] text-black dark:text-white px-5 sm:px-10 pt-8 pb-72 sm:pb-96 box-border">
             <div className="relative z-10 max-w-3xl">
                 <h2 className="m-0 mb-4 text-3xl sm:text-5xl font-extrabold uppercase">Manage Homework</h2>
 
