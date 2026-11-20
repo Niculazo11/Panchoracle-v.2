@@ -21,7 +21,7 @@ export default function SubmitForm({ assignmentId, onDone }) {
 
             {error && <p role="alert" className="m-0 mt-2 text-sm font-bold text-red-700">{error}</p>}
 
-            <button type="submit" disabled={sending} className="mt-3 px-6 py-2 bg-[#5a57d9] text-white font-bold underline cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+            <button type="submit" disabled={sending} className="mt-3 px-6 py-2 bg-[#5a57d9] text-white dark:bg-[#c4b5fd] dark:text-[#14200f] font-bold underline cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
                 {sending ? "Sending..." : "Hand in"}
             </button>
         </form>

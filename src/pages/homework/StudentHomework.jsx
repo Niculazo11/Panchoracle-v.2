@@ -35,7 +35,7 @@ export default function StudentHomework() {
     }
 
     return (
-        <main className="min-h-screen bg-[oklch(90.1%_0.076_70.697)] text-black px-5 sm:px-10 py-8 box-border">
+        <main className="min-h-screen bg-[oklch(90.1%_0.076_70.697)] text-black dark:bg-[#0f1a0a] dark:text-white px-5 sm:px-10 py-8 box-border">
             <div className="max-w-2xl mx-auto">
                 <Link to="/raise" className="underline font-bold">Back to Pancho</Link>
                 <h1 className="m-0 my-6 text-3xl sm:text-5xl font-bold">Homework</h1>

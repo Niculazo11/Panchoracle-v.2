@@ -85,9 +85,9 @@ export default function MiniGames() {
 
   if (loading) {
     return (
-      <main className="relative min-h-screen w-full overflow-hidden bg-[#a3a960]">
+      <main className="relative min-h-screen w-full overflow-hidden bg-[#a3a960] dark:bg-[#4b5a2a]">
         <div className="relative z-10 flex min-h-screen flex-col items-center justify-center">
-          <p className="text-2xl font-bold text-[#1a1a1a]">Loading minigames...</p>
+          <p className="text-2xl font-bold text-[#1a1a1a] dark:text-white">Loading minigames...</p>
         </div>
       </main>
     );
@@ -98,7 +98,7 @@ export default function MiniGames() {
     const Component = MINIGAME_COMPONENTS[activeMinigame];
     if (Component) {
       return (
-        <main className="relative min-h-screen w-full overflow-hidden bg-[#a3a960]">
+        <main className="relative min-h-screen w-full overflow-hidden bg-[#a3a960] dark:bg-[#4b5a2a]">
           <img
             src={asset("images/fondo-minigame.jpeg")}
             alt="Minigames background"
@@ -109,7 +109,7 @@ export default function MiniGames() {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="self-start px-4 py-2 text-sm font-medium text-white bg-[#5a57d9] rounded hover:bg-[#4a47c9] transition-colors"
+              className="self-start px-4 py-2 text-sm font-medium text-white bg-[#5a57d9] dark:bg-[#c4b5fd] dark:text-[#14200f] rounded hover:bg-[#4a47c9] dark:hover:bg-[#a5b4fc] transition-colors"
             >
               Back
             </button>
@@ -123,7 +123,7 @@ export default function MiniGames() {
   }
 
   return (
-    <main className="relative min-h-screen w-full overflow-hidden bg-[#a3a960]">
+    <main className="relative min-h-screen w-full overflow-hidden bg-[#a3a960] dark:bg-[#4b5a2a]">
       <img
         src={asset("images/fondo-minigame.jpeg")}
         alt="Minigames background"
@@ -133,16 +133,16 @@ export default function MiniGames() {
 
       <div className="relative z-10 flex min-h-screen flex-col justify-start gap-8 px-6 py-12 sm:px-12 sm:py-16">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-extrabold uppercase text-[#1a1a1a] sm:text-4xl">Minigames</h1>
+          <h1 className="text-3xl font-extrabold uppercase text-[#1a1a1a] dark:text-white sm:text-4xl">Minigames</h1>
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="px-4 py-2 text-sm font-medium text-white bg-[#5a57d9] rounded hover:bg-[#4a47c9] transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-[#5a57d9] dark:bg-[#c4b5fd] dark:text-[#14200f] rounded hover:bg-[#4a47c9] dark:hover:bg-[#a5b4fc] transition-colors"
           >
             Back
           </button>
         </div>
-        <p className="mt-2 max-w-md font-semibold text-[#1a1a1a]/80">
+        <p className="mt-2 max-w-md font-semibold text-[#1a1a1a]/80 dark:text-white/80">
           Quick, ungraded activities to earn coins for the shop. Your homework grade is never affected here.
         </p>
 
@@ -152,14 +152,14 @@ export default function MiniGames() {
               key={mg.id}
               type="button"
               onClick={() => startMinigame(mg.id)}
-              className="w-full rounded-lg bg-white/90 p-6 text-left shadow-md transition hover:bg-white hover:shadow-lg border border-gray-200 dark:bg-[#14200f]/95 dark:border-gray-700 dark:hover:bg-[#1a3d1a]"
+              className="w-full rounded-lg bg-white/90 dark:bg-[#14200f]/95 p-6 text-left shadow-md transition hover:bg-white dark:hover:bg-[#1a3d1a] hover:shadow-lg border border-gray-200 dark:border-gray-700"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="m-0 text-xl font-bold text-[#1a1a1a] dark:text-white">{mg.name}</h2>
                   <p className="m-0 mt-1 text-sm text-[#1a1a1a]/70 dark:text-gray-300">{mg.description}</p>
                   {!mg.alwaysAvailable && (
-                    <span className="inline-block mt-2 px-2 py-0.5 text-xs font-medium bg-[#5a57d9]/20 text-[#5a57d9] rounded">
+                    <span className="inline-block mt-2 px-2 py-0.5 text-xs font-medium bg-[#5a57d9]/20 text-[#5a57d9] dark:bg-[#c4b5fd]/30 dark:text-[#c4b5fd] rounded">
                       Assigned by teacher
                     </span>
                   )}
@@ -178,7 +178,7 @@ export default function MiniGames() {
         </div>
 
         {feedback && (
-          <p className="max-w-md rounded-lg bg-white/90 px-4 py-3 font-semibold text-black shadow">
+          <p className="max-w-md rounded-lg bg-white/90 dark:bg-[#14200f]/95 px-4 py-3 font-semibold text-black dark:text-white shadow">
             {feedback}
           </p>
         )}

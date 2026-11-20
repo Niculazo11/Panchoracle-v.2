@@ -16,7 +16,7 @@ export default function HomeworkItem({ assignment, submission, onSubmitted }) {
     const badge = submission ? "bg-emerald-600" : expired ? "bg-red-700" : "bg-[#5a57d9]";
 
     return (
-        <li className="p-4 rounded-lg border-2 border-black/20 bg-white text-black">
+        <li className="p-4 rounded-lg border-2 border-black/20 bg-white text-black dark:bg-[#14200f]/95 dark:text-white dark:border-white/20">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="m-0 text-lg font-bold break-words">{assignment.title}</h2>
                 <span className={"px-2 py-0.5 rounded-full text-xs font-bold text-white " + badge}>{state}</span>
@@ -26,7 +26,7 @@ export default function HomeworkItem({ assignment, submission, onSubmitted }) {
 
             {submission && (
                 <p className="m-0 mt-2 text-sm">
-                    Sent: <a href={safeHref(submission.fileUrl)} target="_blank" rel="noopener noreferrer" className="underline text-[#5a57d9] break-all">{submission.fileName}</a>
+                    Sent: <a href={safeHref(submission.fileUrl)} target="_blank" rel="noopener noreferrer" className="underline text-[#5a57d9] dark:text-[#c4b5fd] break-all">{submission.fileName}</a>
                 </p>
             )}
             {!submission && !expired && <SubmitForm assignmentId={assignment.id} onDone={onSubmitted} />}

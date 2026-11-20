@@ -4,10 +4,10 @@
 // re-render.
 export default function QuizResult({ correctCount, totalQuestions, onClaim, onPlayAgain, claimed }) {
     return (
-        <div className="flex max-w-md flex-col items-start gap-4 rounded-2xl bg-white/90 p-6 shadow-xl">
-            <h3 className="text-2xl font-extrabold text-black">Quiz complete!</h3>
+        <div className="flex max-w-md flex-col items-start gap-4 rounded-2xl bg-white/90 dark:bg-[#14200f]/95 p-6 shadow-xl">
+            <h3 className="text-2xl font-extrabold text-black dark:text-white">Quiz complete!</h3>
 
-            <p className="text-lg text-black">
+            <p className="text-lg text-black dark:text-white">
                 You got <span className="font-bold">{correctCount}</span> out of{" "}
                 <span className="font-bold">{totalQuestions}</span> right.
             </p>
@@ -17,7 +17,7 @@ export default function QuizResult({ correctCount, totalQuestions, onClaim, onPl
                     type="button"
                     onClick={onClaim}
                     disabled={claimed || correctCount === 0}
-                    className="rounded-full bg-black px-6 py-3 font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-full bg-black dark:bg-white px-6 py-3 font-semibold text-white dark:text-black transition hover:bg-neutral-800 dark:hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     {claimed ? "Coins claimed" : "Claim coins"}
                 </button>
@@ -25,7 +25,7 @@ export default function QuizResult({ correctCount, totalQuestions, onClaim, onPl
                 <button
                     type="button"
                     onClick={onPlayAgain}
-                    className="rounded-full border-2 border-black px-6 py-3 font-semibold text-black transition hover:bg-black/5"
+                    className="rounded-full border-2 border-black dark:border-white px-6 py-3 font-semibold text-black dark:text-white transition hover:bg-black/5 dark:hover:bg-white/10"
                 >
                     Play again
                 </button>
