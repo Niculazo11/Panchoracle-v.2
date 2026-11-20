@@ -20,12 +20,12 @@ export default function RaisePancho() {
 
     // Redirect to ChoosePancho if the student hasn't picked a Pancho yet.
     useEffect(() => {
-        if (!dog.imgUrl) {
-            navigate("/choosePancho.html");
-        }
-    }, [dog.imgUrl, navigate]);
+        if (dog && !dog.imgUrl) {
+    navigate("/choosePancho.html");
+}
+}, [dog, navigate]);
 
-    if (!dog.imgUrl) {
+    if (!dog?.imgUrl) {
         return null;
     }
 
@@ -34,7 +34,7 @@ export default function RaisePancho() {
             className="min-h-screen w-full bg-cover bg-center bg-no-repeat"
             style={{ backgroundImage: `url("${asset("images/Background1.png")}")` }}
         >
-            <RaiseNav username={student.id} />
+            <RaiseNav username={student?.id} />
 
             <main className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 sm:gap-10 px-4 sm:px-6 py-8">
                 <PanchoSection dog={dog} student={student} />
