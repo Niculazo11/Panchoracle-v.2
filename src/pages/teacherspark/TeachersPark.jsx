@@ -1,7 +1,6 @@
 import ParkBackground from "./ParkBackground.jsx";
 import ParkDog from "./ParkDog.jsx";
 import SettingsGearLink from "./SettingsGearLink.jsx";
-import StudentsLink from "./StudentsLink.jsx";
 import { useParkStudents } from "./useParkStudents.js";
 
 // The park, the main teacher view. TeacherShell draws the top bar around it and makes
@@ -25,7 +24,6 @@ export default function TeachersPark() {
             )}
 
             <SettingsGearLink />
-            <StudentsLink />
         </ParkBackground>
     );
 }
