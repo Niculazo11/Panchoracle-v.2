@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from "react";
 import PanchoLayers from "../../components/PanchoLayers.jsx";
 import { asset } from "../../lib/asset.js";
 import { PLACEHOLDER_DOG } from "./parkDogs.js";
@@ -24,15 +23,9 @@ export default function ParkDog({ dog }) {
     const isDead = Boolean(student.pet) && student.pet.status === "dead";
     const spot = useWanderingDog({ x, y }, !isDead);
 
-    // The Pancho artwork faces right. When the next spot is to the left of the last one the
-    // picture is mirrored; when the dog stands still (same x) it keeps the way it was facing.
-    const [facingLeft, setFacingLeft] = useState(false);
-    const lastX = useRef(spot.x);
-    useEffect(() => {
-        if (spot.x < lastX.current) setFacingLeft(true);
-        else if (spot.x > lastX.current) setFacingLeft(false);
-        lastX.current = spot.x;
-    }, [spot.x]);
+    // The Pancho artwork faces right: the hook says when the walk goes to the left and the
+    // picture is mirrored (only here, in the teacher's park).
+    const facingLeft = spot.facingLeft;
 
     // The grey look is added here, so PanchoLayers always gets "ALIVE": its own
     // dead banner is too big for a small park dog.
@@ -50,7 +43,7 @@ export default function ParkDog({ dog }) {
             <div className="relative">
                 <div className={"relative w-32 h-32 sm:w-44 sm:h-44 lg:w-56 lg:h-56 rounded-lg overflow-hidden border-4 " + (isDead ? "grayscale opacity-70 border-gray-500" : "border-white")}>
                     {/* Only the picture is mirrored, never the name above it. */}
-                    <div className="relative w-full h-full" style={{ transform: facingLeft ? "scaleX(-1)" : "none" }}>
+                    <div className="relative w-full h-full" data-facing={facingLeft ? "left" : "right"} style={{ transform: facingLeft ? "scaleX(-1)" : "none" }}>
                         <PanchoLayers dog={picture} />
                     </div>
                 </div>

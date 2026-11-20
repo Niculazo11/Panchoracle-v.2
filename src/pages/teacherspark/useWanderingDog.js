@@ -8,13 +8,15 @@ function between(range) {
     return range[0] + Math.random() * (range[1] - range[0]);
 }
 
-// Makes a park dog walk around by itself. Returns { x, y, seconds }: the spot the dog is
-// walking to and how long the walk takes (0 before the first walk). Dogs stay where they
+// Makes a park dog walk around by itself. Returns { x, y, seconds, facingLeft }: the spot the
+// dog is walking to, how long the walk takes (0 before the first walk) and whether the walk
+// goes to the left (the dog keeps its last facing when a walk does not change x). Dogs stay where they
 // are if the visitor asked their system for less motion, or when `enabled` is false
 // (a dead Pancho does not walk).
 export function useWanderingDog(start, enabled = true) {
-    const [spot, setSpot] = useState({ x: start.x, y: start.y, seconds: 0 });
+    const [spot, setSpot] = useState({ x: start.x, y: start.y, seconds: 0, facingLeft: false });
     const place = useRef({ x: start.x, y: start.y });
+    const facing = useRef(false);
 
     useEffect(() => {
         const lessMotion = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -28,8 +30,11 @@ export function useWanderingDog(start, enabled = true) {
         function walk() {
             const next = nextWanderTarget(place.current);
 
+            if (next.x < place.current.x) facing.current = true;
+            else if (next.x > place.current.x) facing.current = false;
+
             place.current = { x: next.x, y: next.y };
-            setSpot(next);
+            setSpot({ ...next, facingLeft: facing.current });
             timer = setTimeout(walk, next.seconds * 1000 + between(REST));
         }
 
